@@ -29,12 +29,10 @@ import Data.Vector.Fixed.Mutable
 ----------------------------------------------------------------
 
 -- | Unboxed vector with fixed length
-data Vec n a = Vec {-# UNPACK #-} !Int       -- Offset from start
-                   {-# UNPACK #-} !ByteArray -- Data array
+newtype Vec n a = Vec ByteArray
 
 -- | Mutable unboxed vector with fixed length
-data MVec n s a = MVec {-# UNPACK #-} !Int                  -- Offset from start
-                       {-# UNPACK #-} !(MutableByteArray s) -- Data array
+newtype MVec n s a = MVec (MutableByteArray s)
 
 type Vec2 = Vec (S (S Z))
 type Vec3 = Vec (S (S (S Z)))
@@ -51,13 +49,13 @@ instance (Arity n, Prim a) => MVector (MVec n) a where
   lengthM _ = arity (undefined :: n)
   new = do
     v <- newByteArray $! arity (undefined :: n) * sizeOf (undefined :: a)
-    return $! MVec 0 v
-  clone (MVec off v) = do
-    r@(MVec off2 u) <- new
-    copyMutableByteArray u off2 v off (arity (undefined :: n) * sizeOf (undefined :: a))
+    return $ MVec v
+  clone (MVec v) = do
+    r@(MVec u) <- new
+    copyMutableByteArray u 0 v 0 (arity (undefined :: n) * sizeOf (undefined :: a))
     return r
-  unsafeRead  (MVec off v) i   = readByteArray  v (off + i)
-  unsafeWrite (MVec off v) i x = writeByteArray v (off + i) x
+  unsafeRead  (MVec v) i   = readByteArray  v i
+  unsafeWrite (MVec v) i x = writeByteArray v i x
   {-# INLINE lengthM     #-}
   {-# INLINE new         #-}
   {-# INLINE clone       #-}
@@ -65,9 +63,9 @@ instance (Arity n, Prim a) => MVector (MVec n) a where
   {-# INLINE unsafeWrite #-}
 
 instance (Arity n, Prim a) => IVector (Vec n) a where
-  unsafeFreeze (MVec off v)   = do { a <- unsafeFreezeByteArray v; return $! Vec  off a }
-  unsafeThaw   (Vec  off v)   = do { a <- unsafeThawByteArray   v; return $! MVec off a }
-  unsafeIndex  (Vec  off v) i = indexByteArray v (off + i)
+  unsafeFreeze (MVec v)   = do { a <- unsafeFreezeByteArray v; return $! Vec  a }
+  unsafeThaw   (Vec  v)   = do { a <- unsafeThawByteArray   v; return $! MVec a }
+  unsafeIndex  (Vec  v) i = indexByteArray v i
   {-# INLINE unsafeFreeze #-}
   {-# INLINE unsafeThaw   #-}
   {-# INLINE unsafeIndex  #-}
@@ -104,7 +102,7 @@ data T_new a n = T_new Int (forall s. ST s (MutableByteArray s))
 fini :: (Arity n, Prim a) => T_new a Z -> Vec n a
 fini (T_new _ st) = runST $ do
   v <- unsafeFreezeByteArray =<< st
-  return $! Vec 0 v
+  return $! Vec v
 
 step :: (Prim a) => T_new a (S n) -> a -> T_new a n
 step (T_new i st) x = T_new (i+1) $ do
