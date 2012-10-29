@@ -1,0 +1,31 @@
+Name:           fixed-vector
+Version:        0.1
+Synopsis:       Generic vectors with fixed length
+Description:
+  Generic vectors with fixed length
+
+Cabal-Version:  >= 1.6
+License:        BSD3
+License-File:   LICENSE
+Author:         Aleksey Khudyakov <alexey.skladnoy@gmail.com>
+Maintainer:     Aleksey Khudyakov <alexey.skladnoy@gmail.com>
+Homepage:       http://bitbucket.org/Shimuuar/fixed-vector
+Category:       Data
+Build-Type:     Simple
+
+source-repository head
+  type:     hg
+  location: http://bitbucket.org/Shimuuar/fixed-vector
+source-repository head
+  type:     git
+  location: http://github.com/Shimuuar/fixed-vector
+
+Library
+  Ghc-options:          -Wall
+  Build-Depends:
+    base >=3 && <5,
+    primitive
+  Exposed-modules:
+    Data.Vector.Fixed
+    Data.Vector.Fixed.Unboxed
+    Data.Vector.Fixed.Storable
