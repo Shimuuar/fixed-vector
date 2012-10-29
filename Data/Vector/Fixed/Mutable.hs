@@ -49,6 +49,7 @@ read v i
   | otherwise               = unsafeRead v i
 
 write :: (PrimMonad m, MVector v a) => v (PrimState m) a -> Int -> a -> m ()
+{-# INLINE write #-}
 write v i x
   | i < 0 || i >= lengthM v = error "Data.Vector.Fixed.Mutable.write: index out of range"
   | otherwise               = unsafeWrite v i x
