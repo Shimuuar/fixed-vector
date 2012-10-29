@@ -65,11 +65,12 @@ instance (Arity n, Prim a) => MVector (MVec n) a where
   {-# INLINE unsafeWrite #-}
 
 instance (Arity n, Prim a) => IVector (Vec n) a where
-  unsafeFreeze (MVec off v) = do { a <- unsafeFreezeByteArray v; return $! Vec  off a }
-  unsafeThaw   (Vec  off v) = do { a <- unsafeThawByteArray   v; return $! MVec off a }
+  unsafeFreeze (MVec off v)   = do { a <- unsafeFreezeByteArray v; return $! Vec  off a }
+  unsafeThaw   (Vec  off v)   = do { a <- unsafeThawByteArray   v; return $! MVec off a }
+  unsafeIndex  (Vec  off v) i = indexByteArray v (off + i)
   {-# INLINE unsafeFreeze #-}
   {-# INLINE unsafeThaw   #-}
-
+  {-# INLINE unsafeIndex  #-}
 
 
 type instance Dim (Vec n) = n
@@ -86,7 +87,7 @@ newtype T_idx n = T_idx Int
 inspectVec :: forall n a b. (Arity n, Prim a) => Vec n a -> Fun n a b -> b
 {-# INLINE inspectVec #-}
 inspectVec v (Fun f)
-  = apply (\(T_idx i) -> (index i v, T_idx (i+1)))
+  = apply (\(T_idx i) -> (unsafeIndex v i, T_idx (i+1)))
           (T_idx 0 :: T_idx n)
           f
 
@@ -122,12 +123,3 @@ alloc = T_new 0 $ newByteArray $! arity (undefined :: n) * sizeOf (undefined :: 
 
 instance (Arity n, Prim a, Show a) => Show (Vec n a) where
   show = show . toList
-
-
-----------------------------------------------------------------
--- Helpers
-----------------------------------------------------------------
-
--- Low level indexing operation
-index :: Prim a => Int -> Vec n a -> a
-index n (Vec off arr) = indexByteArray arr (off + n)

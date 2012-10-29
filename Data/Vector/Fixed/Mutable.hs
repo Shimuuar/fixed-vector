@@ -13,6 +13,7 @@ module Data.Vector.Fixed.Mutable (
   , write
     -- * Immutable vectors
   , IVector(..)
+  , (!)
   , lengthI
   , freeze
   , thaw
@@ -63,6 +64,8 @@ class (MVector (Mutable v) a) => IVector v a where
   -- | Convert immutable vector to mutable. Immutable vector must not
   --   be used afterwards.
   unsafeThaw   :: PrimMonad m => v a -> m (Mutable v (PrimState m) a)
+  -- | Get element at specified index
+  unsafeIndex :: v a -> Int -> a
 
 -- | Length of immutable vector
 lengthI :: IVector v a => v a -> Int
@@ -70,6 +73,10 @@ lengthI = lengthM . cast
   where
     cast :: v a -> Mutable v () a
     cast _ = undefined
+
+(!) :: IVector v a => v a -> Int -> a
+v ! i | i < 0 || i >= lengthI v = error "Data.Vector.Fixed.Mutable.!: index out of bounds"
+      | otherwise               = unsafeIndex v i
 
 -- | Safely convert mutable vector to immutable.
 freeze :: (PrimMonad m, IVector v a) => Mutable v (PrimState m) a -> m (v a)
