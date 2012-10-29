@@ -27,5 +27,6 @@ Library
     primitive
   Exposed-modules:
     Data.Vector.Fixed
+    Data.Vector.Fixed.Mutable
     Data.Vector.Fixed.Unboxed
     Data.Vector.Fixed.Storable

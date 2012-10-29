@@ -9,6 +9,8 @@ module Data.Vector.Fixed.Unboxed (
     Vec
   , Vec2
   , Vec3
+    -- * Mutable
+  , MVec
   ) where
 
 import Control.Monad
@@ -18,6 +20,7 @@ import Data.Primitive
 import Prelude hiding (length,replicate,zipWith,map,foldl)
 
 import Data.Vector.Fixed
+import Data.Vector.Fixed.Mutable
 
 
 
@@ -29,6 +32,10 @@ import Data.Vector.Fixed
 data Vec n a = Vec {-# UNPACK #-} !Int       -- Offset from start
                    {-# UNPACK #-} !ByteArray -- Data array
 
+-- | Mutable unboxed vector with fixed length
+data MVec n s a = MVec {-# UNPACK #-} !Int                  -- Offset from start
+                       {-# UNPACK #-} !(MutableByteArray s) -- Data array
+
 type Vec2 = Vec (S (S Z))
 type Vec3 = Vec (S (S (S Z)))
 
@@ -37,6 +44,33 @@ type Vec3 = Vec (S (S (S Z)))
 ----------------------------------------------------------------
 -- Vector instance
 ----------------------------------------------------------------
+
+type instance Mutable (Vec n) = MVec n
+
+instance (Arity n, Prim a) => MVector (MVec n) a where
+  lengthM _ = arity (undefined :: n)
+  new = do
+    v <- newByteArray $! arity (undefined :: n) * sizeOf (undefined :: a)
+    return $! MVec 0 v
+  clone (MVec off v) = do
+    r@(MVec off2 u) <- new
+    copyMutableByteArray u off2 v off (arity (undefined :: n) * sizeOf (undefined :: a))
+    return r
+  unsafeRead  (MVec off v) i   = readByteArray  v (off + i)
+  unsafeWrite (MVec off v) i x = writeByteArray v (off + i) x
+  {-# INLINE lengthM     #-}
+  {-# INLINE new         #-}
+  {-# INLINE clone       #-}
+  {-# INLINE unsafeRead  #-}
+  {-# INLINE unsafeWrite #-}
+
+instance (Arity n, Prim a) => IVector (Vec n) a where
+  unsafeFreeze (MVec off v) = do { a <- unsafeFreezeByteArray v; return $! Vec  off a }
+  unsafeThaw   (Vec  off v) = do { a <- unsafeThawByteArray   v; return $! MVec off a }
+  {-# INLINE unsafeFreeze #-}
+  {-# INLINE unsafeThaw   #-}
+
+
 
 type instance Dim (Vec n) = n
 
@@ -60,8 +94,9 @@ constructVec :: forall n a. (Arity n, Prim a) => Fun n a (Vec n a)
 {-# INLINE constructVec #-}
 constructVec = Fun $
   accum  step
-        (fini :: T_new a Z -> Vec n a)
-        (new  :: T_new a n)
+        (fini  :: T_new a Z -> Vec n a)
+        (alloc :: T_new a n)
+
 
 data T_new a n = T_new Int (forall s. ST s (MutableByteArray s))
 
@@ -76,8 +111,8 @@ step (T_new i st) x = T_new (i+1) $ do
   writeByteArray arr i x
   return arr
 
-new :: forall n a. (Arity n, Prim a) => T_new a n
-new = T_new 0 $ newByteArray $! arity (undefined :: n) * sizeOf (undefined :: a)
+alloc :: forall n a. (Arity n, Prim a) => T_new a n
+alloc = T_new 0 $ newByteArray $! arity (undefined :: n) * sizeOf (undefined :: a)
 
 
 
