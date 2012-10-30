@@ -2,7 +2,6 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE ImpredicativeTypes #-}
 -- |
 -- Unboxed vectors with fixed length
 module Data.Vector.Fixed.Unboxed (
@@ -40,8 +39,13 @@ type Vec3 = Vec (S (S (S Z)))
 
 
 ----------------------------------------------------------------
--- Vector instance
+-- Instances
 ----------------------------------------------------------------
+
+instance (Arity n, Prim a, Show a) => Show (Vec n a) where
+  show = show . toList
+
+
 
 type instance Mutable (Vec n) = MVec n
 
@@ -71,6 +75,7 @@ instance (Arity n, Prim a) => IVector (Vec n) a where
   {-# INLINE unsafeIndex  #-}
 
 
+
 type instance Dim (Vec n) = n
 
 instance (Arity n, Prim a) => Vector (Vec n) a where
@@ -78,12 +83,3 @@ instance (Arity n, Prim a) => Vector (Vec n) a where
   inspect   = inspectVec
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
-
-
-
-----------------------------------------------------------------
--- Instances
-----------------------------------------------------------------
-
-instance (Arity n, Prim a, Show a) => Show (Vec n a) where
-  show = show . toList
