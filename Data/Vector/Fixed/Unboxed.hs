@@ -6,6 +6,7 @@
 -- |
 -- Unboxed vectors with fixed length
 module Data.Vector.Fixed.Unboxed (
+    -- * Immutable
     Vec
   , Vec2
   , Vec3
