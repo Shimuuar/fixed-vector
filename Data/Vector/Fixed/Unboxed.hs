@@ -14,7 +14,6 @@ module Data.Vector.Fixed.Unboxed (
   ) where
 
 import Control.Monad
-import Control.Monad.ST
 import Data.Primitive.ByteArray
 import Data.Primitive
 import Prelude hiding (length,replicate,zipWith,map,foldl)
@@ -78,40 +77,6 @@ instance (Arity n, Prim a) => Vector (Vec n) a where
   inspect   = inspectVec
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
-
-
-newtype T_idx n = T_idx Int
-
-inspectVec :: forall n a b. (Arity n, Prim a) => Vec n a -> Fun n a b -> b
-{-# INLINE inspectVec #-}
-inspectVec v (Fun f)
-  = apply (\(T_idx i) -> (unsafeIndex v i, T_idx (i+1)))
-          (T_idx 0 :: T_idx n)
-          f
-
-constructVec :: forall n a. (Arity n, Prim a) => Fun n a (Vec n a)
-{-# INLINE constructVec #-}
-constructVec = Fun $
-  accum  step
-        (fini  :: T_new a Z -> Vec n a)
-        (alloc :: T_new a n)
-
-
-data T_new a n = T_new Int (forall s. ST s (MutableByteArray s))
-
-fini :: (Arity n, Prim a) => T_new a Z -> Vec n a
-fini (T_new _ st) = runST $ do
-  v <- unsafeFreezeByteArray =<< st
-  return $! Vec v
-
-step :: (Prim a) => T_new a (S n) -> a -> T_new a n
-step (T_new i st) x = T_new (i+1) $ do
-  arr <- st
-  writeByteArray arr i x
-  return arr
-
-alloc :: forall n a. (Arity n, Prim a) => T_new a n
-alloc = T_new 0 $ newByteArray $! arity (undefined :: n) * sizeOf (undefined :: a)
 
 
 

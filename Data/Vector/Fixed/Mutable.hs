@@ -1,6 +1,8 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE Rank2Types            #-}
 -- |
 -- Type classes for mutable vectors. They are quite similar to ones
 -- from @vector@ package but those only suitable for vectors with
@@ -17,9 +19,14 @@ module Data.Vector.Fixed.Mutable (
   , lengthI
   , freeze
   , thaw
+    -- * Vector API
+  , constructVec
+  , inspectVec
   ) where
 
+import Control.Monad.ST
 import Control.Monad.Primitive
+import Data.Vector.Fixed
 import Prelude hiding (read)
 
 
@@ -87,3 +94,36 @@ freeze v = unsafeFreeze =<< clone v
 thaw :: (PrimMonad m, IVector v a) => v a -> m (Mutable v (PrimState m) a)
 {-# INLINE thaw #-}
 thaw v = clone =<< unsafeThaw v
+
+
+
+----------------------------------------------------------------
+-- Vector API
+----------------------------------------------------------------
+
+-- | Generic inspect
+inspectVec :: forall v a b. (Arity (Dim v), IVector v a) => v a -> Fun (Dim v) a b -> b
+{-# INLINE inspectVec #-}
+inspectVec v (Fun f)
+  = apply (\(T_idx i) -> (unsafeIndex v i, T_idx (i+1)))
+          (T_idx 0 :: T_idx (Dim v))
+          f
+
+newtype T_idx n = T_idx Int
+
+
+-- | Generic construct
+constructVec :: forall v a. (Arity (Dim v), IVector v a) => Fun (Dim v) a (v a)
+{-# INLINE constructVec #-}
+constructVec = Fun $
+  accum step
+        (\(T_new _ st) -> runST $ unsafeFreeze =<< st :: v a)
+        (T_new 0 new :: T_new v a (Dim v))
+
+data T_new v a n = T_new Int (forall s. ST s (Mutable v s a))
+
+step :: (IVector v a) => T_new v a (S n) -> a -> T_new v a n
+step (T_new i st) x = T_new (i+1) $ do
+  mv <- st
+  unsafeWrite mv i x
+  return mv
