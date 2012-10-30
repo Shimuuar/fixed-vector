@@ -42,7 +42,7 @@ type Vec3 = Vec (S (S (S Z)))
 ----------------------------------------------------------------
 
 instance (Arity n, Show a) => Show (Vec n a) where
-  show = show . toList
+  show v = "fromList " ++ show (toList v)
 
 
 type instance Mutable (Vec n) = MVec n

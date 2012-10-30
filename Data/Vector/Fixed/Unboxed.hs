@@ -43,7 +43,7 @@ type Vec3 = Vec (S (S (S Z)))
 ----------------------------------------------------------------
 
 instance (Arity n, Prim a, Show a) => Show (Vec n a) where
-  show = show . toList
+  show v = "fromList " ++ show (toList v)
 
 
 

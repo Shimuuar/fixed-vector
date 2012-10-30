@@ -42,8 +42,12 @@ type Vec3 = Vec (S (S (S Z)))
 -- Instances
 ----------------------------------------------------------------
 
-type instance Mutable (Vec n) = MVec n
+instance (Arity n, Prim a, Show a) => Show (Vec n a) where
+  show v = "fromList " ++ show (toList v)
 
+
+
+type instance Mutable (Vec n) = MVec n
 
 instance (Arity n, Storable a) => MVector (MVec n) a where
   lengthM _ = arity (undefined :: n)
