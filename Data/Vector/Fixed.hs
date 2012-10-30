@@ -39,12 +39,15 @@ module Data.Vector.Fixed (
   , zipWith
   , izipWith
     -- ** Conversion
+  , convert
   , toList
+  , fromList
     -- * Special types
   , VecList(..)
   ) where
 
 import Data.Complex
+import qualified Prelude as P
 import Prelude hiding (replicate,map,zipWith,foldl,length,sum)
 
 
@@ -333,11 +336,26 @@ izipWithF f (Fun g0) =
 
 ----------------------------------------------------------------
 
+-- | Convert between different vector types
+convert :: (Vector v a, Vector w a, Dim v ~ Dim w) => v a -> w a
+{-# INLINE convert #-}
+convert v = inspect v construct
+-- FIXME: check for fusion rules!
+
 -- | Convert vector to the list
 toList :: (Vector v a) => v a -> [a]
 toList v
   = case inspect v construct of VecList xs -> xs
 
+-- | Create vector form list. List must have same length as the
+--   vector.
+fromList :: forall v a. (Vector v a) => [a] -> v a
+{-# INLINE fromList #-}
+fromList xs
+  | length r == P.length xs = convert r
+  | otherwise               = error "Data.Vector.Fixed.fromList: bad list length"
+  where
+   r = VecList xs :: VecList (Dim v) a
 
 
 ----------------------------------------------------------------
