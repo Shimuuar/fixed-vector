@@ -13,6 +13,7 @@ module Data.Vector.Fixed.Mutable (
   , MVector(..)
   , read
   , write
+  , clone
     -- * Immutable vectors
   , IVector(..)
   , (!)
@@ -40,22 +41,44 @@ type family Mutable (v :: * -> *) :: * -> * -> *
 -- | Type class for mutable vectors
 class MVector v a where
   -- | Number of elements. Function should be lazy in its argument.
-  lengthM     :: v s a -> Int
+  lengthM   :: v s a -> Int
+  -- | Checks whether vectors' buffers overlaps
+  overlaps  :: v s a -> v s a -> Bool
+  -- | Copy vector. The two vectors may not overlap. Since vectors'
+  --   length is encoded in the type there is no need in runtime checks.
+  copy :: PrimMonad m
+       => v (PrimState m) a    -- ^ Target
+       -> v (PrimState m) a    -- ^ Source
+       -> m ()
+  -- | Copy vector. The two vectors may overlap. Since vectors' length
+  --   is encoded in the type there is no need in runtime checks.
+  move :: PrimMonad m
+       => v (PrimState m) a    -- ^ Target
+       -> v (PrimState m) a    -- ^ Source
+       -> m ()
   -- | Allocate new vector
   new   :: PrimMonad m => m (v (PrimState m) a)
-  -- | Clone vector
-  clone :: PrimMonad m => v (PrimState m) a -> m (v (PrimState m) a)
   -- | Read value at index without bound checks.
   unsafeRead  :: PrimMonad m => v (PrimState m) a -> Int -> m a
-  -- | Wrtie value at index without bound checks.
+  -- | Write value at index without bound checks.
   unsafeWrite :: PrimMonad m => v (PrimState m) a -> Int -> a -> m ()
 
+-- | Clone vector
+clone :: (PrimMonad m, MVector v a) => v (PrimState m) a -> m (v (PrimState m) a)
+{-# INLINE clone #-}
+clone v = do
+  u <- new
+  move v u
+  return u
+
+-- | Read value at index with bound checks.
 read  :: (PrimMonad m, MVector v a) => v (PrimState m) a -> Int -> m a
 {-# INLINE read #-}
 read v i
   | i < 0 || i >= lengthM v = error "Data.Vector.Fixed.Mutable.read: index out of range"
   | otherwise               = unsafeRead v i
 
+-- | Write value at index with bound checks.
 write :: (PrimMonad m, MVector v a) => v (PrimState m) a -> Int -> a -> m ()
 {-# INLINE write #-}
 write v i x

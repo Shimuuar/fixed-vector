@@ -51,18 +51,18 @@ type instance Mutable (Vec n) = MVec n
 
 instance (Arity n, Prim a) => MVector (MVec n) a where
   lengthM _ = arity (undefined :: n)
+  overlaps (MVec v) (MVec u) = sameMutableByteArray v u
   new = do
     v <- newByteArray $! arity (undefined :: n) * sizeOf (undefined :: a)
     return $ MVec v
-  clone (MVec v) = do
-    r@(MVec u) <- new
-    copyMutableByteArray u 0 v 0 (arity (undefined :: n) * sizeOf (undefined :: a))
-    return r
+  copy                       = move
+  move (MVec dst) (MVec src) = copyMutableByteArray dst 0 src 0 (arity (undefined :: n))
   unsafeRead  (MVec v) i   = readByteArray  v i
   unsafeWrite (MVec v) i x = writeByteArray v i x
   {-# INLINE lengthM     #-}
   {-# INLINE new         #-}
-  {-# INLINE clone       #-}
+  {-# INLINE move        #-}
+  {-# INLINE copy        #-}
   {-# INLINE unsafeRead  #-}
   {-# INLINE unsafeWrite #-}
 
