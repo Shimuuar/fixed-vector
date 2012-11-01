@@ -7,11 +7,17 @@
 -- |
 -- Unboxed vectors with fixed length
 module Data.Vector.Fixed.Unboxed(
+    -- * Immutable
+    Vec
+  , Vec2
+  , Vec3
+    -- * Mutable
+  , MVec
+    -- * Type classes
+  , Unbox
   ) where
 
 import Control.Monad
-import Data.Primitive.ByteArray
-import Data.Primitive
 import Data.Complex
 import Data.Int  (     Int8, Int16, Int32, Int64 )
 import Data.Word (Word,Word8,Word16,Word32,Word64)
