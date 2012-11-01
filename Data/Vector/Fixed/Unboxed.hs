@@ -50,8 +50,8 @@ instance (Arity n, Show a, Unbox n a) => Show (Vec n a) where
 
 type instance Mutable (Vec n) = MVec n
 
-type instance Dim (Vec  n  ) = n
-type instance Dim (MVec n s) = n
+type instance Dim  (Vec  n) = n
+type instance DimM (MVec n) = n
 
 instance (Arity n, Unbox n a) => Vector (Vec n) a where
   construct = constructVec
@@ -71,8 +71,6 @@ data instance Vec  n   () = V_Unit
 instance Arity n => Unbox n ()
 
 instance Arity n => MVector (MVec n) () where
-  lengthM  _   = arity (undefined :: n)
-  {-# INLINE lengthM     #-}
   overlaps _ _ = False
   {-# INLINE overlaps    #-}
   new          = return MV_Unit
@@ -105,8 +103,6 @@ newtype instance Vec  n   Bool = V_Bool  (P.Vec  n   Word8)
 instance Arity n => Unbox n Bool
 
 instance Arity n => MVector (MVec n) Bool where
-  lengthM  _   = arity (undefined :: n)
-  {-# INLINE lengthM     #-}
   overlaps (MV_Bool v) (MV_Bool w) = overlaps v w
   {-# INLINE overlaps    #-}
   new          = MV_Bool `liftM` new
@@ -144,14 +140,12 @@ toBool _ = True
 -- Primitive wrappers
 #define primMV(ty,con)                              \
 instance Arity n => MVector (MVec n) ty where {     \
-  lengthM  _               = arity (undefined :: n) \
 ; overlaps (con v) (con w) = overlaps v w           \
 ; new = con `liftM` new                             \
 ; copy (con v) (con w) = copy v w                   \
 ; move (con v) (con w) = move v w                   \
 ; unsafeRead  (con v) i = unsafeRead v i            \
 ; unsafeWrite (con v) i x = unsafeWrite v i x       \
-; {-# INLINE lengthM     #-}                        \
 ; {-# INLINE overlaps    #-}                        \
 ; {-# INLINE new         #-}                        \
 ; {-# INLINE move        #-}                        \
@@ -205,8 +199,6 @@ newtype instance Vec  n   (Complex a) = V_Complex  (Vec  n   (a,a))
 instance (Unbox n a) => Unbox n (Complex a)
 
 instance (Arity n, MVector (MVec n) a) => MVector (MVec n) (Complex a) where
-  lengthM  _   = arity (undefined :: n)
-  {-# INLINE lengthM     #-}
   overlaps (MV_Complex v) (MV_Complex w) = overlaps v w
   {-# INLINE overlaps    #-}
   new = MV_Complex `liftM` new
@@ -240,8 +232,6 @@ data instance Vec  n   (a,b) = V_2  !(Vec  n   a) !(Vec  n   b)
 instance (Unbox n a, Unbox n b) => Unbox n (a,b)
 
 instance (Arity n, MVector (MVec n) a, MVector (MVec n) b) => MVector (MVec n) (a,b) where
-  lengthM  _   = arity (undefined :: n)
-  {-# INLINE lengthM     #-}
   overlaps (MV_2 va vb) (MV_2 wa wb) = overlaps va wa || overlaps vb wb
   {-# INLINE overlaps    #-}
   new = do as <- new
@@ -281,8 +271,6 @@ instance (Unbox n a, Unbox n b, Unbox n c) => Unbox n (a,b,c)
 
 instance (Arity n, MVector (MVec n) a, MVector (MVec n) b, MVector (MVec n) c
          ) => MVector (MVec n) (a,b,c) where
-  lengthM  _   = arity (undefined :: n)
-  {-# INLINE lengthM     #-}
   overlaps (MV_3 va vb vc) (MV_3 wa wb wc)
     = overlaps va wa || overlaps vb wb || overlaps vc wc
   {-# INLINE overlaps    #-}

@@ -10,7 +10,9 @@
 module Data.Vector.Fixed.Mutable (
     -- * Mutable vectors
     Mutable
+  , DimM
   , MVector(..)
+  , lengthM
   , read
   , write
   , clone
@@ -38,10 +40,11 @@ import Prelude hiding (read)
 -- | Mutable counterpart of fixed-length vector
 type family Mutable (v :: * -> *) :: * -> * -> *
 
+-- | Dimension for mutable vector
+type family DimM (v :: * -> * -> *) :: *
+
 -- | Type class for mutable vectors
-class MVector v a where
-  -- | Number of elements. Function should be lazy in its argument.
-  lengthM   :: v s a -> Int
+class (Arity (DimM v)) => MVector v a where
   -- | Checks whether vectors' buffers overlaps
   overlaps  :: v s a -> v s a -> Bool
   -- | Copy vector. The two vectors may not overlap. Since vectors'
@@ -62,6 +65,11 @@ class MVector v a where
   unsafeRead  :: PrimMonad m => v (PrimState m) a -> Int -> m a
   -- | Write value at index without bound checks.
   unsafeWrite :: PrimMonad m => v (PrimState m) a -> Int -> a -> m ()
+
+
+-- | Length of mutable vector
+lengthM :: forall v s a. (Arity (DimM v)) => v s a -> Int
+lengthM _ = arity (undefined :: DimM v)
 
 -- | Clone vector
 clone :: (PrimMonad m, MVector v a) => v (PrimState m) a -> m (v (PrimState m) a)
@@ -87,7 +95,7 @@ write v i x
 
 
 -- | Type class for immutable vectors
-class (MVector (Mutable v) a) => IVector v a where
+class (Dim v ~ DimM (Mutable v), MVector (Mutable v) a) => IVector v a where
   -- | Convert vector to immutable state. Mutable vector must not be
   --   modified afterwards.
   unsafeFreeze :: PrimMonad m => Mutable v (PrimState m) a -> m (v a)

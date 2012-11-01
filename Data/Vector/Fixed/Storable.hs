@@ -51,8 +51,6 @@ instance (Arity n, Storable a, Show a) => Show (Vec n a) where
 type instance Mutable (Vec n) = MVec n
 
 instance (Arity n, Storable a) => MVector (MVec n) a where
-  lengthM _ = arity (undefined :: n)
-  {-# INLINE lengthM     #-}
   overlaps (MVec fp) (MVec fq)
     = between p q (q `advancePtr` n) || between q p (p `advancePtr` n)
     where
@@ -98,8 +96,8 @@ instance (Arity n, Storable a) => IVector (Vec n) a where
   {-# INLINE unsafeIndex  #-}
 
 
-type instance Dim (Vec  n  ) = n
-type instance Dim (MVec n s) = n
+type instance Dim  (Vec  n) = n
+type instance DimM (MVec n) = n
 
 instance (Arity n, Storable a) => Vector (Vec n) a where
   construct = constructVec

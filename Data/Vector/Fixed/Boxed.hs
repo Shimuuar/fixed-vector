@@ -48,8 +48,6 @@ instance (Arity n, Show a) => Show (Vec n a) where
 type instance Mutable (Vec n) = MVec n
 
 instance (Arity n) => MVector (MVec n) a where
-  lengthM _ = arity (undefined :: n)
-  {-# INLINE lengthM     #-}
   overlaps (MVec v) (MVec u) = sameMutableArray v u
   {-# INLINE overlaps    #-}
   new = do
@@ -75,8 +73,8 @@ instance (Arity n) => IVector (Vec n) a where
 
 
 
-type instance Dim (Vec  n  ) = n
-type instance Dim (MVec n s) = n
+type instance Dim  (Vec  n) = n
+type instance DimM (MVec n) = n
 
 instance (Arity n) => Vector (Vec n) a where
   construct = constructVec
