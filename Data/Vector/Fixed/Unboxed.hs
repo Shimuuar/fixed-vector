@@ -44,7 +44,8 @@ instance (Arity n, Show a, Unbox n a) => Show (Vec n a) where
 
 type instance Mutable (Vec n) = MVec n
 
-type instance Dim (Vec n) = n
+type instance Dim (Vec  n  ) = n
+type instance Dim (MVec n s) = n
 
 instance (Arity n, Unbox n a) => Vector (Vec n) a where
   construct = constructVec

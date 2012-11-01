@@ -98,7 +98,8 @@ instance (Arity n, Storable a) => IVector (Vec n) a where
   {-# INLINE unsafeIndex  #-}
 
 
-type instance Dim (Vec n) = n
+type instance Dim (Vec  n  ) = n
+type instance Dim (MVec n s) = n
 
 instance (Arity n, Storable a) => Vector (Vec n) a where
   construct = constructVec

@@ -77,7 +77,8 @@ instance (Arity n, Prim a) => IVector (Vec n) a where
 
 
 
-type instance Dim (Vec n) = n
+type instance Dim (Vec  n  ) = n
+type instance Dim (MVec n s) = n
 
 instance (Arity n, Prim a) => Vector (Vec n) a where
   construct = constructVec
