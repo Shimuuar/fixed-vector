@@ -4,7 +4,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 -- |
 -- Unboxed vectors with fixed length
-module Data.Vector.Fixed.Unboxed (
+module Data.Vector.Fixed.Primitive (
     -- * Immutable
     Vec
   , Vec2

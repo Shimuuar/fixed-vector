@@ -29,5 +29,5 @@ Library
     Data.Vector.Fixed
     Data.Vector.Fixed.Mutable
     Data.Vector.Fixed.Boxed
-    Data.Vector.Fixed.Unboxed
+    Data.Vector.Fixed.Primitive
     Data.Vector.Fixed.Storable
