@@ -52,7 +52,7 @@ type instance Mutable (Vec n) = MVec n
 
 instance (Arity n, Storable a) => MVector (MVec n) a where
   lengthM _ = arity (undefined :: n)
-
+  {-# INLINE lengthM     #-}
   overlaps (MVec fp) (MVec fq)
     = between p q (q `advancePtr` n) || between q p (p `advancePtr` n)
     where
@@ -60,36 +60,32 @@ instance (Arity n, Storable a) => MVector (MVec n) a where
       p = getPtr fp
       q = getPtr fq
       n = arity (undefined :: n)
-
+  {-# INLINE overlaps    #-}
   new = unsafePrimToPrim $ do
     fp <- mallocVector $ arity (undefined :: n)
     return $ MVec fp
-
+  {-# INLINE new         #-}
   copy (MVec fp) (MVec fq)
     = unsafePrimToPrim
     $ withForeignPtr fp $ \p ->
       withForeignPtr fq $ \q ->
       copyArray p q (arity (undefined :: n))
-
+  {-# INLINE copy        #-}
   move (MVec fp) (MVec fq)
     = unsafePrimToPrim
     $ withForeignPtr fp $ \p ->
       withForeignPtr fq $ \q ->
       moveArray p q (arity (undefined :: n))
-
+  {-# INLINE move        #-}
   unsafeRead (MVec fp) i
     = unsafePrimToPrim
     $ withForeignPtr fp (`peekElemOff` i)
-
+  {-# INLINE unsafeRead  #-}
   unsafeWrite (MVec fp) i x
     = unsafePrimToPrim
     $ withForeignPtr fp $ \p -> pokeElemOff p i x
-  {-# INLINE lengthM     #-}
-  {-# INLINE new         #-}
-  {-# INLINE copy        #-}
-  {-# INLINE move        #-}
-  {-# INLINE unsafeRead  #-}
   {-# INLINE unsafeWrite #-}
+
 
 instance (Arity n, Storable a) => IVector (Vec n) a where
   unsafeFreeze (MVec fp)   = return $ Vec  fp

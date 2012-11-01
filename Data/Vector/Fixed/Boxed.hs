@@ -49,19 +49,20 @@ type instance Mutable (Vec n) = MVec n
 
 instance (Arity n) => MVector (MVec n) a where
   lengthM _ = arity (undefined :: n)
+  {-# INLINE lengthM     #-}
   overlaps (MVec v) (MVec u) = sameMutableArray v u
+  {-# INLINE overlaps    #-}
   new = do
     v <- newArray (arity (undefined :: n)) uninitialised
     return $ MVec v
-  copy = move
-  move (MVec dst) (MVec src) = copyMutableArray dst 0 src 0 (arity (undefined :: n))
-  unsafeRead  (MVec v) i   = readArray  v i
-  unsafeWrite (MVec v) i x = writeArray v i x
-  {-# INLINE lengthM     #-}
   {-# INLINE new         #-}
+  copy = move
   {-# INLINE copy        #-}
+  move (MVec dst) (MVec src) = copyMutableArray dst 0 src 0 (arity (undefined :: n))
   {-# INLINE move        #-}
+  unsafeRead  (MVec v) i   = readArray  v i
   {-# INLINE unsafeRead  #-}
+  unsafeWrite (MVec v) i x = writeArray v i x
   {-# INLINE unsafeWrite #-}
 
 instance (Arity n) => IVector (Vec n) a where
