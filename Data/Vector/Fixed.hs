@@ -141,12 +141,9 @@ class Arity (Dim v) => Vector v a where
   inspect   :: v a -> Fun (Dim v) a b -> b
 
 -- | Length of vector.
-length :: Arity (Dim v) => v a -> Int
+length :: forall v a. Arity (Dim v) => v a -> Int
 {-# INLINE length #-}
-length = arity . dim
-  where
-    dim :: v a -> Dim v
-    dim _ = undefined
+length _ = arity (undefined :: Dim v)
 
 
 ----------------------------------------------------------------
