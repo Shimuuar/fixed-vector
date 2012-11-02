@@ -6,10 +6,8 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 -- |
--- Generic vectors with fixed length. In style of Roman of Leshchinskiy
+-- Generic API for vectors with fixed length. It uses implementation which is described here:
 -- <http://unlines.wordpress.com/2010/11/15/generics-for-small-fixed-size-vectors/>
---
--- Note that vector operations do not fuse. Probably it could be fixed.
 module Data.Vector.Fixed (
     -- * Type-level naturals
     Z
@@ -55,18 +53,18 @@ import Prelude hiding (replicate,map,zipWith,foldl,length,sum)
 -- N-ary functions
 ----------------------------------------------------------------
 
--- | Zero
+-- | Type level zero
 data Z
 -- | Successor of n
 data S n
 
 
--- | Type family for n-ary functions
+-- | Type family for n-ary functions.
 type family   Fn n a b
 type instance Fn Z     a b = b
 type instance Fn (S n) a b = a -> Fn n a b
 
--- | Newtype which is used to make Fn injective.
+-- | Newtype wrapper which is used to make 'Fn' injective.
 newtype Fun n a b = Fun (Fn n a b)
 
 newtype T_fmap a b n = T_fmap (Fn n a b)
@@ -231,7 +229,7 @@ basisF n0 (Fun f)
 
 ----------------------------------------------------------------
 
--- | Generate vetor
+-- | Generate vector.
 generate :: forall v a. (Vector v a) => (Int -> a) -> v a
 {-# INLINE generate #-}
 generate f = create $ Cont
