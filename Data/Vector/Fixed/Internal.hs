@@ -28,6 +28,7 @@ module Data.Vector.Fixed.Internal (
     -- * Fusion
   , Cont(..)
   , create
+  , inspectV
   ) where
 
 import Data.Complex
@@ -143,12 +144,16 @@ create :: (Arity (Dim v), Vector v a) => Cont (Dim v) a -> v a
 {-# INLINE[1] create #-}
 create (Cont f) = f construct
 
+inspectV :: (Arity (Dim v), Vector v a) => v a -> Fun (Dim v) a b -> b
+{-# INLINE[1] inspectV #-}
+inspectV = inspect
+
 app :: Cont n a -> Fun n a b -> b
 {-# INLINE app #-}
 app (Cont f) g = f g
 
 {-# RULES "inspect/construct"
-      forall f g. inspect (create f) g = app f g
+      forall f g. inspectV (create f) g = app f g
   #-}
 
 

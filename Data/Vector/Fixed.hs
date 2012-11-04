@@ -43,7 +43,7 @@ module Data.Vector.Fixed (
     -- * Special types
   , VecList(..)
   ) where
-
+import Data.Complex
 import Data.Vector.Fixed.Internal
 
 import qualified Prelude as P
@@ -58,9 +58,14 @@ import Prelude hiding (replicate,map,zipWith,foldl,length,sum)
 -- TODO: does not fuse!
 -- | Newtype wrapper for partially constructed vectors. /n/ is number
 --   of uninitialized elements.
+--
+--   Example of use:
+--
+-- >>> vec $ con |> 1 |> 3 :: Complex Double
+-- > 1 :+ 3
 newtype New n v a = New (Fn n a (v a))
 
--- | Convert to vector
+-- | Convert fully applied constructor to vector
 vec :: New Z v a -> v a
 {-# INLINE vec #-}
 vec (New v) = v
@@ -70,6 +75,7 @@ con :: Vector v a => New (Dim v) v a
 {-# INLINE con #-}
 con = f2n construct
 
+-- | Apply another element to vector
 (|>) :: New (S n) v a -> a -> New n v a
 {-# INLINE  (|>) #-}
 New f |> a = New (f a)
@@ -136,7 +142,7 @@ generateF g (Fun f)
 -- | Left fold over vector
 foldl :: Vector v a => (b -> a -> b) -> b -> v a -> b
 {-# INLINE foldl #-}
-foldl f z v = inspect v
+foldl f z v = inspectV v
             $ foldlF f z
 
 -- | Sum all elements in the vector
@@ -159,7 +165,7 @@ foldlF f b = Fun $ accum (\(T_foldl r) a -> T_foldl (f r a))
 map :: (Vector v a, Vector v b) => (a -> b) -> v a -> v b
 {-# INLINE map #-}
 map f v = create $ Cont
-        $ inspect v
+        $ inspectV v
         . mapF f
 
 
@@ -179,8 +185,8 @@ zipWith :: (Vector v a, Vector v b, Vector v c)
         => (a -> b -> c) -> v a -> v b -> v c
 {-# INLINE zipWith #-}
 zipWith f v u = create $ Cont
-              $ inspect u
-              . inspect v
+              $ inspectV u
+              . inspectV v
               . zipWithF f
 
 data T_zip a c r n = T_zip (VecList n a) (Fn n c r)
@@ -200,8 +206,8 @@ izipWith :: (Vector v a, Vector v b, Vector v c)
          => (Int -> a -> b -> c) -> v a -> v b -> v c
 {-# INLINE izipWith #-}
 izipWith f v u = create $ Cont
-               $ inspect u
-               . inspect v
+               $ inspectV u
+               . inspectV v
                . izipWithF f
 
 data T_izip a c r n = T_izip Int (VecList n a) (Fn n c r)
@@ -221,13 +227,13 @@ izipWithF f (Fun g0) =
 -- | Convert between different vector types
 convert :: (Vector v a, Vector w a, Dim v ~ Dim w) => v a -> w a
 {-# INLINE convert #-}
-convert v = inspect v construct
+convert v = inspectV v construct
 -- FIXME: check for fusion rules!
 
 -- | Convert vector to the list
 toList :: (Vector v a) => v a -> [a]
 toList v
-  = case inspect v construct of VecList xs -> xs
+  = case inspectV v construct of VecList xs -> xs
 
 -- | Create vector form list. List must have same length as the
 --   vector.
