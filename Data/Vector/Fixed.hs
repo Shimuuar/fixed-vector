@@ -6,8 +6,13 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 -- |
--- Generic API for vectors with fixed length. It uses implementation which is described here:
+-- Generic API for vectors with fixed length. It uses implementation
+-- which is described here:
 -- <http://unlines.wordpress.com/2010/11/15/generics-for-small-fixed-size-vectors/>
+--
+-- For encoding of vector size library uses Peano naturals defined in
+-- the library. At come point in the future it would make sense to
+-- switch to new GHC type level numerals.
 module Data.Vector.Fixed (
     -- * Type-level naturals
     Z
@@ -78,7 +83,7 @@ instance Arity n => Functor (Fun n a) where
   {-# INLINE fmap #-}
 
 
--- | Type class for handling N-ary functions.
+-- | Type class for handling /n/-ary functions.
 class Arity n where
   -- | Left fold over /n/ elements exposed as n-ary function.
   accum :: (forall k. tag (S k) -> a -> tag k) -- ^ Fold function
@@ -138,7 +143,7 @@ class Arity (Dim v) => Vector v a where
   -- | Deconstruction of vector.
   inspect   :: v a -> Fun (Dim v) a b -> b
 
--- | Length of vector.
+-- | Length of vector. Function doesn't evaluate its argument.
 length :: forall v a. Arity (Dim v) => v a -> Int
 {-# INLINE length #-}
 length _ = arity (undefined :: Dim v)

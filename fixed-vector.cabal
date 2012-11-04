@@ -2,7 +2,26 @@ Name:           fixed-vector
 Version:        0.1
 Synopsis:       Generic vectors with fixed length
 Description:
-  Generic vectors with fixed length
+  Generic vectors with fixed length. Package is structured as follows:
+  .
+  [@Data.Vector.Fixed@]
+  Generic API. It's suitable for both ADT-based vector like @Complex@
+  and array-based ones.
+  .
+  [@Data.Vector.Fixed.Mutable@]
+  Type classes for array-based implementation.
+  .
+  [@Data.Vector.Fixed.Unboxed@]
+  Unboxed vectors.
+  .
+  [@Data.Vector.Fixed.Boxed@]
+  Boxed vector which can hold elements of any type.
+  .
+  [@Data.Vector.Fixed.Storable@]
+  Unboxed vectors of @Storable@  types.
+  .
+  [@Data.Vector.Fixed.Primitive@]
+  Unboxed vectors based on pritimive package.
 
 Cabal-Version:  >= 1.6
 License:        BSD3
