@@ -28,7 +28,7 @@ License:        BSD3
 License-File:   LICENSE
 Author:         Aleksey Khudyakov <alexey.skladnoy@gmail.com>
 Maintainer:     Aleksey Khudyakov <alexey.skladnoy@gmail.com>
-Homepage:       http://bitbucket.org/Shimuuar/fixed-vector
+Bug-reports:    https://github.com/Shimuuar/fixed-vector/issues
 Category:       Data
 Build-Type:     Simple
 
