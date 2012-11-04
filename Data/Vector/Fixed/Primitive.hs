@@ -1,9 +1,11 @@
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
 -- |
--- Unboxed vectors with fixed length
+-- Unboxed vectors with fixed length. Vectors from
+-- "Data.Vector.Fixed.Unboxed" provide more flexibility at no
+-- performeance cost.
 module Data.Vector.Fixed.Primitive (
     -- * Immutable
     Vec

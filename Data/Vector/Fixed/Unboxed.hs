@@ -5,7 +5,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 -- |
--- Unboxed vectors with fixed length
+-- Unboxed vectors with fixed length.
 module Data.Vector.Fixed.Unboxed(
     -- * Immutable
     Vec

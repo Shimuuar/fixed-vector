@@ -2,6 +2,8 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
+-- |
+-- Storable-based unboxed vectors.
 module Data.Vector.Fixed.Storable (
     -- * Immutable
     Vec

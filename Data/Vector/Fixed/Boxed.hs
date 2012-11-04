@@ -3,7 +3,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 -- |
--- Boxed vector
+-- Boxed vector.
 module Data.Vector.Fixed.Boxed (
     -- * Immutable
     Vec

@@ -4,7 +4,7 @@
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE Rank2Types            #-}
 -- |
--- Type classes for mutable vectors. They are quite similar to ones
+-- Type classes for array based vector. They are quite similar to ones
 -- from @vector@ package but those only suitable for vectors with
 -- variable length.
 module Data.Vector.Fixed.Mutable (
