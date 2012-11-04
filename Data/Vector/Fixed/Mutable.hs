@@ -29,7 +29,7 @@ module Data.Vector.Fixed.Mutable (
 
 import Control.Monad.ST
 import Control.Monad.Primitive
-import Data.Vector.Fixed
+import Data.Vector.Fixed.Internal
 import Prelude hiding (read)
 
 

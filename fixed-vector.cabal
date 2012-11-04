@@ -45,7 +45,10 @@ Library
     base >=3 && <5,
     primitive
   Exposed-modules:
+    -- API
     Data.Vector.Fixed
+    Data.Vector.Fixed.Internal
+    -- Arrays
     Data.Vector.Fixed.Mutable
     Data.Vector.Fixed.Boxed
     Data.Vector.Fixed.Primitive

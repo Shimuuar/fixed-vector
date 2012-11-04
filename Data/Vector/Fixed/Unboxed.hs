@@ -24,6 +24,7 @@ import Data.Word (Word,Word8,Word16,Word32,Word64)
 import Prelude hiding (length,replicate,zipWith,map,foldl)
 
 import Data.Vector.Fixed
+import Data.Vector.Fixed.Internal
 import Data.Vector.Fixed.Mutable
 import qualified Data.Vector.Fixed.Primitive as P
 
