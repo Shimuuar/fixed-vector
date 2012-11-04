@@ -7,8 +7,12 @@ module Data.Vector.Fixed.Storable (
     Vec
   , Vec2
   , Vec3
+    -- * Raw pointers
+  , unsafeFromForeignPtr
+  , unsafeToForeignPtr
+  , unsafeWith
     -- * Mutable
-  , MVec
+  , MVec(..)
   ) where
 
 import Control.Monad.Primitive
@@ -38,6 +42,26 @@ newtype MVec n s a = MVec (ForeignPtr a)
 
 type Vec2 = Vec (S (S Z))
 type Vec3 = Vec (S (S (S Z)))
+
+
+----------------------------------------------------------------
+-- Raw Ptrs
+----------------------------------------------------------------
+
+-- | Get underlying pointer. Data may not be modified through pointer.
+unsafeToForeignPtr :: Storable a => Vec n a -> ForeignPtr a
+{-# INLINE unsafeToForeignPtr #-}
+unsafeToForeignPtr (Vec fp) = fp
+
+-- | Construct vector from foreign pointer.
+unsafeFromForeignPtr :: Storable a => ForeignPtr a -> Vec n a
+{-# INLINE unsafeFromForeignPtr #-}
+unsafeFromForeignPtr = Vec
+
+unsafeWith :: Storable a => (Ptr a -> IO b) -> Vec n a -> IO b
+{-# INLINE unsafeWith #-}
+unsafeWith f (Vec fp) = f (getPtr fp)
+
 
 
 ----------------------------------------------------------------
