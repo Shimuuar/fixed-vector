@@ -43,7 +43,7 @@ module Data.Vector.Fixed (
     -- * Special types
   , VecList(..)
   ) where
-import Data.Complex
+
 import Data.Vector.Fixed.Internal
 
 import qualified Prelude as P
