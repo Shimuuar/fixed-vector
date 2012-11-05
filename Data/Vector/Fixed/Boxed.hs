@@ -36,10 +36,6 @@ newtype MVec n s a = MVec (MutableArray s a)
 type Vec2 = Vec (S (S Z))
 type Vec3 = Vec (S (S (S Z)))
 
-{-# RULES "fixed-vector: !/index"
-    (!) = index :: Arity n => Vec n a -> Int -> a
-  #-}
-
 
 
 ----------------------------------------------------------------

@@ -39,12 +39,8 @@ data family MVec n s a
 type Vec2 = Vec (S (S Z))
 type Vec3 = Vec (S (S (S Z)))
 
-
 class (Arity n, IVector (Vec n) a, MVector (MVec n) a) => Unbox n a
 
-{-# RULES "fixed-vector: !/index"
-    (!) = index :: Arity n => Vec n a -> Int -> a
-  #-}
 
 ----------------------------------------------------------------
 -- Generic instances
