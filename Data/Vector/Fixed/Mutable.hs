@@ -18,7 +18,7 @@ module Data.Vector.Fixed.Mutable (
   , clone
     -- * Immutable vectors
   , IVector(..)
-  , (!)
+  , index
   , lengthI
   , freeze
   , thaw
@@ -30,6 +30,7 @@ module Data.Vector.Fixed.Mutable (
 import Control.Monad.ST
 import Control.Monad.Primitive
 import Data.Vector.Fixed.Internal
+import Data.Vector.Fixed          ((!))
 import Prelude hiding (read)
 
 
@@ -112,9 +113,11 @@ lengthI = lengthM . cast
     cast :: v a -> Mutable v () a
     cast _ = undefined
 
-(!) :: IVector v a => v a -> Int -> a
-v ! i | i < 0 || i >= lengthI v = error "Data.Vector.Fixed.Mutable.!: index out of bounds"
-      | otherwise               = unsafeIndex v i
+index :: IVector v a => v a -> Int -> a
+{-# INLINE index #-}
+index v i | i < 0 || i >= lengthI v = error "Data.Vector.Fixed.Mutable.!: index out of bounds"
+          | otherwise               = unsafeIndex v i
+
 
 -- | Safely convert mutable vector to immutable.
 freeze :: (PrimMonad m, IVector v a) => Mutable v (PrimState m) a -> m (v a)

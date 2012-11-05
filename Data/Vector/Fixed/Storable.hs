@@ -45,6 +45,11 @@ newtype MVec n s a = MVec (ForeignPtr a)
 type Vec2 = Vec (S (S Z))
 type Vec3 = Vec (S (S (S Z)))
 
+{-# RULES "fixed-vector: !/index"
+    (!) = index :: Arity n => Vec n a -> Int -> a
+  #-}
+
+
 
 ----------------------------------------------------------------
 -- Raw Ptrs
