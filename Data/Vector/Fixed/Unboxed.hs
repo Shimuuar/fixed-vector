@@ -4,6 +4,7 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE UndecidableInstances  #-}
 -- |
 -- Unboxed vectors with fixed length.
 module Data.Vector.Fixed.Unboxed(
@@ -54,7 +55,7 @@ type instance Mutable (Vec n) = MVec n
 type instance Dim  (Vec  n) = n
 type instance DimM (MVec n) = n
 
-instance (Arity n, Unbox n a) => Vector (Vec n) a where
+instance (IVector (Vec n) a) => Vector (Vec n) a where
   construct = constructVec
   inspect   = inspectVec
   {-# INLINE construct #-}
@@ -230,7 +231,7 @@ instance (Arity n, IVector (Vec n) a) => IVector (Vec n) (Complex a) where
 data instance MVec n s (a,b) = MV_2 !(MVec n s a) !(MVec n s b)
 data instance Vec  n   (a,b) = V_2  !(Vec  n   a) !(Vec  n   b)
 
-instance (Unbox n a, Unbox n b) => Unbox n (a,b)
+-- instance (Unbox n a, Unbox n b) => Unbox n (a,b)
 
 instance (Arity n, MVector (MVec n) a, MVector (MVec n) b) => MVector (MVec n) (a,b) where
   overlaps (MV_2 va vb) (MV_2 wa wb) = overlaps va wa || overlaps vb wb
@@ -250,7 +251,10 @@ instance (Arity n, MVector (MVec n) a, MVector (MVec n) b) => MVector (MVec n) (
   unsafeWrite (MV_2 v w) i (a,b) = unsafeWrite v i a >> unsafeWrite w i b
   {-# INLINE unsafeWrite #-}
 
-instance (Arity n, IVector (Vec n) a, IVector (Vec n) b) => IVector (Vec n) (a,b) where
+
+instance ( Arity n
+         , IVector (Vec n) a, IVector (Vec n) b
+         ) => IVector (Vec n) (a,b) where
   unsafeFreeze (MV_2 v w)   = do as <- unsafeFreeze v
                                  bs <- unsafeFreeze w
                                  return $ V_2 as bs
@@ -295,7 +299,9 @@ instance (Arity n, MVector (MVec n) a, MVector (MVec n) b, MVector (MVec n) c
     = unsafeWrite v i a >> unsafeWrite w i b >> unsafeWrite u i c
   {-# INLINE unsafeWrite #-}
 
-instance (Arity n, IVector (Vec n) a, IVector (Vec n) b, IVector (Vec n) c
+instance ( Arity n
+         , Vector  (Vec n) a, Vector  (Vec n) b, Vector  (Vec n) c
+         , IVector (Vec n) a, IVector (Vec n) b, IVector (Vec n) c
          ) => IVector (Vec n) (a,b,c) where
   unsafeFreeze (MV_3 v w u) = do as <- unsafeFreeze v
                                  bs <- unsafeFreeze w
