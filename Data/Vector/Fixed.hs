@@ -30,6 +30,10 @@ module Data.Vector.Fixed (
   , replicate
   , basis
   , generate
+    -- ** Element access
+  , head
+  , tail
+  , (!)
     -- ** Transformation
   , map
   , foldl
@@ -44,13 +48,14 @@ module Data.Vector.Fixed (
   , VecList(..)
   ) where
 
+import Data.Complex
 import Data.Vector.Fixed.Internal
 
 import qualified Prelude as P
-import Prelude hiding (replicate,map,zipWith,foldl,length,sum)
+import Prelude hiding (replicate,map,zipWith,foldl,length,sum,head,tail)
 
 
-  
+
 ----------------------------------------------------------------
 -- Generic functions
 ----------------------------------------------------------------
@@ -135,6 +140,68 @@ generateF g (Fun f)
   = apply (\(T_generate n) -> (g n, T_generate (n - 1)))
           (T_generate 0 :: T_generate n)
           f
+
+
+----------------------------------------------------------------
+
+-- | First element of vector.
+head :: (Vector v a, Dim v ~ S n) => v a -> a
+{-# INLINE head #-}
+head v = inspectV v
+       $ headF
+
+data T_head a n = T_head (Maybe a)
+
+headF :: forall n a. Arity (S n) => Fun (S n) a a
+headF = Fun $ accum (\(T_head m) a -> T_head $ case m of { Nothing -> Just a; x -> x })
+                    (\(T_head (Just x)) -> x)
+                    (T_head Nothing :: T_head a (S n))
+
+
+----------------------------------------------------------------
+
+-- | Tail of vector.
+tail :: (Vector v a, Vector w a, Dim v ~ S (Dim w))
+     => v a -> w a
+{-# INLINE tail #-}
+tail v = create $ Cont
+       $ inspectV v
+       . tailF
+
+tailF :: Arity n => Fun n a b -> Fun (S n) a b
+{-# INLINE tailF #-}
+tailF (Fun f) = Fun (\_ -> f)
+
+
+----------------------------------------------------------------
+
+-- | /O(n)/ Get vector's element at index i.
+--
+-- Generic version is /O(n)/. Version specialized for the array-based
+-- vectors is /O(1)/.
+(!) :: (Vector v a) => v a -> Int -> a
+-- FIXME: inlining may interfere
+{-# INLINE (!) #-}
+v ! i = inspectV v
+      $ elemF i
+
+newtype T_Elem a n = T_Elem (Either Int a)
+
+elemF :: forall n a. Arity n => Int -> Fun n a a
+elemF n
+  -- This is needed because of possible underflow during subtraction
+  | n < 0     = error "Data.Vector.Fixed.!: index out of range"
+  | otherwise = Fun $ accum
+     (\(T_Elem x) a -> T_Elem $ case x of
+                         Left  0 -> Right a
+                         Left  i -> Left (i - 1)
+                         r       -> r
+     )
+     (\(T_Elem x) -> case x of
+                       Left  _ -> error "Data.Vector.Fixed.!: index out of range"
+                       Right a -> a
+     )
+     ( T_Elem (Left n) :: T_Elem a n)
 
 
 ----------------------------------------------------------------
