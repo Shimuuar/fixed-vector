@@ -30,7 +30,6 @@ module Data.Vector.Fixed.Mutable (
 import Control.Monad.ST
 import Control.Monad.Primitive
 import Data.Vector.Fixed.Internal
-import Data.Vector.Fixed          ((!))
 import Prelude hiding (read)
 
 
@@ -96,7 +95,7 @@ write v i x
 
 
 -- | Type class for immutable vectors
-class (Dim v ~ DimM (Mutable v), Vector v a, MVector (Mutable v) a) => IVector v a where
+class (Dim v ~ DimM (Mutable v), MVector (Mutable v) a) => IVector v a where
   -- | Convert vector to immutable state. Mutable vector must not be
   --   modified afterwards.
   unsafeFreeze :: PrimMonad m => Mutable v (PrimState m) a -> m (v a)

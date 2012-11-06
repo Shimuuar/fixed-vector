@@ -175,11 +175,7 @@ tailF (Fun f) = Fun (\_ -> f)
 ----------------------------------------------------------------
 
 -- | /O(n)/ Get vector's element at index i.
---
--- Generic version is /O(n)/. Version specialized for the array-based
--- vectors is /O(1)/.
 (!) :: (Vector v a) => v a -> Int -> a
--- FIXME: inlining may interfere
 {-# INLINE (!) #-}
 v ! i = inspectV v
       $ elemF i

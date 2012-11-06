@@ -40,7 +40,7 @@ data family MVec n s a
 type Vec2 = Vec (S (S Z))
 type Vec3 = Vec (S (S (S Z)))
 
-class (Arity n, IVector (Vec n) a, MVector (MVec n) a) => Unbox n a
+class (IVector (Vec n) a, MVector (MVec n) a) => Unbox n a
 
 
 ----------------------------------------------------------------
@@ -55,7 +55,7 @@ type instance Mutable (Vec n) = MVec n
 type instance Dim  (Vec  n) = n
 type instance DimM (MVec n) = n
 
-instance (IVector (Vec n) a) => Vector (Vec n) a where
+instance (Unbox n a) => Vector (Vec n) a where
   construct = constructVec
   inspect   = inspectVec
   {-# INLINE construct #-}
