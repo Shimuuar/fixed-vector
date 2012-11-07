@@ -86,6 +86,12 @@ class Arity n where
         -> tag n                               -- ^ Initial value
         -> Fn n a b                            -- ^ N-ary function
         -> b
+  -- | Monadic apply
+  applyM :: Monad m
+         => (forall k. tag (S k) -> m (a, tag k)) -- ^ Get value to apply to function
+         -> tag n                                 -- ^ Initial value
+         -> Fn n a b                              -- ^ N-ary function
+         -> m b
   -- | Arity of function.
   arity :: n -> Int
 
@@ -93,6 +99,7 @@ instance Arity Z where
   accum  _ g t = g t
   accumM _ g t = g =<< t
   apply  _ _ h = h
+  applyM _ _ h = return h
   arity  _ = 0
   {-# INLINE accum  #-}
   {-# INLINE accumM #-}
@@ -103,6 +110,8 @@ instance Arity n => Arity (S n) where
   accum  f g t = \a -> accum  f g (f t a)
   accumM f g t = \a -> accumM f g $ flip f a =<< t
   apply  f t h = case f t of (a,u) -> apply f u (h a)
+  applyM f t h = do (a,u) <- f t
+                    applyM f u (h a)
   arity  n = 1 + arity (prevN n)
     where
       prevN :: S n -> n
