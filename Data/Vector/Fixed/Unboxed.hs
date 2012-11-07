@@ -231,7 +231,7 @@ instance (Arity n, IVector (Vec n) a) => IVector (Vec n) (Complex a) where
 data instance MVec n s (a,b) = MV_2 !(MVec n s a) !(MVec n s b)
 data instance Vec  n   (a,b) = V_2  !(Vec  n   a) !(Vec  n   b)
 
--- instance (Unbox n a, Unbox n b) => Unbox n (a,b)
+instance (Unbox n a, Unbox n b) => Unbox n (a,b)
 
 instance (Arity n, MVector (MVec n) a, MVector (MVec n) b) => MVector (MVec n) (a,b) where
   overlaps (MV_2 va vb) (MV_2 wa wb) = overlaps va wa || overlaps vb wb
