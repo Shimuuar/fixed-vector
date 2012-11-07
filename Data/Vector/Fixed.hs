@@ -38,6 +38,8 @@ module Data.Vector.Fixed (
   , (!)
     -- ** Transformation
   , map
+  , mapM
+  , mapM_
   , foldl
   , sum
   , zipWith
@@ -53,7 +55,7 @@ module Data.Vector.Fixed (
 import Data.Vector.Fixed.Internal
 
 import qualified Prelude as P
-import Prelude hiding (replicate,map,zipWith,foldl,length,sum,head,tail)
+import Prelude hiding (replicate,map,zipWith,foldl,length,sum,head,tail,mapM,mapM_)
 
 
 
@@ -254,6 +256,17 @@ map f v = create $ Cont
         $ inspectV v
         . mapF f
 
+-- | Monadic map over vector.
+mapM :: (Vector v a, Vector v b, Monad m) => (a -> m b) -> v a -> m (v b)
+{-# INLINE mapM #-}
+mapM f v = inspect v
+         $ mapFM f
+         $ construct
+
+-- | Apply monadic action to each element of vector and ignore result.
+mapM_ :: (Vector v a, Monad m) => (a -> m b) -> v a -> m ()
+{-# INLINE mapM_ #-}
+mapM_ f = foldl (\m a -> m >> f a >> return ()) (return ())
 
 newtype T_map b c n = T_map (Fn n b c)
 
@@ -262,7 +275,10 @@ mapF f (Fun h) = Fun $ accum (\(T_map g) a -> T_map (g (f a)))
                              (\(T_map g)   -> g)
                              (T_map h :: T_map b c n)
 
-
+mapFM :: forall m n a b c. (Arity n, Monad m) => (a -> m b) -> Fun n b c -> Fun n a (m c)
+mapFM f (Fun h) = Fun $ accumM (\(T_map g) a -> do { b <- f a; return (T_map (g b)) })
+                               (\(T_map g) -> return g)
+                               (return $ T_map h :: m (T_map b c n))
 
 ----------------------------------------------------------------
 
