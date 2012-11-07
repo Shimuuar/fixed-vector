@@ -151,7 +151,7 @@ newtype T_generate n = T_generate Int
 
 generateF :: forall n a b. (Arity n) => (Int -> a) -> Fun n a b -> b
 generateF g (Fun f)
-  = apply (\(T_generate n) -> (g n, T_generate (n - 1)))
+  = apply (\(T_generate n) -> (g n, T_generate (n + 1)))
           (T_generate 0 :: T_generate n)
           f
 
@@ -162,7 +162,7 @@ generateM f = generateFM f construct
 
 generateFM :: forall m n a b. (Monad m, Arity n) => (Int -> m a) -> Fun n a b -> m b
 generateFM g (Fun f)
-  = applyM (\(T_generate n) -> do { a <- g n; return (a, T_generate (n - 1)) } )
+  = applyM (\(T_generate n) -> do { a <- g n; return (a, T_generate (n + 1)) } )
            (T_generate 0 :: T_generate n)
            f
 
