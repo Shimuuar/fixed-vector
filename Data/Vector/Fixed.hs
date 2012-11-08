@@ -260,7 +260,7 @@ map f v = create $ Cont
 -- | Monadic map over vector.
 mapM :: (Vector v a, Vector v b, Monad m) => (a -> m b) -> v a -> m (v b)
 {-# INLINE mapM #-}
-mapM f v = inspect v
+mapM f v = inspectV v
          $ mapFM f
          $ construct
 
