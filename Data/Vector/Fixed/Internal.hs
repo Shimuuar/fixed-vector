@@ -6,13 +6,12 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 -- |
--- Implementation bits os API for fixed length vectors. It's based on
--- ideas described here:
--- <http://unlines.wordpress.com/2010/11/15/generics-for-small-fixed-size-vectors/>
+-- Type classes for generic vectors. This module exposes type classes
+-- and auxiliary functions needed to write generic functions not
+-- present in the module "Data.Vector.Fixed".
 --
--- Generally there is no need to import this module unless you want to
--- implement generic function which could not be expressed using
--- combinators from "Data.Vector.Fixed"
+-- Implementation is based on
+-- <http://unlines.wordpress.com/2010/11/15/generics-for-small-fixed-size-vectors/>
 module Data.Vector.Fixed.Internal (
     -- * Type-level naturals
     Z
@@ -25,7 +24,8 @@ module Data.Vector.Fixed.Internal (
   , Dim
   , Vector(..)
   , length
-    -- * Fusion
+    -- * Deforestation
+    -- $deforestation
   , Cont(..)
   , create
   , inspectV
@@ -71,26 +71,29 @@ instance Arity n => Functor (Fun n a) where
 -- | Type class for handling /n/-ary functions.
 class Arity n where
   -- | Left fold over /n/ elements exposed as n-ary function.
-  accum :: (forall k. tag (S k) -> a -> tag k) -- ^ Fold function
-        -> (tag Z -> b)                        -- ^ Extract result of fold
-        -> tag n                               -- ^ Initial value
-        -> Fn n a b                            -- ^ Reduction function
+  accum :: (forall k. t (S k) -> a -> t k) -- ^ Fold function
+        -> (t Z -> b)                      -- ^ Extract result of fold
+        -> t n                             -- ^ Initial value
+        -> Fn n a b                        -- ^ Reduction function
+
   -- | Monadic left fold.
   accumM :: Monad m
-         => (forall k. tag (S k) -> a -> m (tag k))
-         -> (tag Z -> m b)
-         -> m (tag n)
-         -> Fn n a (m b)
-  -- | Apply all parameters to the function. 
-  apply :: (forall k. tag (S k) -> (a, tag k)) -- ^ Get value to apply to function
-        -> tag n                               -- ^ Initial value
-        -> Fn n a b                            -- ^ N-ary function
+         => (forall k. t (S k) -> a -> m (t k)) -- ^ Fold function
+         -> (t Z -> m b)                        -- ^ Extract result of fold
+         -> m (t n)                             -- ^ Initial value
+         -> Fn n a (m b)                        -- ^ Reduction function
+
+  -- | Apply all parameters to the function.
+  apply :: (forall k. t (S k) -> (a, t k)) -- ^ Get value to apply to function
+        -> t n                             -- ^ Initial value
+        -> Fn n a b                        -- ^ N-ary function
         -> b
+
   -- | Monadic apply
   applyM :: Monad m
-         => (forall k. tag (S k) -> m (a, tag k)) -- ^ Get value to apply to function
-         -> tag n                                 -- ^ Initial value
-         -> Fn n a b                              -- ^ N-ary function
+         => (forall k. t (S k) -> m (a, t k)) -- ^ Get value to apply to function
+         -> t n                               -- ^ Initial value
+         -> Fn n a b                          -- ^ N-ary function
          -> m b
   -- | Arity of function.
   arity :: n -> Int
@@ -127,10 +130,10 @@ instance Arity n => Arity (S n) where
 -- Type class for vectors
 ----------------------------------------------------------------
 
--- | Type family for vector size.
+-- | Size of vector expressed as type-level natural.
 type family Dim (v :: * -> *)
 
--- | Type class for short vectors with fixed length
+-- | Type class for vectors with fixed length.
 class Arity (Dim v) => Vector v a where
   -- | N-ary function for creation of vectors.
   construct :: Fun (Dim v) a (v a)
@@ -143,16 +146,46 @@ length :: forall v a. Arity (Dim v) => v a -> Int
 length _ = arity (undefined :: Dim v)
 
 
+
 ----------------------------------------------------------------
 -- Fusion
 ----------------------------------------------------------------
 
+-- $deforestation
+--
+-- Explicit deforestation is less important for ADT based vectors
+-- since GHC is able to eliminate intermediate data structures. But it
+-- cannot do so for array-based ones so intermediate vector have to be
+-- removed with RULES. Following identity is used. Of course @f@ must
+-- be polymorphic in continuation result type.
+--
+-- > inspect (f construct) g = f g
+--
+-- But 'construct' function is located somewhere deep in function
+-- application stack so it cannot be matched using rule. Function
+-- 'create' is needed to move 'construct' to the top.
+--
+-- As a rule function which are subject to deforestation should be
+-- written using 'create' and 'inspectV' functions.
+
+
+-- | Continuation with arbitrary result.
 newtype Cont n a = Cont (forall r. Fun n a r -> r)
 
+-- | Construct vector. It should be used instead of 'construct' to get
+--   deforestation. Example of usage:
+--
+-- > cont1 $ cont2 $ construct
+--
+--   becomes
+--
+-- > create $ Cont $ cont1 . cont2
 create :: (Arity (Dim v), Vector v a) => Cont (Dim v) a -> v a
 {-# INLINE[1] create #-}
 create (Cont f) = f construct
 
+-- | Wrapper for 'inspect'. It's inlined later and is needed in order
+--   to give deforestation rule chance to fire.
 inspectV :: (Arity (Dim v), Vector v a) => v a -> Fun (Dim v) a b -> b
 {-# INLINE[1] inspectV #-}
 inspectV = inspect
