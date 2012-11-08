@@ -37,11 +37,13 @@ module Data.Vector.Fixed (
   , head
   , tail
   , (!)
-    -- ** Transformation
+    -- ** Map
   , map
   , mapM
   , mapM_
+    -- ** Folding
   , foldl
+  , foldl1
   , sum
   , zipWith
   , izipWith
@@ -53,10 +55,11 @@ module Data.Vector.Fixed (
   , VecList(..)
   ) where
 
+import Data.Maybe (fromMaybe)
 import Data.Vector.Fixed.Internal
 
 import qualified Prelude as P
-import Prelude hiding (replicate,map,zipWith,foldl,length,sum,head,tail,mapM,mapM_)
+import Prelude hiding (replicate,map,zipWith,foldl,foldl1,length,sum,head,tail,mapM,mapM_)
 
 
 
@@ -234,18 +237,58 @@ foldl :: Vector v a => (b -> a -> b) -> b -> v a -> b
 foldl f z v = inspectV v
             $ foldlF f z
 
+newtype T_foldl b n = T_foldl b
+
+foldlF :: forall n a b. Arity n => (b -> a -> b) -> b -> Fun n a b
+{-# INLINE foldlF #-}
+foldlF f b = Fun $ accum (\(T_foldl r) a -> T_foldl (f r a))
+                         (\(T_foldl r) -> r)
+                         (T_foldl b :: T_foldl b n)
+
+-- | Left fold over vector
+foldl1 :: (Vector v a, Dim v ~ S n) => (a -> a -> a) -> v a -> a
+{-# INLINE foldl1 #-}
+foldl1 f v = inspectV v
+           $ foldl1F f
+
+
+-- Implementation of foldl1F is particularly ugly. It could be
+-- expressed in terms of foldlF:
+--
+-- > foldl1F f = Fun $ \a -> case foldlF f a :: Fun n a a of Fun g -> g
+--
+-- But it require constraint `Arity n` whereas foldl1 provide
+-- Arity (S n). Latter imply former but GHC cannot infer it. So it
+-- 'Arity n' begin to propagate through contexts. It's not acceptable.
+
+newtype T_foldl1 a n = T_foldl1 (Maybe a)
+
+foldl1F :: forall n a. (Arity (S n)) => (a -> a -> a) -> Fun (S n) a a
+{-# INLINE foldl1F #-}
+foldl1F f = Fun $ accum (\(T_foldl1 r) a -> T_foldl1 $ Just $ maybe a (flip f a) r)
+                        (\(T_foldl1 (Just x)) -> x)
+                        (T_foldl1 Nothing :: T_foldl1 a (S n))
+
+
+
+
+----------------------------------------------------------------
+
 -- | Sum all elements in the vector
 sum :: (Vector v a, Num a) => v a -> a
 {-# INLINE sum #-}
 sum = foldl (+) 0
 
+-- | Maximum element of vector
+maximum :: (Vector v a, Dim v ~ S n, Ord a) => v a -> a
+{-# INLINE maximum #-}
+maximum = foldl1 max
 
-newtype T_foldl b n = T_foldl b
+-- | Minimum element of vector
+minimum :: (Vector v a, Dim v ~ S n, Ord a) => v a -> a
+{-# INLINE minimum #-}
+minimum = foldl1 max
 
-foldlF :: forall n a b. Arity n => (b -> a -> b) -> b -> Fun n a b
-foldlF f b = Fun $ accum (\(T_foldl r) a -> T_foldl (f r a))
-                         (\(T_foldl r) -> r)
-                         (T_foldl b :: T_foldl b n)
 
 
 ----------------------------------------------------------------
