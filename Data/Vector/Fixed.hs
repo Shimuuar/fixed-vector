@@ -242,6 +242,15 @@ foldl :: Vector v a => (b -> a -> b) -> b -> v a -> b
 foldl f z v = inspectV v
             $ foldlF f z
 
+-- | Monadic fold over vector.
+foldM :: (Vector v a, Monad m) => (b -> a -> m b) -> b -> v a -> m b
+{-# INLINE foldM #-}
+foldM f x v = foldl go (return x) v
+  where
+    go m a = do b <- m
+                f b a
+
+
 newtype T_foldl b n = T_foldl b
 
 foldlF :: forall n a b. Arity n => (b -> a -> b) -> b -> Fun n a b
