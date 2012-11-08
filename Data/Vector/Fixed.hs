@@ -45,6 +45,9 @@ module Data.Vector.Fixed (
   , foldl
   , foldl1
   , sum
+  , maximum
+  , minimum
+    -- ** Zips
   , zipWith
   , izipWith
     -- ** Conversion
@@ -55,11 +58,13 @@ module Data.Vector.Fixed (
   , VecList(..)
   ) where
 
-import Data.Maybe (fromMaybe)
 import Data.Vector.Fixed.Internal
 
 import qualified Prelude as P
-import Prelude hiding (replicate,map,zipWith,foldl,foldl1,length,sum,head,tail,mapM,mapM_)
+import Prelude hiding ( replicate,map,zipWith,maximum,minimum
+                      , foldl,foldl1,length,sum
+                      , head,tail,mapM,mapM_
+                      )
 
 
 
