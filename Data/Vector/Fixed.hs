@@ -45,6 +45,7 @@ module Data.Vector.Fixed (
     -- ** Folding
   , foldl
   , foldl1
+  , foldM
   , sum
   , maximum
   , minimum
