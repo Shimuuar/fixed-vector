@@ -22,6 +22,7 @@ module Data.Vector.Fixed (
   , Arity
   , Fun(..)
   , length
+  , convertContinuation
     -- * Generic functions
     -- ** Literal vectors
   , New
@@ -37,6 +38,7 @@ module Data.Vector.Fixed (
     -- ** Element access
   , head
   , tail
+  , tailWith
   , (!)
     -- ** Map
   , map
@@ -73,6 +75,16 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum
 ----------------------------------------------------------------
 -- Generic functions
 ----------------------------------------------------------------
+
+-- | Change continuation type.
+convertContinuation :: forall n a r. (Arity n)
+                    => (forall v. (Dim v ~ n, Vector v a) => v a -> r)
+                    -> Fun n a r
+{-# INLINE convertContinuation #-}
+convertContinuation f = fmap f g
+  where
+    g = construct :: Fun n a (VecList n a)
+
 
 -- TODO: does not fuse!
 -- | Newtype wrapper for partially constructed vectors. /n/ is number
@@ -208,6 +220,19 @@ tailF :: Arity n => Fun n a b -> Fun (S n) a b
 {-# INLINE tailF #-}
 tailF (Fun f) = Fun (\_ -> f)
 
+-- | Continuation variant of tail. It should be used when tail of
+--   vector is immediately deconstructed with polymorphic
+--   function. For example @'sum' . 'tail'@ will fail with unhelpful
+--   error message because return value of @tail@ is polymorphic. But
+--   @'tailWith' 'sum'@ works just fine.
+tailWith :: (Arity n, Vector v a, Dim v ~ S n)
+         => (forall w. (Vector w a, Dim w ~ n) => w a -> r) -- ^ Continuation
+         -> v a                                             -- ^ Vector
+         -> r
+{-# INLINE tailWith #-}
+tailWith f v = inspectV v
+             $ tailF
+             $ convertContinuation f
 
 ----------------------------------------------------------------
 
