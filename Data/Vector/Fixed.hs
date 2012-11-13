@@ -20,6 +20,7 @@ module Data.Vector.Fixed (
     -- ** Type class
   , Vector(..)
   , Arity
+  , Fun(..)
   , length
     -- * Generic functions
     -- ** Literal vectors
