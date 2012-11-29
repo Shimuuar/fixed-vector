@@ -17,6 +17,13 @@ module Data.Vector.Fixed (
     Dim
   , Z
   , S
+    -- ** Synonyms for small numerals
+  , N1
+  , N2
+  , N3
+  , N4
+  , N5
+  , N6
     -- ** Type class
   , Vector(..)
   , Arity
@@ -75,6 +82,13 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum
 ----------------------------------------------------------------
 -- Generic functions
 ----------------------------------------------------------------
+
+type N1 = S Z
+type N2 = S N1
+type N3 = S N2
+type N4 = S N3
+type N5 = S N4
+type N6 = S N5
 
 -- | Change continuation type.
 convertContinuation :: forall n a r. (Arity n)
