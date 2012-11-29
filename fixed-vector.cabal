@@ -1,5 +1,5 @@
 Name:           fixed-vector
-Version:        0.1
+Version:        0.1.1
 Synopsis:       Generic vectors with fixed length
 Description:
   Generic vectors with fixed length. Package is structured as follows:
@@ -22,6 +22,11 @@ Description:
   .
   [@Data.Vector.Fixed.Primitive@]
   Unboxed vectors based on pritimive package.
+  .
+  Changes in 0.1.1
+  .
+  * @foldM@ and @tailWith@ added. Type synonyms for numbers up to 6 are
+    added. @Fun@ is reexported from @Data.Vector.Fixed@.
 
 Cabal-Version:  >= 1.6
 License:        BSD3
