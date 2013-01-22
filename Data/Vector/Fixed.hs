@@ -26,6 +26,7 @@ module Data.Vector.Fixed (
   , N6
     -- ** Type class
   , Vector(..)
+  , VectorN
   , Arity
   , Fun(..)
   , length
@@ -475,3 +476,4 @@ instance Arity n => Vector (VecList n) a where
     f
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
+instance Arity n => VectorN VecList n a

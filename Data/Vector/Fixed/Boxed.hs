@@ -82,6 +82,7 @@ instance (Arity n) => Vector (Vec n) a where
   inspect   = inspectVec
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
+instance (Arity n) => VectorN Vec n a
 
 uninitialised :: a
 uninitialised = error "Data.Vector.Fixed.Boxed: uninitialised element"

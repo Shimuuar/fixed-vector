@@ -23,6 +23,7 @@ module Data.Vector.Fixed.Internal (
     -- * Vector type class
   , Dim
   , Vector(..)
+  , VectorN
   , length
     -- * Deforestation
     -- $deforestation
@@ -139,6 +140,13 @@ class Arity (Dim v) => Vector v a where
   construct :: Fun (Dim v) a (v a)
   -- | Deconstruction of vector.
   inspect   :: v a -> Fun (Dim v) a b -> b
+
+-- | Vector parametrized by length. In ideal world it should be:
+--
+-- > forall n. (Arity n, Vector (v n) a, Dim (v n) ~ n) => VectorN v a
+--
+-- Alas polymorphic constraints aren't allowed in haskell.
+class (Vector (v n) a, Dim (v n) ~ n) => VectorN v n a
 
 -- | Length of vector. Function doesn't evaluate its argument.
 length :: forall v a. Arity (Dim v) => v a -> Int

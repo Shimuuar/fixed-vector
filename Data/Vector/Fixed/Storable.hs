@@ -132,6 +132,7 @@ instance (Arity n, Storable a) => Vector (Vec n) a where
   inspect   = inspectVec
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
+instance (Arity n, Storable a) => VectorN Vec n a
 
 
 

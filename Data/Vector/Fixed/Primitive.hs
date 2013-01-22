@@ -86,3 +86,4 @@ instance (Arity n, Prim a) => Vector (Vec n) a where
   inspect   = inspectVec
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
+instance (Arity n, Prim a) => VectorN Vec n a

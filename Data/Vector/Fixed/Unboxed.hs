@@ -59,6 +59,8 @@ instance (Unbox n a) => Vector (Vec n) a where
   inspect   = inspectVec
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
+instance (Unbox n a) => VectorN Vec n a
+
 
 
 ----------------------------------------------------------------
