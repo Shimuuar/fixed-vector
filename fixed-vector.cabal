@@ -1,5 +1,5 @@
 Name:           fixed-vector
-Version:        0.1.1
+Version:        0.1.2
 Synopsis:       Generic vectors with fixed length
 Description:
   Generic vectors with fixed length. Package is structured as follows:
