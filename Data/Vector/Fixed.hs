@@ -386,7 +386,8 @@ map :: (Vector v a, Vector v b) => (a -> b) -> v a -> v b
 {-# INLINE map #-}
 map f v = create $ Cont
         $ inspectV v
-        . mapF f
+        . fmap runID
+        . mapFM (return . f)
 
 -- | Evaluate every action in the vector from left to right.
 sequence :: (Vector v a, Vector v (m a), Monad m) => v (m a) -> m (v a)
@@ -411,14 +412,11 @@ mapM_ :: (Vector v a, Monad m) => (a -> m b) -> v a -> m ()
 {-# INLINE mapM_ #-}
 mapM_ f = foldl (\m a -> m >> f a >> return ()) (return ())
 
+
 newtype T_map b c n = T_map (Fn n b c)
 
-mapF :: forall n a b c. Arity n => (a -> b) -> Fun n b c -> Fun n a c
-mapF f (Fun h) = Fun $ accum (\(T_map g) a -> T_map (g (f a)))
-                             (\(T_map g)   -> g)
-                             (T_map h :: T_map b c n)
-
 mapFM :: forall m n a b c. (Arity n, Monad m) => (a -> m b) -> Fun n b c -> Fun n a (m c)
+{-# INLINE mapFM #-}
 mapFM f (Fun h) = Fun $ accumM (\(T_map g) a -> do { b <- f a; return (T_map (g b)) })
                                (\(T_map g) -> return g)
                                (return $ T_map h :: m (T_map b c n))
@@ -428,16 +426,17 @@ mapFM f (Fun h) = Fun $ accumM (\(T_map g) a -> do { b <- f a; return (T_map (g 
 imap :: (Vector v a, Vector v b, Monad m) =>
     (Int -> a -> b) -> v a -> v b
 {-# INLINE imap #-}
-imap f v = inspectV v
-         $ imapF f
-         $ construct
+imap f v = create $ Cont
+         $ inspectV v
+         . fmap runID
+         . imapFM (\i a -> return $ f i a)
 
 imapM :: (Vector v a, Vector v b, Monad m) =>
     (Int -> a -> m b) -> v a -> m (v b)
 {-# INLINE imapM #-}
 imapM f v = inspectV v
-         $ imapFM f
-         $ construct
+          $ imapFM f
+          $ construct
 
 imapM_ :: (Vector v a, Monad m) => (Int -> a -> m b) -> v a -> m ()
 {-# INLINE imapM_ #-}
@@ -446,15 +445,9 @@ imapM_ f = ifoldl (\m i a -> m >> f i a >> return ()) (return ())
 
 data T_imap b c n = T_imap {-# UNPACK #-} !Int (Fn n b c)
 
-imapF :: forall n a b c. Arity n
-      => (Int -> a -> b) -> Fun n b c -> Fun n a c
-imapF f (Fun h) = Fun $
-  accum (\(T_imap i g) a -> T_imap (i + 1) (g (f i a)))
-        (\(T_imap _ g)    -> g)
-        (T_imap 0 h :: T_imap b c n)
-
-imapFM :: forall m n a b c. (Arity n, Monad m) =>
-    (Int -> a -> m b) -> Fun n b c -> Fun n a (m c)
+imapFM :: forall m n a b c. (Arity n, Monad m)
+       => (Int -> a -> m b) -> Fun n b c -> Fun n a (m c)
+{-# INLINE imapFM #-}
 imapFM f (Fun h) = Fun $
   accumM (\(T_imap i g) a -> do b <- f i a
                                 return (T_imap (i + 1) (g b)))
@@ -560,3 +553,13 @@ instance Arity n => Vector (VecList n) a where
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
 instance Arity n => VectorN VecList n a
+
+
+-- String identity monad
+newtype Id a = Id { runID :: a }
+
+instance Monad Id where
+  return     = Id
+  Id a >>= f = f a
+  {-# INLINE return #-}
+  {-# INLINE (>>=)  #-}
