@@ -69,7 +69,9 @@ module Data.Vector.Fixed (
   , minimum
     -- ** Zips
   , zipWith
+  , zipWithM
   , izipWith
+  , izipWithM
     -- ** Conversion
   , convert
   , toList
@@ -465,19 +467,17 @@ zipWith :: (Vector v a, Vector v b, Vector v c)
 zipWith f v u = create $ Cont
               $ inspectV u
               . inspectV v
-              . zipWithF f
+              . (fmap (fmap runID))
+              . izipWithFM (\_ a b -> return (f a b))
 
-data T_zip a c r n = T_zip (VecList n a) (Fn n c r)
-
-zipWithF :: forall n a b c d. Arity n
-         => (a -> b -> c) -> Fun n c d -> Fun n a (Fun n b d)
-zipWithF f (Fun g0) =
-  fmap (\v -> Fun $ accum
-              (\(T_zip (VecList (a:as)) g) b -> T_zip (VecList as) (g (f a b)))
-              (\(T_zip _ x) -> x)
-              (T_zip v g0 :: T_zip a c d n)
-       ) construct
-
+-- | Zip two vector together using monadic function.
+zipWithM :: (Vector v a, Vector v b, Vector v c, Monad m)
+         => (a -> b -> m c) -> v a -> v b -> m (v c)
+{-# INLINE zipWithM #-}
+zipWithM f v u = inspectV u
+               $ inspectV v
+               $ izipWithFM (const f)
+               $ construct
 
 -- | Zip two vector together.
 izipWith :: (Vector v a, Vector v b, Vector v c)
@@ -486,17 +486,31 @@ izipWith :: (Vector v a, Vector v b, Vector v c)
 izipWith f v u = create $ Cont
                $ inspectV u
                . inspectV v
-               . izipWithF f
+               . fmap (fmap runID)
+               . izipWithFM (\i a b -> return $ f i a b)
+
+-- | Zip two vector together using monadic function.
+izipWithM :: (Vector v a, Vector v b, Vector v c, Monad m)
+          => (Int -> a -> b -> m c) -> v a -> v b -> m (v c)
+{-# INLINE izipWithM #-}
+izipWithM f v u = inspectV u
+                $ inspectV v
+                $ izipWithFM f
+                $ construct
 
 data T_izip a c r n = T_izip Int (VecList n a) (Fn n c r)
 
-izipWithF :: forall n a b c d. Arity n
-          => (Int -> a -> b -> c) -> Fun n c d -> Fun n a (Fun n b d)
-izipWithF f (Fun g0) =
-  fmap (\v -> Fun $ accum
-              (\(T_izip i (VecList (a:as)) g) b -> T_izip (i+1) (VecList as) (g (f i a b)))
-              (\(T_izip _ _ x) -> x)
-              (T_izip 0 v g0 :: T_izip a c d n)
+-- FIXME: explain function
+izipWithFM :: forall m n a b c d. (Arity n, Monad m)
+           => (Int -> a -> b -> m c) -> Fun n c d -> Fun n a (Fun n b (m d))
+{-# INLINE izipWithFM #-}
+izipWithFM f (Fun g0) =
+  fmap (\v -> Fun $ accumM
+              (\(T_izip i (VecList (a:as)) g) b -> do x <- f i a b
+                                                      return $ T_izip (i+1) (VecList as) (g x)
+              )
+              (\(T_izip _ _ x) -> return x)
+              (return $ T_izip 0 v g0 :: m (T_izip a c d n))
        ) construct
 
 
