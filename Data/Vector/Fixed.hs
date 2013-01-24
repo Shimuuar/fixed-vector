@@ -343,7 +343,7 @@ maximum = foldl1 max
 -- | Minimum element of vector
 minimum :: (Vector v a, Dim v ~ S n, Ord a) => v a -> a
 {-# INLINE minimum #-}
-minimum = foldl1 max
+minimum = foldl1 min
 
 
 
