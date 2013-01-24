@@ -52,10 +52,15 @@ module Data.Vector.Fixed (
   , map
   , mapM
   , mapM_
+  , sequence
+  , sequence_
     -- ** Folding
   , foldl
   , foldl1
   , foldM
+  , ifoldl
+  , ifoldM
+    -- *** Special folds
   , sum
   , maximum
   , minimum
@@ -75,7 +80,7 @@ import Data.Vector.Fixed.Internal
 import qualified Prelude as P
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum
                       , foldl,foldl1,length,sum
-                      , head,tail,mapM,mapM_
+                      , head,tail,mapM,mapM_,sequence,sequence_
                       )
 
 
@@ -326,6 +331,30 @@ foldl1F f = Fun $ accum (\(T_foldl1 r) a -> T_foldl1 $ Just $ maybe a (flip f a)
                         (T_foldl1 Nothing :: T_foldl1 a (S n))
 
 
+-- | Left fold over vector. Function is applied to each element and
+--   its index.
+ifoldl :: Vector v a => (b -> Int -> a -> b) -> b -> v a -> b
+{-# INLINE ifoldl #-}
+ifoldl f z v = inspectV v
+            $ ifoldlF f z
+
+-- | Left monadic fold over vector. Function is applied to each element and
+--   its index.
+ifoldM :: (Vector v a, Monad m) => (b -> Int -> a -> m b) -> b -> v a -> m b
+{-# INLINE ifoldM #-}
+ifoldM f x v = ifoldl go (return x) v
+  where
+    go m i a = do { b <- m; f b i a }
+
+data T_ifoldl b n = T_ifoldl {-# UNPACK #-} !Int b
+
+ifoldlF :: forall n a b. Arity n => (b -> Int -> a -> b) -> b -> Fun n a b
+{-# INLINE ifoldlF #-}
+ifoldlF f b = Fun $
+    accum (\(T_ifoldl i r) a -> T_ifoldl (i + 1) (f r i a))
+          (\(T_ifoldl _ r) -> r)
+          (T_ifoldl 0 b :: T_ifoldl b n)
+
 
 
 ----------------------------------------------------------------
@@ -355,6 +384,17 @@ map :: (Vector v a, Vector v b) => (a -> b) -> v a -> v b
 map f v = create $ Cont
         $ inspectV v
         . mapF f
+
+-- | Evaluate every action in the vector from left to right.
+sequence :: (Vector v a, Vector v (m a), Monad m) => v (m a) -> m (v a)
+{-# INLINE sequence #-}
+sequence = mapM id
+
+-- | Evaluate every action in the vector from left to right and ignore result
+sequence_ :: (Vector v (m a), Monad m) => v (m a) -> m ()
+{-# INLINE sequence_ #-}
+sequence_ = mapM_ id
+
 
 -- | Monadic map over vector.
 mapM :: (Vector v a, Vector v b, Monad m) => (a -> m b) -> v a -> m (v b)
