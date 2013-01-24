@@ -52,6 +52,9 @@ module Data.Vector.Fixed (
   , map
   , mapM
   , mapM_
+  , imap
+  , imapM
+  , imapM_
   , sequence
   , sequence_
     -- ** Folding
@@ -419,6 +422,46 @@ mapFM :: forall m n a b c. (Arity n, Monad m) => (a -> m b) -> Fun n b c -> Fun 
 mapFM f (Fun h) = Fun $ accumM (\(T_map g) a -> do { b <- f a; return (T_map (g b)) })
                                (\(T_map g) -> return g)
                                (return $ T_map h :: m (T_map b c n))
+
+
+
+imap :: (Vector v a, Vector v b, Monad m) =>
+    (Int -> a -> b) -> v a -> v b
+{-# INLINE imap #-}
+imap f v = inspectV v
+         $ imapF f
+         $ construct
+
+imapM :: (Vector v a, Vector v b, Monad m) =>
+    (Int -> a -> m b) -> v a -> m (v b)
+{-# INLINE imapM #-}
+imapM f v = inspectV v
+         $ imapFM f
+         $ construct
+
+imapM_ :: (Vector v a, Monad m) => (Int -> a -> m b) -> v a -> m ()
+{-# INLINE imapM_ #-}
+imapM_ f = ifoldl (\m i a -> m >> f i a >> return ()) (return ())
+
+
+data T_imap b c n = T_imap {-# UNPACK #-} !Int (Fn n b c)
+
+imapF :: forall n a b c. Arity n
+      => (Int -> a -> b) -> Fun n b c -> Fun n a c
+imapF f (Fun h) = Fun $
+  accum (\(T_imap i g) a -> T_imap (i + 1) (g (f i a)))
+        (\(T_imap _ g)    -> g)
+        (T_imap 0 h :: T_imap b c n)
+
+imapFM :: forall m n a b c. (Arity n, Monad m) =>
+    (Int -> a -> m b) -> Fun n b c -> Fun n a (m c)
+imapFM f (Fun h) = Fun $
+  accumM (\(T_imap i g) a -> do b <- f i a
+                                return (T_imap (i + 1) (g b)))
+         (\(T_imap _ g) -> return g)
+         (return $ T_imap 0 h :: m (T_imap b c n))
+
+
 
 ----------------------------------------------------------------
 
