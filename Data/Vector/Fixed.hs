@@ -341,7 +341,7 @@ foldl1F f = Fun $ accum (\(T_foldl1 r) a -> T_foldl1 $ Just $ maybe a (flip f a)
 ifoldl :: Vector v a => (b -> Int -> a -> b) -> b -> v a -> b
 {-# INLINE ifoldl #-}
 ifoldl f z v = inspectV v
-            $ ifoldlF f z
+             $ ifoldlF f z
 
 -- | Left monadic fold over vector. Function is applied to each element and
 --   its index.
@@ -424,7 +424,7 @@ mapFM f (Fun h) = Fun $ accumM (\(T_map g) a -> do { b <- f a; return (T_map (g 
                                (return $ T_map h :: m (T_map b c n))
 
 
-
+-- | Apply function to every element of the vector and its index.
 imap :: (Vector v a, Vector v b, Monad m) =>
     (Int -> a -> b) -> v a -> v b
 {-# INLINE imap #-}
@@ -433,6 +433,7 @@ imap f v = create $ Cont
          . fmap runID
          . imapFM (\i a -> return $ f i a)
 
+-- | Apply monadic function to every element of the vector and its index.
 imapM :: (Vector v a, Vector v b, Monad m) =>
     (Int -> a -> m b) -> v a -> m (v b)
 {-# INLINE imapM #-}
@@ -440,6 +441,8 @@ imapM f v = inspectV v
           $ imapFM f
           $ construct
 
+-- | Apply monadic function to every element of the vector and its
+--   index and discard result.
 imapM_ :: (Vector v a, Monad m) => (Int -> a -> m b) -> v a -> m ()
 {-# INLINE imapM_ #-}
 imapM_ f = ifoldl (\m i a -> m >> f i a >> return ()) (return ())
@@ -460,7 +463,7 @@ imapFM f (Fun h) = Fun $
 
 ----------------------------------------------------------------
 
--- | Zip two vector together.
+-- | Zip two vector together using function.
 zipWith :: (Vector v a, Vector v b, Vector v c)
         => (a -> b -> c) -> v a -> v b -> v c
 {-# INLINE zipWith #-}
@@ -479,7 +482,8 @@ zipWithM f v u = inspectV u
                $ izipWithFM (const f)
                $ construct
 
--- | Zip two vector together.
+-- | Zip two vector together using function which takes element index
+--   as well.
 izipWith :: (Vector v a, Vector v b, Vector v c)
          => (Int -> a -> b -> c) -> v a -> v b -> v c
 {-# INLINE izipWith #-}
@@ -489,7 +493,8 @@ izipWith f v u = create $ Cont
                . fmap (fmap runID)
                . izipWithFM (\i a b -> return $ f i a b)
 
--- | Zip two vector together using monadic function.
+-- | Zip two vector together using monadic function which takes element
+--   index as well..
 izipWithM :: (Vector v a, Vector v b, Vector v c, Monad m)
           => (Int -> a -> b -> m c) -> v a -> v b -> m (v c)
 {-# INLINE izipWithM #-}
@@ -512,6 +517,7 @@ izipWithFM f (Fun g0) =
               (\(T_izip _ _ x) -> return x)
               (return $ T_izip 0 v g0 :: m (T_izip a c d n))
        ) construct
+
 
 
 ----------------------------------------------------------------
