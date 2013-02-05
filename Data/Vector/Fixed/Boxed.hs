@@ -27,7 +27,7 @@ import Data.Vector.Fixed.Mutable
 -- Data type
 ----------------------------------------------------------------
 
--- | Unboxed vector with fixed length
+-- | Vector with fixed length which can hold any value.
 newtype Vec n a = Vec (Array a)
 
 -- | Mutable unboxed vector with fixed length
