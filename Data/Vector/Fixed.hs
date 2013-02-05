@@ -425,7 +425,7 @@ mapFM f (Fun h) = Fun $ accumM (\(T_map g) a -> do { b <- f a; return (T_map (g 
 
 
 -- | Apply function to every element of the vector and its index.
-imap :: (Vector v a, Vector v b, Monad m) =>
+imap :: (Vector v a, Vector v b) =>
     (Int -> a -> b) -> v a -> v b
 {-# INLINE imap #-}
 imap f v = create $ Cont
