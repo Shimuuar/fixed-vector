@@ -48,6 +48,8 @@ module Data.Vector.Fixed (
   , tail
   , tailWith
   , (!)
+    -- ** Comparison
+  , eq
     -- ** Map
   , map
   , mapM
@@ -472,6 +474,27 @@ minimum :: (Vector v a, Dim v ~ S n, Ord a) => v a -> a
 minimum = foldl1 min
 
 
+----------------------------------------------------------------
+
+-- | Test two vectors for equality.
+--
+--   Examples:
+--
+--   >>> import Data.Vector.Fixed.Boxed (Vec2)
+--   >>> let v0 = basis 0 :: Vec2 Int
+--   >>> let v1 = basis 1 :: Vec2 Int
+--   >>> v0 `eq` v0
+--   True
+--   >>> v0 `eq` v1
+--   False
+--
+eq :: (Vector v a, Eq a) => v a -> v a -> Bool
+{-# INLINE eq #-}
+eq v w = inspectV w
+       $ inspectV v
+       $ fmap (fmap runID)
+       $ izipWithFM (\_ a b -> return (a == b))
+       $ foldlF (&&) True
 
 ----------------------------------------------------------------
 
