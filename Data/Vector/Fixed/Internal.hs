@@ -213,6 +213,9 @@ zipWithF f (Fun g0) =
               (T_zip v g0 :: T_zip a c d n)
        ) construct
 
+cvec :: (Vector v a, Dim v ~ n) => v a -> ContVec r n a
+cvec v = ContVec $ inspect v
+
 
 
 ----------------------------------------------------------------
