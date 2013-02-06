@@ -28,7 +28,7 @@ Description:
   * @foldM@ and @tailWith@ added. Type synonyms for numbers up to 6 are
     added. @Fun@ is reexported from @Data.Vector.Fixed@.
 
-Cabal-Version:  >= 1.6
+Cabal-Version:  >= 1.8
 License:        BSD3
 License-File:   LICENSE
 Author:         Aleksey Khudyakov <alexey.skladnoy@gmail.com>
