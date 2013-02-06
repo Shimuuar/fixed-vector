@@ -112,13 +112,21 @@ convertContinuation f = fmap f g
 
 
 -- TODO: does not fuse!
--- | Newtype wrapper for partially constructed vectors. /n/ is number
---   of uninitialized elements.
+
+-- | Generic function for construction of arbitrary vectors. It
+--   represents partially constructed vector where /n/ is number of
+--   uninitialized elements, /v/ is type of vector and /a/ element type.
 --
---   Example of use:
+--   Uninitialized vector could be obtained from 'con' and vector
+--   elements could be added from left to right using '|>' operator.
+--   Finally it could be converted to vector using 'vec' function.
 --
--- >>> vec $ con |> 1 |> 3 :: Complex Double
--- > 1 :+ 3
+--   Construction of complex number which could be seen as 2-element vector:
+--
+--   >>> import Data.Complex
+--   >>> vec $ con |> 1 |> 3 :: Complex Double
+--   1.0 :+ 3.0
+--
 newtype New n v a = New (Fn n a (v a))
 
 -- | Convert fully applied constructor to vector
@@ -145,6 +153,21 @@ f2n (Fun f) = New f
 ----------------------------------------------------------------
 
 -- | Replicate value /n/ times.
+--
+--   Examples:
+--
+--   >>> import Data.Vector.Fixed.Boxed (Vec2)
+--   >>> replicate 1 :: Vec2 Int     -- Two element vector
+--   fromList [1,1]
+--
+--   >>> import Data.Vector.Fixed.Boxed (Vec3)
+--   >>> replicate 2 :: Vec3 Double  -- Three element vector
+--   fromList [2.0,2.0,2.0]
+--
+--   >>> import Data.Vector.Fixed.Boxed (Vec)
+--   >>> replicate "foo" :: Vec N5 String
+--   fromList ["foo","foo","foo","foo","foo"]
+--
 replicate :: Vector v a => a -> v a
 {-# INLINE replicate #-}
 replicate x = create $ Cont
@@ -159,6 +182,17 @@ replicateF x (Fun h)
           h
 
 -- | Execute monadic action for every element of vector.
+--
+--   Examples:
+--
+--   >>> import Data.Vector.Fixed.Boxed (Vec2,Vec3)
+--   >>> replicateM (Just 3) :: Maybe (Vec3 Int)
+--   Just fromList [3,3,3]
+--   >>> replicateM (putStrLn "Hi!") :: IO (Vec2 ())
+--   Hi!
+--   Hi!
+--   fromList [(),()]
+--
 replicateM :: (Vector v a, Monad m) => m a -> m (v a)
 {-# INLINE replicateM #-}
 replicateM x = replicateFM x construct
@@ -173,6 +207,17 @@ replicateFM act (Fun h)
 ----------------------------------------------------------------
 
 -- | Unit vector along Nth axis,
+--
+--   Examples:
+--
+--   >>> import Data.Vector.Fixed.Boxed (Vec3)
+--   >>> basis 0 :: Vec3 Int
+--   fromList [1,0,0]
+--   >>> basis 1 :: Vec3 Int
+--   fromList [0,1,0]
+--   >>> basis 2 :: Vec3 Int
+--   fromList [0,0,1]
+--
 basis :: forall v a. (Vector v a, Num a) => Int -> v a
 {-# INLINE basis #-}
 basis n = create $ Cont
@@ -189,7 +234,14 @@ basisF n0 (Fun f)
 
 ----------------------------------------------------------------
 
--- | Generate vector.
+-- | Generate vector from function which maps element's index to its value.
+--
+--   Examples:
+--
+--   >>> import Data.Vector.Fixed.Unboxed (Vec)
+--   >>> generate (^2) :: Vec N4 Int
+--   fromList [0,1,4,9]
+--
 generate :: forall v a. (Vector v a) => (Int -> a) -> v a
 {-# INLINE generate #-}
 generate f = create $ Cont
@@ -218,6 +270,14 @@ generateFM g (Fun f)
 ----------------------------------------------------------------
 
 -- | First element of vector.
+--
+--   Examples:
+--
+--   >>> import Data.Vector.Fixed.Boxed (Vec3)
+--   >>> let x = vec $ con |> 1 |> 2 |> 3 :: Vec3 Int
+--   >>> head x
+--   1
+--
 head :: (Vector v a, Dim v ~ S n) => v a -> a
 {-# INLINE head #-}
 head v = inspectV v
@@ -234,6 +294,14 @@ headF = Fun $ accum (\(T_head m) a -> T_head $ case m of { Nothing -> Just a; x 
 ----------------------------------------------------------------
 
 -- | Tail of vector.
+--
+--   Examples:
+--
+--   >>> import Data.Vector.Fixed.Boxed (Vec2, Vec3)
+--   >>> let x = vec $ con |> 1 |> 2 |> 3 :: Vec3 Int
+--   >>> tail x :: Vec2 Int
+--   fromList [2,3]
+--
 tail :: (Vector v a, Vector w a, Dim v ~ S (Dim w))
      => v a -> w a
 {-# INLINE tail #-}
@@ -250,6 +318,14 @@ tailF (Fun f) = Fun (\_ -> f)
 --   function. For example @'sum' . 'tail'@ will fail with unhelpful
 --   error message because return value of @tail@ is polymorphic. But
 --   @'tailWith' 'sum'@ works just fine.
+--
+--   Examples:
+--
+--   >>> import Data.Vector.Fixed.Boxed (Vec3)
+--   >>> let x = vec $ con |> 1 |> 2 |> 3 :: Vec3 Int
+--   >>> tailWith sum x
+--   5
+--
 tailWith :: (Arity n, Vector v a, Dim v ~ S n)
          => (forall w. (Vector w a, Dim w ~ n) => w a -> r) -- ^ Continuation
          -> v a                                             -- ^ Vector
@@ -370,11 +446,27 @@ sum :: (Vector v a, Num a) => v a -> a
 sum = foldl (+) 0
 
 -- | Maximum element of vector
+--
+--   Examples:
+--
+--   >>> import Data.Vector.Fixed.Boxed (Vec3)
+--   >>> let x = vec $ con |> 1 |> 2 |> 3 :: Vec3 Int
+--   >>> maximum x
+--   3
+--
 maximum :: (Vector v a, Dim v ~ S n, Ord a) => v a -> a
 {-# INLINE maximum #-}
 maximum = foldl1 max
 
 -- | Minimum element of vector
+--
+--   Examples:
+--
+--   >>> import Data.Vector.Fixed.Boxed (Vec3)
+--   >>> let x = vec $ con |> 1 |> 2 |> 3 :: Vec3 Int
+--   >>> minimum x
+--   1
+--
 minimum :: (Vector v a, Dim v ~ S n, Ord a) => v a -> a
 {-# INLINE minimum #-}
 minimum = foldl1 min
@@ -464,6 +556,21 @@ imapFM f (Fun h) = Fun $
 ----------------------------------------------------------------
 
 -- | Zip two vector together using function.
+--
+--   Examples:
+--
+--   >>> import Data.Vector.Fixed.Boxed (Vec3)
+--   >>> let b0 = basis 0 :: Vec3 Int
+--   >>> let b1 = basis 1 :: Vec3 Int
+--   >>> let b2 = basis 2 :: Vec3 Int
+--   >>> let vplus x y = zipWith (+) x y
+--   >>> vplus b0 b1
+--   fromList [1,1,0]
+--   >>> vplus b0 b2
+--   fromList [1,0,1]
+--   >>> vplus b1 b2
+--   fromList [0,1,1]
+--
 zipWith :: (Vector v a, Vector v b, Vector v c)
         => (a -> b -> c) -> v a -> v b -> v c
 {-# INLINE zipWith #-}

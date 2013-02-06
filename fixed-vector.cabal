@@ -59,3 +59,14 @@ Library
     Data.Vector.Fixed.Primitive
     Data.Vector.Fixed.Unboxed
     Data.Vector.Fixed.Storable
+
+Test-Suite doctests
+  Type: exitcode-stdio-1.0
+  Hs-Source-Dirs: test
+  Main-Is: Doctests.hs
+  Build-Depends:
+    base >=3 && <5,
+    primitive,
+    -- Additional test dependencies.
+    doctest   == 0.9.*,
+    filemanip == 0.3.6.*
