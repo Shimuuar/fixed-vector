@@ -26,8 +26,6 @@ module Data.Vector.Fixed.Internal (
   , VectorN
   , length
   , Id(..)
-    -- * Data types
-  , VecList(..) -- FIXME: unsafe
     -- * Deforestation
     -- $deforestation
   , Cont(..)
@@ -230,31 +228,3 @@ type instance Dim Complex = S (S Z)
 instance RealFloat a => Vector Complex a where
   construct = Fun (:+)
   inspect (x :+ y) (Fun f) = f x y
-
-
-
--- | Vector based on the lists. Not very useful by itself but is
---   necessary for implementation.
-newtype VecList n a = VecList [a]
-                      deriving (Show,Eq)
-
-type instance Dim (VecList n) = n
-
-newtype Flip f a n = Flip (f n a)
-
-newtype T_list a n = T_list ([a] -> [a])
-
--- It's vital to avoid 'reverse' and build list using [a]->[a]
--- functions. Reverse is recursive and interferes with inlining.
-instance Arity n => Vector (VecList n) a where
-  construct = Fun $ accum
-    (\(T_list xs) x -> T_list (xs . (x:)))
-    (\(T_list xs) -> VecList (xs []) :: VecList n a)
-    (T_list id :: T_list a n)
-  inspect v (Fun f) = apply
-    (\(Flip (VecList (x:xs))) -> (x, Flip (VecList xs)))
-    (Flip v)
-    f
-  {-# INLINE construct #-}
-  {-# INLINE inspect   #-}
-instance Arity n => VectorN VecList n a

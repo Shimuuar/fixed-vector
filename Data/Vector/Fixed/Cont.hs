@@ -1,5 +1,7 @@
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
 -- |
 -- Continuations-based API
 module Data.Vector.Fixed.Cont (
@@ -8,6 +10,8 @@ module Data.Vector.Fixed.Cont (
   , cvec
     -- * Running ContVec
   , vector
+    -- * Data types
+  , VecList(..) -- FIXME: unsafe
   ) where
 
 import Control.Applicative
@@ -76,3 +80,30 @@ cvec v = ContVec $ inspect v
 vector :: (Vector v a, Dim v ~ n) => ContVec (v a) n a -> v a
 vector c = runContVec c construct
 {-# INLINE vector #-}
+
+
+-- | Vector based on the lists. Not very useful by itself but is
+--   necessary for implementation.
+newtype VecList n a = VecList [a]
+                      deriving (Show,Eq)
+
+type instance Dim (VecList n) = n
+
+newtype Flip f a n = Flip (f n a)
+
+newtype T_list a n = T_list ([a] -> [a])
+
+-- It's vital to avoid 'reverse' and build list using [a]->[a]
+-- functions. Reverse is recursive and interferes with inlining.
+instance Arity n => Vector (VecList n) a where
+  construct = Fun $ accum
+    (\(T_list xs) x -> T_list (xs . (x:)))
+    (\(T_list xs) -> VecList (xs []) :: VecList n a)
+    (T_list id :: T_list a n)
+  inspect v (Fun f) = apply
+    (\(Flip (VecList (x:xs))) -> (x, Flip (VecList xs)))
+    (Flip v)
+    f
+  {-# INLINE construct #-}
+  {-# INLINE inspect   #-}
+instance Arity n => VectorN VecList n a

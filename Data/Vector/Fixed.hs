@@ -83,6 +83,7 @@ module Data.Vector.Fixed (
   ) where
 
 import Data.Vector.Fixed.Internal
+import Data.Vector.Fixed.Cont     (VecList(..))
 
 import qualified Prelude as P
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum
