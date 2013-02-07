@@ -5,8 +5,13 @@
 -- |
 -- Continuations-based API
 module Data.Vector.Fixed.Cont (
-    ContVec
+    -- * Vector as continuation
+    ContVecT
+  , runContVecT
+  -- ** Non-monadic vector
+  , ContVec
   , runContVec
+  -- ** Inserting vector
   , cvec
     -- * Running ContVec
   , vector
@@ -23,11 +28,16 @@ import Data.Vector.Fixed.Internal
 ----------------------------------------------------------------
 
 -- | Vector as continuation.
-newtype ContVec r n a = ContVec { runContVec :: Fun n a r -> r }
+newtype ContVecT r m n a = ContVecT { runContVecT :: Fun n a (m r) -> m r }
 
+type ContVec r = ContVecT r Id
 
-instance Arity n => Functor (ContVec r n) where
-  fmap f (ContVec cont) = ContVec $ \g -> cont (fmapF f g)
+runContVec :: Arity n => ContVec r n a -> Fun n a r -> r
+runContVec (ContVecT c) f = runID $ c (fmap return f)
+{-# INLINE runContVec #-}
+
+instance (Arity n, Monad m) => Functor (ContVecT r m n) where
+  fmap f (ContVecT cont) = ContVecT $ \g -> cont (fmapF f g)
   {-# INLINE fmap #-}
 
 data T_vfmap a r n = T_vfmap (Fn n a r)
@@ -40,10 +50,10 @@ fmapF f (Fun gB) = Fun $
 
 
 
-instance Arity n => Applicative (ContVec r n) where
-  pure = ContVec . replicateF
-  ContVec contF <*> ContVec contA = ContVec $
-    \funB -> contF $ fmap contA $ zipWithF ($) funB
+instance (Arity n, Monad m) => Applicative (ContVecT r m n) where
+  pure = ContVecT . replicateF
+  ContVecT contF <*> ContVecT contA = ContVecT $
+    \funB -> contF $ fmap contA $ izipWithFM (\_ f a -> return (f a)) funB
   {-# INLINE pure  #-}
   {-# INLINE (<*>) #-}
 
@@ -56,16 +66,19 @@ replicateF x (Fun h)
           (T_replicate :: T_replicate n)
           h
 
--- Implementation of <*>
-data T_zip a c r n = T_zip (VecList n a) (Fn n c r)
+data T_izip a c r n = T_izip Int (VecList n a) (Fn n c r)
 
-zipWithF :: forall n a b c r. Arity n
-         => (a -> b -> c) -> Fun n c r -> Fun n a (Fun n b r)
-zipWithF f (Fun g0) =
-  fmap (\v -> Fun $ accum
-              (\(T_zip (VecList (a:as)) g) b -> T_zip (VecList as) (g (f a b)))
-              (\(T_zip _ x) -> x)
-              (T_zip v g0 :: T_zip a c r n)
+-- FIXME: explain function
+izipWithFM :: forall m n a b c r. (Arity n, Monad m)
+           => (Int -> a -> b -> m c) -> Fun n c (m r) -> Fun n a (Fun n b (m r))
+{-# INLINE izipWithFM #-}
+izipWithFM f (Fun g0) =
+  fmap (\v -> Fun $ accumM
+              (\(T_izip i (VecList (a:as)) g) b -> do x <- f i a b
+                                                      return $ T_izip (i+1) (VecList as) (g x)
+              )
+              (\(T_izip _ _ x) -> x)
+              (return $ T_izip 0 v g0 :: m (T_izip a c (m r) n))
        ) construct
 
 
@@ -73,8 +86,8 @@ zipWithF f (Fun g0) =
 -- Functions
 ----------------------------------------------------------------
 
-cvec :: (Vector v a, Dim v ~ n) => v a -> ContVec r n a
-cvec v = ContVec $ inspect v
+cvec :: (Vector v a, Dim v ~ n, Monad m) => v a -> ContVecT r m n a
+cvec v = ContVecT $ inspect v
 {-# INLINE cvec #-}
 
 vector :: (Vector v a, Dim v ~ n) => ContVec (v a) n a -> v a
