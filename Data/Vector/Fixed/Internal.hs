@@ -25,6 +25,7 @@ module Data.Vector.Fixed.Internal (
   , Vector(..)
   , VectorN
   , length
+  , Id(..)
     -- * Data types
   , VecList(..) -- FIXME: unsafe
     -- * Deforestation
@@ -154,6 +155,16 @@ class (Vector (v n) a, Dim (v n) ~ n) => VectorN v n a
 length :: forall v a. Arity (Dim v) => v a -> Int
 {-# INLINE length #-}
 length _ = arity (undefined :: Dim v)
+
+
+-- | Strict identity monad
+newtype Id a = Id { runID :: a }
+
+instance Monad Id where
+  return     = Id
+  Id a >>= f = f a
+  {-# INLINE return #-}
+  {-# INLINE (>>=)  #-}
 
 
 

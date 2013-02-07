@@ -672,17 +672,3 @@ fromList xs
   | otherwise               = error "Data.Vector.Fixed.fromList: bad list length"
   where
    r = VecList xs :: VecList (Dim v) a
-
-
-----------------------------------------------------------------
--- Data types
-----------------------------------------------------------------
-
--- String identity monad
-newtype Id a = Id { runID :: a }
-
-instance Monad Id where
-  return     = Id
-  Id a >>= f = f a
-  {-# INLINE return #-}
-  {-# INLINE (>>=)  #-}
