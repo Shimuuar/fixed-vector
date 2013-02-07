@@ -25,8 +25,6 @@ module Data.Vector.Fixed.Internal (
   , Vector(..)
   , VectorN
   , length
-    -- * Fixed vector as continuation
-  , ContVec
     -- * Data types
   , VecList(..) -- FIXME: unsafe
     -- * Deforestation
@@ -36,7 +34,6 @@ module Data.Vector.Fixed.Internal (
   , inspectV
   ) where
 
-import Control.Applicative (Applicative(..))
 import Data.Complex
 import Prelude hiding (length)
 
@@ -157,64 +154,6 @@ class (Vector (v n) a, Dim (v n) ~ n) => VectorN v n a
 length :: forall v a. Arity (Dim v) => v a -> Int
 {-# INLINE length #-}
 length _ = arity (undefined :: Dim v)
-
-
-
-----------------------------------------------------------------
--- Vector as continuation
-----------------------------------------------------------------
-
--- | Vector as continuation.
-newtype ContVec r n a = ContVec { runContVec :: Fun n a r -> r }
-
-
-instance Arity n => Functor (ContVec r n) where
-  fmap f (ContVec cont) = ContVec $ \g -> cont (cofmap f g)
-
-data T_cofmap a r n = T_cofmap (Fn n a r)
-
-cofmap :: forall n a b r. Arity n => (a -> b) -> Fun n b r -> Fun n a r
-cofmap f (Fun gB) = Fun $
-  accum (\(T_cofmap g) b -> T_cofmap (g (f b)))
-        (\(T_cofmap r)   -> r)
-        (  T_cofmap gB :: T_cofmap b r n)
-
-
-instance Arity n => Applicative (ContVec r n) where
-  pure = ContVec . replicateF
-  ContVec cF <*> ContVec cA = ContVec $ applyF cF cA
-
--- Implementation of pure
-data T_replicate n = T_replicate
-
-replicateF :: forall n a b. Arity n => a -> Fun n a b -> b
-replicateF x (Fun h)
-  = apply (\T_replicate -> (x, T_replicate))
-          (T_replicate :: T_replicate n)
-          h
-
-
--- Implementation of <*> operator for Applicative
-applyF :: forall n a b r. Arity n
-       => (Fun n (a -> b) r -> r)
-       -> (Fun n  a       r -> r)
-       -> (Fun n  b       r -> r)
-applyF contF contA funB =
-  contF $ fmap contA $ zipWithF ($) funB
-
-data T_zip a c r n = T_zip (VecList n a) (Fn n c r)
-
-zipWithF :: forall n a b c d. Arity n
-         => (a -> b -> c) -> Fun n c d -> Fun n a (Fun n b d)
-zipWithF f (Fun g0) =
-  fmap (\v -> Fun $ accum
-              (\(T_zip (VecList (a:as)) g) b -> T_zip (VecList as) (g (f a b)))
-              (\(T_zip _ x) -> x)
-              (T_zip v g0 :: T_zip a c d n)
-       ) construct
-
-cvec :: (Vector v a, Dim v ~ n) => v a -> ContVec r n a
-cvec v = ContVec $ inspect v
 
 
 
