@@ -6,6 +6,8 @@ module Data.Vector.Fixed.Cont (
     ContVec
   , runContVec
   , cvec
+    -- * Running ContVec
+  , vector
   ) where
 
 import Control.Applicative
@@ -70,3 +72,7 @@ zipWithF f (Fun g0) =
 cvec :: (Vector v a, Dim v ~ n) => v a -> ContVec r n a
 cvec v = ContVec $ inspect v
 {-# INLINE cvec #-}
+
+vector :: (Vector v a, Dim v ~ n) => ContVec (v a) n a -> v a
+vector c = runContVec c construct
+{-# INLINE vector #-}
