@@ -61,9 +61,9 @@ Library
     Data.Vector.Fixed.Storable
 
 Test-Suite doctests
-  Type: exitcode-stdio-1.0
-  Hs-Source-Dirs: test
-  Main-Is: Doctests.hs
+  Type:           exitcode-stdio-1.0
+  Hs-source-dirs: test
+  Main-is:        Doctests.hs
   Build-Depends:
     base >=3 && <5,
     primitive,
