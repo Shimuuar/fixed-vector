@@ -527,10 +527,6 @@ toList = foldr (:) []
 
 -- | Create vector form list. List must have same length as the
 --   vector.
-fromList :: forall v a. (Vector v a) => [a] -> v a
+fromList :: (Vector v a) => [a] -> v a
 {-# INLINE fromList #-}
-fromList xs
-  | length r == P.length xs = convert r
-  | otherwise               = error "Data.Vector.Fixed.fromList: bad list length"
-  where
-   r = VecList xs :: VecList (Dim v) a
+fromList = C.vector . C.fromList

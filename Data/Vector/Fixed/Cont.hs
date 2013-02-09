@@ -11,6 +11,7 @@ module Data.Vector.Fixed.Cont (
   , ContVec
     -- * Construction of ContVec
   , cvec
+  , fromList
   , replicate
   , replicateM
   , generate
@@ -84,6 +85,18 @@ instance (Arity n) => Applicative (ContVecT r m n) where
 cvec :: (Vector v a, Dim v ~ n, Monad m) => v a -> ContVecT r m n a
 cvec = ContVecT . inspect
 {-# INLINE[1] cvec #-}
+
+fromList :: forall r m n a. Arity n => [a] -> ContVecT r m n a
+{-# INLINE fromList #-}
+fromList xs = ContVecT $ \(Fun fun) ->
+  apply step
+        (T_flist xs :: T_flist a n)
+        fun
+  where
+    step (T_flist []    ) = error "Data.Vector.Fixed.Cont.fromList: too few elements"
+    step (T_flist (a:as)) = (a, T_flist as)
+
+data T_flist a n = T_flist [a]
 
 
 -- | Execute monadic action for every element of vector.
