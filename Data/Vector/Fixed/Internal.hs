@@ -26,11 +26,6 @@ module Data.Vector.Fixed.Internal (
   , VectorN
   , length
   , Id(..)
-    -- * Deforestation
-    -- $deforestation
-  , Cont(..)
-  , create
-  , inspectV
   ) where
 
 import Data.Complex
@@ -163,59 +158,6 @@ instance Monad Id where
   Id a >>= f = f a
   {-# INLINE return #-}
   {-# INLINE (>>=)  #-}
-
-
-
-----------------------------------------------------------------
--- Fusion
-----------------------------------------------------------------
-
--- $deforestation
---
--- Explicit deforestation is less important for ADT based vectors
--- since GHC is able to eliminate intermediate data structures. But it
--- cannot do so for array-based ones so intermediate vector have to be
--- removed with RULES. Following identity is used. Of course @f@ must
--- be polymorphic in continuation result type.
---
--- > inspect (f construct) g = f g
---
--- But 'construct' function is located somewhere deep in function
--- application stack so it cannot be matched using rule. Function
--- 'create' is needed to move 'construct' to the top.
---
--- As a rule function which are subject to deforestation should be
--- written using 'create' and 'inspectV' functions.
-
-
--- | Continuation with arbitrary result.
-newtype Cont n a = Cont (forall r. Fun n a r -> r)
-
--- | Construct vector. It should be used instead of 'construct' to get
---   deforestation. Example of usage:
---
--- > cont1 $ cont2 $ construct
---
---   becomes
---
--- > create $ Cont $ cont1 . cont2
-create :: (Arity (Dim v), Vector v a) => Cont (Dim v) a -> v a
-{-# INLINE[1] create #-}
-create (Cont f) = f construct
-
--- | Wrapper for 'inspect'. It's inlined later and is needed in order
---   to give deforestation rule chance to fire.
-inspectV :: (Arity (Dim v), Vector v a) => v a -> Fun (Dim v) a b -> b
-{-# INLINE[1] inspectV #-}
-inspectV = inspect
-
-app :: Cont n a -> Fun n a b -> b
-{-# INLINE app #-}
-app (Cont f) g = f g
-
-{-# RULES "inspect/construct"
-      forall f g. inspectV (create f) g = app f g
-  #-}
 
 
 
