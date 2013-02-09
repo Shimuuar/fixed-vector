@@ -366,7 +366,7 @@ foldl1 f = C.runContVec (C.foldl1 f)
 ifoldl :: Vector v a => (b -> Int -> a -> b) -> b -> v a -> b
 {-# INLINE ifoldl #-}
 ifoldl f z = C.runContVec (C.ifoldl f z)
-           . C.cvec  
+           . C.cvec
 
 -- | Left monadic fold over vector. Function is applied to each element and
 --   its index.
@@ -517,7 +517,7 @@ zipWithM :: (Vector v a, Vector v b, Vector v c, Monad m)
          => (a -> b -> m c) -> v a -> v b -> m (v c)
 {-# INLINE zipWithM #-}
 zipWithM f v u = C.vectorM
-               $ C.zipWithM f (C.cvec v) (C.cvec u)  
+               $ C.zipWithM f (C.cvec v) (C.cvec u)
 
 -- | Zip two vector together using function which takes element index
 --   as well.
@@ -533,7 +533,7 @@ izipWithM :: (Vector v a, Vector v b, Vector v c, Monad m)
           => (Int -> a -> b -> m c) -> v a -> v b -> m (v c)
 {-# INLINE izipWithM #-}
 izipWithM f v u = C.vectorM
-                $ C.izipWithM f (C.cvec v) (C.cvec u)  
+                $ C.izipWithM f (C.cvec v) (C.cvec u)
 
 
 ----------------------------------------------------------------
@@ -546,7 +546,7 @@ convert = C.vector . C.cvec
 -- | Convert vector to the list
 toList :: (Vector v a) => v a -> [a]
 toList v
-  = case inspectV v construct of VecList xs -> xs
+  = case inspect v construct of VecList xs -> xs
 
 -- | Create vector form list. List must have same length as the
 --   vector.

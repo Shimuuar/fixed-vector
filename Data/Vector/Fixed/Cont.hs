@@ -253,7 +253,7 @@ runContVecM :: Arity n
             -> m r
 runContVecM f (ContVecT c) = c f
 {-# INLINE runContVecM #-}
-  
+
 runContVec :: Arity n
            => Fun n a r
            -> ContVec r n a
