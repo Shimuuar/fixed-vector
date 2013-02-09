@@ -4,6 +4,7 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE Rank2Types            #-}
 -- |
 -- Continuations-based API
 module Data.Vector.Fixed.Cont (
@@ -91,16 +92,16 @@ type N6 = S N5
 ----------------------------------------------------------------
 
 -- | Vector as continuation.
-newtype ContVecT r m n a = ContVecT (Fun n a (m r) -> m r)
+newtype ContVecT m n a = ContVecT (forall r. Fun n a (m r) -> m r)
 
 -- | Vector as continuation without monadic context
-type ContVec r = ContVecT r Id
+type ContVec = ContVecT Id
 
-instance (Arity n) => Functor (ContVecT r m n) where
+instance (Arity n) => Functor (ContVecT m n) where
   fmap = map
   {-# INLINE fmap #-}
 
-instance (Arity n) => Applicative (ContVecT r m n) where
+instance (Arity n) => Applicative (ContVecT m n) where
   pure  = replicate
   (<*>) = zipWith ($)
   {-# INLINE pure  #-}
@@ -113,11 +114,11 @@ instance (Arity n) => Applicative (ContVecT r m n) where
 ----------------------------------------------------------------
 
 -- | Convert regular vector to continuation
-cvec :: (Vector v a, Dim v ~ n, Monad m) => v a -> ContVecT r m n a
-cvec = ContVecT . inspect
+cvec :: (Vector v a, Dim v ~ n, Monad m) => v a -> ContVecT m n a
+cvec v = ContVecT (inspect v)
 {-# INLINE[1] cvec #-}
 
-fromList :: forall r m n a. Arity n => [a] -> ContVecT r m n a
+fromList :: forall m n a. Arity n => [a] -> ContVecT m n a
 {-# INLINE fromList #-}
 fromList xs = ContVecT $ \(Fun fun) ->
   apply step
@@ -131,8 +132,8 @@ data T_flist a n = T_flist [a]
 
 
 -- | Execute monadic action for every element of vector.
-replicate :: forall r m n a. (Arity n)
-          => a -> ContVecT r m n a
+replicate :: forall m n a. (Arity n)
+          => a -> ContVecT m n a
 {-# INLINE replicate #-}
 replicate a = ContVecT $ \(Fun fun) ->
   apply (\T_replicate -> (a, T_replicate))
@@ -140,8 +141,8 @@ replicate a = ContVecT $ \(Fun fun) ->
         fun
 
 -- | Execute monadic action for every element of vector.
-replicateM :: forall r m n a. (Arity n, Monad m)
-           => m a -> ContVecT r m n a
+replicateM :: forall m n a. (Arity n, Monad m)
+           => m a -> ContVecT m n a
 {-# INLINE replicateM #-}
 replicateM act = ContVecT $ \(Fun fun) ->
   applyM (\T_replicate -> do { a <- act; return (a, T_replicate) } )
@@ -151,26 +152,26 @@ replicateM act = ContVecT $ \(Fun fun) ->
 data T_replicate n = T_replicate
 
 
-generate :: forall r m n a. (Arity n) => (Int -> a) -> ContVecT r m n a
+generate :: forall m n a. (Arity n) => (Int -> a) -> ContVecT m n a
 {-# INLINE generate #-}
 generate f = ContVecT $ \(Fun fun) ->
   apply (\(T_generate n) -> (f n, T_generate (n + 1)))
         (T_generate 0 :: T_generate n)
-        (fun :: Fn n a (m r))
+         fun
 
-generateM :: forall m n a r. (Monad m, Arity n)
-           => (Int -> m a) -> ContVecT r m n a
+generateM :: forall m n a. (Monad m, Arity n)
+           => (Int -> m a) -> ContVecT m n a
 {-# INLINE generateM #-}
 generateM f = ContVecT $ \(Fun fun) ->
   applyM (\(T_generate n) -> do { a <- f n; return (a, T_generate (n + 1)) } )
          (T_generate 0 :: T_generate n)
-         (fun :: Fn n a (m r))
+          fun
 
 newtype T_generate n = T_generate Int
 
 newtype T_basis n = T_basis Int
 
-basis :: forall r m n a. (Num a, Arity n) => Int -> ContVecT r m n a
+basis :: forall m n a. (Num a, Arity n) => Int -> ContVecT m n a
 {-# INLINE basis #-}
 basis n0 = ContVecT $ \(Fun fun) ->
   apply (\(T_basis n) -> ((if n == 0 then 1 else 0) :: a, T_basis (n - 1)))
@@ -178,23 +179,23 @@ basis n0 = ContVecT $ \(Fun fun) ->
         fun
 
 
-mk1 :: a -> ContVecT r m N1 a
+mk1 :: a -> ContVecT m N1 a
 mk1 a1 = ContVecT $ \(Fun f) -> f a1
 {-# INLINE mk1 #-}
 
-mk2 :: a -> a -> ContVecT r m N2 a
+mk2 :: a -> a -> ContVecT m N2 a
 mk2 a1 a2 = ContVecT $ \(Fun f) -> f a1 a2
 {-# INLINE mk2 #-}
 
-mk3 :: a -> a -> a -> ContVecT r m N3 a
+mk3 :: a -> a -> a -> ContVecT m N3 a
 mk3 a1 a2 a3 = ContVecT $ \(Fun f) -> f a1 a2 a3
 {-# INLINE mk3 #-}
 
-mk4 :: a -> a -> a -> a -> ContVecT r m N4 a
+mk4 :: a -> a -> a -> a -> ContVecT m N4 a
 mk4 a1 a2 a3 a4 = ContVecT $ \(Fun f) -> f a1 a2 a3 a4
 {-# INLINE mk4 #-}
 
-mk5 :: a -> a -> a -> a -> a -> ContVecT r m N5 a
+mk5 :: a -> a -> a -> a -> a -> ContVecT m N5 a
 mk5 a1 a2 a3 a4 a5 = ContVecT $ \(Fun f) -> f a1 a2 a3 a4 a5
 {-# INLINE mk5 #-}
 
@@ -203,24 +204,20 @@ mk5 a1 a2 a3 a4 a5 = ContVecT $ \(Fun f) -> f a1 a2 a3 a4 a5
 -- Transforming vectors
 ----------------------------------------------------------------
 
-map :: forall r m n a b. (Arity n)
-     => (a -> b) -> ContVecT r m n a -> ContVecT r m n b
+map :: (Arity n) => (a -> b) -> ContVecT m n a -> ContVecT m n b
 {-# INLINE map #-}
 map = imap . const
 
-imap :: forall r m n a b. (Arity n)
-     => (Int -> a -> b) -> ContVecT r m n a -> ContVecT r m n b
+imap :: (Arity n) => (Int -> a -> b) -> ContVecT m n a -> ContVecT m n b
 {-# INLINE imap #-}
 imap f (ContVecT contA) = ContVecT $
   contA . imapF f
 
-mapM :: forall r m n a b. (Arity n, Monad m)
-     => (a -> m b) -> ContVecT r m n a -> ContVecT r m n b
+mapM :: (Arity n, Monad m) => (a -> m b) -> ContVecT m n a -> ContVecT m n b
 {-# INLINE mapM #-}
 mapM = imapM . const
 
-imapM :: forall r m n a b. (Arity n, Monad m)
-     => (Int -> a -> m b) -> ContVecT r m n a -> ContVecT r m n b
+imapM :: (Arity n, Monad m) => (Int -> a -> m b) -> ContVecT m n a -> ContVecT m n b
 {-# INLINE imapM #-}
 imapM f (ContVecT contA) = ContVecT $
   contA . imapFM f
@@ -247,43 +244,39 @@ data T_map a r n = T_map Int (Fn n a r)
 
 
 -- | Get tail
-tail :: ContVecT r m (S n) a
-     -> ContVecT r m n a
+tail :: ContVecT m (S n) a
+     -> ContVecT m n a
 tail (ContVecT cont) = ContVecT $ \(Fun f) -> cont (Fun $ \_ -> f)
 {-# INLINE tail #-}
 
 -- | /O(1)/ Prepend element to vector
-cons :: a -> ContVecT r m n a -> ContVecT r m (S n) a
+cons :: a -> ContVecT m n a -> ContVecT m (S n) a
 {-# INLINE cons #-}
 cons a (ContVecT cont) = ContVecT $ \(Fun f) -> cont $ Fun $ f a
 
 -- | Zip two vector together using function.
-zipWith :: forall a b c m r n. (Arity n)
-        => (a -> b -> c)
-        -> ContVecT r m n a -> ContVecT r m n b -> ContVecT r m n c
+zipWith :: (Arity n) => (a -> b -> c)
+        -> ContVecT m n a -> ContVecT m n b -> ContVecT m n c
 {-# INLINE zipWith #-}
 zipWith = izipWith . const
 
 -- | Zip two vector together using function which takes element index
 --   as well.
-izipWith :: forall a b c m r n. (Arity n)
-         => (Int -> a -> b -> c)
-         -> ContVecT r m n a -> ContVecT r m n b -> ContVecT r m n c
+izipWith :: (Arity n) => (Int -> a -> b -> c)
+         -> ContVecT m n a -> ContVecT m n b -> ContVecT m n c
 {-# INLINE izipWith #-}
 izipWith f (ContVecT contA) (ContVecT contB) = ContVecT $ \funC ->
   contA $ fmap contB $ izipWithF f funC
 
 -- | Zip two vector together using monadic function.
-zipWithM :: forall a b c m r n. (Arity n, Monad m)
-         => (a -> b -> m c)
-         -> ContVecT r m n a -> ContVecT r m n b -> ContVecT r m n c
+zipWithM :: (Arity n, Monad m) => (a -> b -> m c)
+         -> ContVecT m n a -> ContVecT m n b -> ContVecT m n c
 zipWithM = izipWithM . const
 
 -- | Zip two vector together using monadic function which takes element
 --   index as well..
-izipWithM :: forall a b c m r n. (Arity n, Monad m)
-          => (Int -> a -> b -> m c)
-          -> ContVecT r m n a -> ContVecT r m n b -> ContVecT r m n c
+izipWithM :: (Arity n, Monad m) => (Int -> a -> b -> m c)
+          -> ContVecT m n a -> ContVecT m n b -> ContVecT m n c
 {-# INLINE izipWithM #-}
 izipWithM f (ContVecT contA) (ContVecT contB) = ContVecT $ \funC ->
   contA $ fmap contB $ izipWithFM f funC
@@ -324,32 +317,32 @@ data T_izip a c r n = T_izip Int (VecList n a) (Fn n c r)
 
 runContVecT :: (Monad m, Arity n)
             => Fun n a r
-            -> ContVecT r m n a
+            -> ContVecT m n a
             -> m r
 runContVecT f (ContVecT c) = c $ fmap return f
 {-# INLINE runContVecT #-}
 
 runContVecM :: Arity n
             => Fun n a (m r)
-            -> ContVecT r m n a
+            -> ContVecT m n a
             -> m r
 runContVecM f (ContVecT c) = c f
 {-# INLINE runContVecM #-}
 
 runContVec :: Arity n
            => Fun n a r
-           -> ContVec r n a
+           -> ContVec n a
            -> r
 runContVec f (ContVecT c) = runID $ c (fmap return f)
 {-# INLINE runContVec #-}
 
 -- | Convert continuation to the vector.
-vector :: (Vector v a, Dim v ~ n) => ContVec (v a) n a -> v a
+vector :: (Vector v a, Dim v ~ n) => ContVec n a -> v a
 vector = runContVec construct
 {-# INLINE[1] vector #-}
 
 -- | Convert continuation to the vector.
-vectorM :: (Vector v a, Dim v ~ n, Monad m) => ContVecT (v a) m n a -> m (v a)
+vectorM :: (Vector v a, Dim v ~ n, Monad m) => ContVecT m n a -> m (v a)
 vectorM = runContVecT construct
 {-# INLINE[1] vectorM #-}
 
