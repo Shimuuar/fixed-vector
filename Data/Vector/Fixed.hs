@@ -79,11 +79,11 @@ module Data.Vector.Fixed (
   , toList
   , fromList
     -- * Special types
-  , VecList(..)
+  , VecList
   ) where
 
 import Data.Vector.Fixed.Internal
-import Data.Vector.Fixed.Cont     (VecList(..))
+import Data.Vector.Fixed.Cont     (VecList)
 import qualified Data.Vector.Fixed.Cont as C
 
 import qualified Prelude as P
