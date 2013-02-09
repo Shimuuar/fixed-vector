@@ -21,6 +21,7 @@ module Data.Vector.Fixed.Cont (
   , mapM
   , imapM
   , tail
+  , cons
     -- ** Zips
   , zipWith
   , izipWith
@@ -176,6 +177,11 @@ tail :: ContVecT r m (S n) a
      -> ContVecT r m n a
 tail (ContVecT cont) = ContVecT $ \(Fun f) -> cont (Fun $ \_ -> f)
 {-# INLINE tail #-}
+
+-- | /O(1)/ Prepend element to vector
+cons :: a -> ContVecT r m n a -> ContVecT r m (S n) a
+{-# INLINE cons #-}
+cons a (ContVecT cont) = ContVecT $ \(Fun f) -> cont $ Fun $ f a
 
 -- | Zip two vector together using function.
 zipWith :: forall a b c m r n. (Arity n)
