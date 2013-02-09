@@ -46,6 +46,7 @@ module Data.Vector.Fixed.Cont (
   , runContVecT
   , runContVecM
   , runContVec
+  , head
     -- ** Vector construction
   , vector
   , vectorM
@@ -341,6 +342,14 @@ vector = runContVec construct
 vectorM :: (Vector v a, Dim v ~ n, Monad m) => ContVecT (v a) m n a -> m (v a)
 vectorM = runContVecT construct
 {-# INLINE[1] vectorM #-}
+
+head :: forall n a. Arity (S n) => Fun (S n) a a
+head = Fun $ accum (\(T_head m) a -> T_head $ case m of { Nothing -> Just a; x -> x })
+                   (\(T_head (Just x)) -> x)
+                   (T_head Nothing :: T_head a (S n))
+
+data T_head a n = T_head (Maybe a)
+
 
 
 foldl :: forall n a b. Arity n

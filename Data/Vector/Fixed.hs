@@ -276,15 +276,7 @@ generateM = C.vectorM . C.generateM
 --
 head :: (Vector v a, Dim v ~ S n) => v a -> a
 {-# INLINE head #-}
-head v = inspectV v
-       $ headF
-
-data T_head a n = T_head (Maybe a)
-
-headF :: forall n a. Arity (S n) => Fun (S n) a a
-headF = Fun $ accum (\(T_head m) a -> T_head $ case m of { Nothing -> Just a; x -> x })
-                    (\(T_head (Just x)) -> x)
-                    (T_head Nothing :: T_head a (S n))
+head = C.runContVec C.head . C.cvec
 
 
 ----------------------------------------------------------------
