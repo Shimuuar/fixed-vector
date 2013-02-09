@@ -24,6 +24,7 @@ module Data.Vector.Fixed.Cont (
   , replicateM
   , generate
   , generateM
+  , basis
     -- ** Constructors
   , mk1
   , mk2
@@ -166,6 +167,15 @@ generateM f = ContVecT $ \(Fun fun) ->
          (fun :: Fn n a (m r))
 
 newtype T_generate n = T_generate Int
+
+newtype T_basis n = T_basis Int
+
+basis :: forall r m n a. (Num a, Arity n) => Int -> ContVecT r m n a
+{-# INLINE basis #-}
+basis n0 = ContVecT $ \(Fun fun) ->
+  apply (\(T_basis n) -> ((if n == 0 then 1 else 0) :: a, T_basis (n - 1)))
+        (T_basis n0 :: T_basis n)
+        fun
 
 
 mk1 :: a -> ContVecT r m N1 a
