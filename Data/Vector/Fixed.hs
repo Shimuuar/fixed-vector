@@ -51,7 +51,6 @@ module Data.Vector.Fixed (
     -- ** Element access
   , head
   , tail
-  , (!)
     -- ** Comparison
   , eq
     -- ** Map
@@ -295,33 +294,6 @@ tail :: (Vector v a, Vector w a, Dim v ~ S (Dim w))
 {-# INLINE tail #-}
 tail = C.vector . C.tail . C.cvec
 
-
-
-----------------------------------------------------------------
-
--- | /O(n)/ Get vector's element at index i.
-(!) :: (Vector v a) => v a -> Int -> a
-{-# INLINE (!) #-}
-v ! i = inspectV v
-      $ elemF i
-
-newtype T_Elem a n = T_Elem (Either Int a)
-
-elemF :: forall n a. Arity n => Int -> Fun n a a
-elemF n
-  -- This is needed because of possible underflow during subtraction
-  | n < 0     = error "Data.Vector.Fixed.!: index out of range"
-  | otherwise = Fun $ accum
-     (\(T_Elem x) a -> T_Elem $ case x of
-                         Left  0 -> Right a
-                         Left  i -> Left (i - 1)
-                         r       -> r
-     )
-     (\(T_Elem x) -> case x of
-                       Left  _ -> error "Data.Vector.Fixed.!: index out of range"
-                       Right a -> a
-     )
-     ( T_Elem (Left n) :: T_Elem a n)
 
 
 ----------------------------------------------------------------
