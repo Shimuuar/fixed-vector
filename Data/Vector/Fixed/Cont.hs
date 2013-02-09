@@ -36,7 +36,9 @@ module Data.Vector.Fixed.Cont (
     -- ** Folds
   , foldl
   , foldl1
+  , foldr
   , ifoldl
+  , ifoldr
   , foldM
   , ifoldM
     -- * Data types
@@ -46,7 +48,7 @@ module Data.Vector.Fixed.Cont (
 import Control.Applicative
 import Data.Vector.Fixed.Internal
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum
-                      , foldl,foldl1,length,sum
+                      , foldl,foldr,foldl1,length,sum
                       , head,tail,mapM,mapM_,sequence,sequence_
                       )
 
@@ -316,6 +318,24 @@ foldl1 f = Fun $ accum (\(T_foldl1 r) a -> T_foldl1 $ Just $ maybe a (flip f a) 
                        (\(T_foldl1 (Just x)) -> x)
                        (T_foldl1 Nothing :: T_foldl1 a (S n))
 
+
+-- | Right fold over continuation vector
+foldr :: forall n a b. Arity n
+      => (a -> b -> b) -> b -> Fun n a b
+{-# INLINE foldr #-}
+foldr = ifoldr . const
+
+-- | Right fold over continuation vector
+ifoldr :: forall n a b. Arity n
+      => (Int -> a -> b -> b) -> b -> Fun n a b
+{-# INLINE ifoldr #-}
+ifoldr f z = Fun $
+  accum (\(T_ifoldr i g) a -> T_ifoldr (i+1) (g . f i a))
+        (\(T_ifoldr _ g)   -> g z)
+        (T_ifoldr 0 id :: T_ifoldr b n)
+
+
+data T_ifoldr b n = T_ifoldr Int (b -> b)
 
 
 

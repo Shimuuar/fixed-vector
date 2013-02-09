@@ -61,9 +61,11 @@ module Data.Vector.Fixed (
   , sequence_
     -- ** Folding
   , foldl
+  , foldr
   , foldl1
-  , foldM
   , ifoldl
+  , ifoldr
+  , foldM
   , ifoldM
     -- *** Special folds
   , sum
@@ -88,7 +90,7 @@ import qualified Data.Vector.Fixed.Cont as C
 
 import qualified Prelude as P
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum
-                      , foldl,foldl1,length,sum
+                      , foldl,foldr,foldl1,length,sum
                       , head,tail,mapM,mapM_,sequence,sequence_
                       )
 
@@ -346,13 +348,11 @@ foldl :: Vector v a => (b -> a -> b) -> b -> v a -> b
 foldl f x = C.runContVec (C.foldl f x)
           . C.cvec
 
--- | Monadic fold over vector.
-foldM :: (Vector v a, Monad m) => (b -> a -> m b) -> b -> v a -> m b
-{-# INLINE foldM #-}
-foldM f x v = foldl go (return x) v
-  where
-    go m a = do b <- m
-                f b a
+-- | Left fold over vector
+foldr :: Vector v a => (a -> b -> b) -> b -> v a -> b
+{-# INLINE foldr #-}
+foldr f x = C.runContVec (C.foldr f x)
+          . C.cvec
 
 -- | Left fold over vector
 foldl1 :: (Vector v a, Dim v ~ S n) => (a -> a -> a) -> v a -> a
@@ -360,6 +360,11 @@ foldl1 :: (Vector v a, Dim v ~ S n) => (a -> a -> a) -> v a -> a
 foldl1 f = C.runContVec (C.foldl1 f)
          . C.cvec
 
+-- | Left fold over vector
+ifoldr :: Vector v a => (Int -> a -> b -> b) -> b -> v a -> b
+{-# INLINE ifoldr #-}
+ifoldr f x = C.runContVec (C.ifoldr f x)
+           . C.cvec
 
 -- | Left fold over vector. Function is applied to each element and
 --   its index.
@@ -367,6 +372,14 @@ ifoldl :: Vector v a => (b -> Int -> a -> b) -> b -> v a -> b
 {-# INLINE ifoldl #-}
 ifoldl f z = C.runContVec (C.ifoldl f z)
            . C.cvec
+
+-- | Monadic fold over vector.
+foldM :: (Vector v a, Monad m) => (b -> a -> m b) -> b -> v a -> m b
+{-# INLINE foldM #-}
+foldM f x v = foldl go (return x) v
+  where
+    go m a = do b <- m
+                f b a
 
 -- | Left monadic fold over vector. Function is applied to each element and
 --   its index.
@@ -545,8 +558,7 @@ convert = C.vector . C.cvec
 
 -- | Convert vector to the list
 toList :: (Vector v a) => v a -> [a]
-toList v
-  = case inspect v construct of VecList xs -> xs
+toList = foldr (:) []
 
 -- | Create vector form list. List must have same length as the
 --   vector.
