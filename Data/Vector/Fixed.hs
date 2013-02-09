@@ -30,7 +30,6 @@ module Data.Vector.Fixed (
   , Arity
   , Fun(..)
   , length
-  , convertContinuation
     -- * Generic functions
     -- ** Literal vectors
   , New
@@ -46,7 +45,6 @@ module Data.Vector.Fixed (
     -- ** Element access
   , head
   , tail
-  , tailWith
   , (!)
     -- ** Comparison
   , eq
@@ -106,15 +104,6 @@ type N3 = S N2
 type N4 = S N3
 type N5 = S N4
 type N6 = S N5
-
--- | Change continuation type.
-convertContinuation :: forall n a r. (Arity n)
-                    => (forall v. (Dim v ~ n, Vector v a) => v a -> r)
-                    -> Fun n a r
-{-# INLINE convertContinuation #-}
-convertContinuation f = fmap f g
-  where
-    g = construct :: Fun n a (VecList n a)
 
 
 -- TODO: does not fuse!
@@ -287,31 +276,7 @@ tail :: (Vector v a, Vector w a, Dim v ~ S (Dim w))
 {-# INLINE tail #-}
 tail = C.vector . C.tail . C.cvec
 
-tailF :: Arity n => Fun n a b -> Fun (S n) a b
-{-# INLINE tailF #-}
-tailF (Fun f) = Fun (\_ -> f)
 
--- | Continuation variant of tail. It should be used when tail of
---   vector is immediately deconstructed with polymorphic
---   function. For example @'sum' . 'tail'@ will fail with unhelpful
---   error message because return value of @tail@ is polymorphic. But
---   @'tailWith' 'sum'@ works just fine.
---
---   Examples:
---
---   >>> import Data.Vector.Fixed.Boxed (Vec3)
---   >>> let x = vec $ con |> 1 |> 2 |> 3 :: Vec3 Int
---   >>> tailWith sum x
---   5
---
-tailWith :: (Arity n, Vector v a, Dim v ~ S n)
-         => (forall w. (Vector w a, Dim w ~ n) => w a -> r) -- ^ Continuation
-         -> v a                                             -- ^ Vector
-         -> r
-{-# INLINE tailWith #-}
-tailWith f v = inspectV v
-             $ tailF
-             $ convertContinuation f
 
 ----------------------------------------------------------------
 
