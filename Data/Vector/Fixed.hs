@@ -69,6 +69,10 @@ module Data.Vector.Fixed (
   , sum
   , maximum
   , minimum
+  , and
+  , or
+  , all
+  , any
     -- ** Zips
   , zipWith
   , zipWithM
@@ -87,7 +91,7 @@ import Data.Vector.Fixed.Cont     (VecList)
 import qualified Data.Vector.Fixed.Cont as C
 
 import qualified Prelude as P
-import Prelude hiding ( replicate,map,zipWith,maximum,minimum
+import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
                       , foldl,foldr,foldl1,length,sum
                       , head,tail,mapM,mapM_,sequence,sequence_
                       )
@@ -360,8 +364,8 @@ ifoldM f x v = ifoldl go (return x) v
 
 -- | Sum all elements in the vector
 sum :: (Vector v a, Num a) => v a -> a
+sum = C.runContVec C.sum . C.cvec
 {-# INLINE sum #-}
-sum = foldl (+) 0
 
 -- | Maximum element of vector
 --
@@ -373,8 +377,8 @@ sum = foldl (+) 0
 --   3
 --
 maximum :: (Vector v a, Dim v ~ S n, Ord a) => v a -> a
+maximum = C.runContVec C.maximum . C.cvec
 {-# INLINE maximum #-}
-maximum = foldl1 max
 
 -- | Minimum element of vector
 --
@@ -386,8 +390,24 @@ maximum = foldl1 max
 --   1
 --
 minimum :: (Vector v a, Dim v ~ S n, Ord a) => v a -> a
+minimum = C.runContVec C.minimum . C.cvec
 {-# INLINE minimum #-}
-minimum = foldl1 min
+
+and :: (Vector v Bool) => v Bool -> Bool
+and = C.runContVec C.and . C.cvec
+{-# INLINE and #-}
+
+or :: (Vector v Bool) => v Bool -> Bool
+or = C.runContVec C.or . C.cvec
+{-# INLINE or #-}
+
+all :: (Vector v a) => (a -> Bool) -> v a -> Bool
+all f = C.runContVec (C.all f) . C.cvec
+{-# INLINE all #-}
+
+any :: (Vector v a) => (a -> Bool) -> v a -> Bool
+any f = C.runContVec (C.any f) . C.cvec
+{-# INLINE any #-}
 
 
 ----------------------------------------------------------------

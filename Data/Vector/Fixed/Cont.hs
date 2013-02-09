@@ -1,3 +1,4 @@
+{-# LANGUAGE NoMonomorphismRestriction #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE FlexibleContexts      #-}
@@ -43,13 +44,21 @@ module Data.Vector.Fixed.Cont (
   , ifoldr
   , foldM
   , ifoldM
+    -- *** Special folds
+  , sum
+  , minimum
+  , maximum
+  , and
+  , or
+  , all
+  , any
     -- * Data types
-  , VecList(..) -- FIXME: unsafe
+  , VecList
   ) where
 
 import Control.Applicative
 import Data.Vector.Fixed.Internal
-import Prelude hiding ( replicate,map,zipWith,maximum,minimum
+import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,any,all
                       , foldl,foldr,foldl1,length,sum
                       , head,tail,mapM,mapM_,sequence,sequence_
                       )
@@ -357,7 +366,33 @@ ifoldr f z = Fun $
 data T_ifoldr b n = T_ifoldr Int (b -> b)
 
 
+sum :: (Num a, Arity n) => Fun n a a
+sum = foldl (+) 0
+{-# INLINE sum #-}
 
+minimum :: (Ord a, Arity (S n)) => Fun (S n) a a
+minimum = foldl1 min
+{-# INLINE minimum #-}
+
+maximum :: (Ord a, Arity (S n)) => Fun (S n) a a
+maximum = foldl1 max
+{-# INLINE maximum #-}
+
+and :: Arity n => Fun n Bool Bool
+and = foldr (&&) True
+{-# INLINE and #-}
+
+or :: Arity n => Fun n Bool Bool
+or = foldr (||) False
+{-# INLINE or #-}
+
+all :: Arity n => (a -> Bool) -> Fun n a Bool
+all f = foldr (\x b -> f x && b) True
+{-# INLINE all #-}
+
+any :: Arity n => (a -> Bool) -> Fun n a Bool
+any f = foldr (\x b -> f x && b) True
+{-# INLINE any #-}
 
 ----------------------------------------------------------------
 -- VecList
