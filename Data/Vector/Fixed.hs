@@ -84,6 +84,7 @@ module Data.Vector.Fixed (
 
 import Data.Vector.Fixed.Internal
 import Data.Vector.Fixed.Cont     (VecList(..))
+import qualified Data.Vector.Fixed.Cont as C
 
 import qualified Prelude as P
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum
@@ -173,16 +174,8 @@ f2n (Fun f) = New f
 --
 replicate :: Vector v a => a -> v a
 {-# INLINE replicate #-}
-replicate x = create $ Cont
-            $ replicateF x
-
-data T_replicate n = T_replicate
-
-replicateF :: forall n a b. Arity n => a -> Fun n a b -> b
-replicateF x (Fun h)
-  = apply (\T_replicate -> (x, T_replicate))
-          (T_replicate :: T_replicate n)
-          h
+replicate
+  = C.vector . C.replicate
 
 -- | Execute monadic action for every element of vector.
 --
@@ -198,13 +191,9 @@ replicateF x (Fun h)
 --
 replicateM :: (Vector v a, Monad m) => m a -> m (v a)
 {-# INLINE replicateM #-}
-replicateM x = replicateFM x construct
+replicateM
+  = C.vectorM . C.replicateM
 
-replicateFM :: forall m n a b. (Monad m, Arity n) => m a -> Fun n a b -> m b
-replicateFM act (Fun h)
-  = applyM (\T_replicate -> do { a <- act; return (a, T_replicate) } )
-           (T_replicate :: T_replicate n)
-           h
 
 
 ----------------------------------------------------------------
@@ -247,27 +236,13 @@ basisF n0 (Fun f)
 --
 generate :: forall v a. (Vector v a) => (Int -> a) -> v a
 {-# INLINE generate #-}
-generate f = create $ Cont
-           $ generateF f
-
-newtype T_generate n = T_generate Int
-
-generateF :: forall n a b. (Arity n) => (Int -> a) -> Fun n a b -> b
-generateF g (Fun f)
-  = apply (\(T_generate n) -> (g n, T_generate (n + 1)))
-          (T_generate 0 :: T_generate n)
-          f
+generate = C.vector . C.generate
 
 -- | Monadic generation
 generateM :: forall m v a. (Monad m, Vector v a) => (Int -> m a) -> m (v a)
 {-# INLINE generateM #-}
-generateM f = generateFM f construct
+generateM = C.vectorM . C.generateM
 
-generateFM :: forall m n a b. (Monad m, Arity n) => (Int -> m a) -> Fun n a b -> m b
-generateFM g (Fun f)
-  = applyM (\(T_generate n) -> do { a <- g n; return (a, T_generate (n + 1)) } )
-           (T_generate 0 :: T_generate n)
-           f
 
 
 ----------------------------------------------------------------
@@ -308,9 +283,7 @@ headF = Fun $ accum (\(T_head m) a -> T_head $ case m of { Nothing -> Just a; x 
 tail :: (Vector v a, Vector w a, Dim v ~ S (Dim w))
      => v a -> w a
 {-# INLINE tail #-}
-tail v = create $ Cont
-       $ inspectV v
-       . tailF
+tail = C.vector . C.tail . C.cvec
 
 tailF :: Arity n => Fun n a b -> Fun (S n) a b
 {-# INLINE tailF #-}
@@ -370,8 +343,8 @@ elemF n
 -- | Left fold over vector
 foldl :: Vector v a => (b -> a -> b) -> b -> v a -> b
 {-# INLINE foldl #-}
-foldl f z v = inspectV v
-            $ foldlF f z
+foldl f x = C.runContVec (C.foldl f x)
+          . C.cvec
 
 -- | Monadic fold over vector.
 foldM :: (Vector v a, Monad m) => (b -> a -> m b) -> b -> v a -> m b
@@ -381,46 +354,19 @@ foldM f x v = foldl go (return x) v
     go m a = do b <- m
                 f b a
 
-
-newtype T_foldl b n = T_foldl b
-
-foldlF :: forall n a b. Arity n => (b -> a -> b) -> b -> Fun n a b
-{-# INLINE foldlF #-}
-foldlF f b = Fun $ accum (\(T_foldl r) a -> T_foldl (f r a))
-                         (\(T_foldl r) -> r)
-                         (T_foldl b :: T_foldl b n)
-
 -- | Left fold over vector
 foldl1 :: (Vector v a, Dim v ~ S n) => (a -> a -> a) -> v a -> a
 {-# INLINE foldl1 #-}
-foldl1 f v = inspectV v
-           $ foldl1F f
-
-
--- Implementation of foldl1F is particularly ugly. It could be
--- expressed in terms of foldlF:
---
--- > foldl1F f = Fun $ \a -> case foldlF f a :: Fun n a a of Fun g -> g
---
--- But it require constraint `Arity n` whereas foldl1 provide
--- Arity (S n). Latter imply former but GHC cannot infer it. So it
--- 'Arity n' begin to propagate through contexts. It's not acceptable.
-
-newtype T_foldl1 a n = T_foldl1 (Maybe a)
-
-foldl1F :: forall n a. (Arity (S n)) => (a -> a -> a) -> Fun (S n) a a
-{-# INLINE foldl1F #-}
-foldl1F f = Fun $ accum (\(T_foldl1 r) a -> T_foldl1 $ Just $ maybe a (flip f a) r)
-                        (\(T_foldl1 (Just x)) -> x)
-                        (T_foldl1 Nothing :: T_foldl1 a (S n))
+foldl1 f = C.runContVec (C.foldl1 f)
+         . C.cvec
 
 
 -- | Left fold over vector. Function is applied to each element and
 --   its index.
 ifoldl :: Vector v a => (b -> Int -> a -> b) -> b -> v a -> b
 {-# INLINE ifoldl #-}
-ifoldl f z v = inspectV v
-             $ ifoldlF f z
+ifoldl f z = C.runContVec (C.ifoldl f z)
+           . C.cvec  
 
 -- | Left monadic fold over vector. Function is applied to each element and
 --   its index.
@@ -429,15 +375,6 @@ ifoldM :: (Vector v a, Monad m) => (b -> Int -> a -> m b) -> b -> v a -> m b
 ifoldM f x v = ifoldl go (return x) v
   where
     go m i a = do { b <- m; f b i a }
-
-data T_ifoldl b n = T_ifoldl {-# UNPACK #-} !Int b
-
-ifoldlF :: forall n a b. Arity n => (b -> Int -> a -> b) -> b -> Fun n a b
-{-# INLINE ifoldlF #-}
-ifoldlF f b = Fun $
-    accum (\(T_ifoldl i r) a -> T_ifoldl (i + 1) (f r i a))
-          (\(T_ifoldl _ r) -> r)
-          (T_ifoldl 0 b :: T_ifoldl b n)
 
 
 
@@ -491,21 +428,18 @@ minimum = foldl1 min
 --
 eq :: (Vector v a, Eq a) => v a -> v a -> Bool
 {-# INLINE eq #-}
-eq v w = inspectV w
-       $ inspectV v
-       $ fmap (fmap runID)
-       $ izipWithFM (\_ a b -> return (a == b))
-       $ foldlF (&&) True
+eq v w = C.runContVec (C.foldl (&&) True)
+       $ C.zipWith (==) (C.cvec v) (C.cvec w)
+
 
 ----------------------------------------------------------------
 
 -- | Map over vector
 map :: (Vector v a, Vector v b) => (a -> b) -> v a -> v b
 {-# INLINE map #-}
-map f v = create $ Cont
-        $ inspectV v
-        . fmap runID
-        . mapFM (return . f)
+map f = C.vector
+      . C.map f
+      . C.cvec
 
 -- | Evaluate every action in the vector from left to right.
 sequence :: (Vector v a, Vector v (m a), Monad m) => v (m a) -> m (v a)
@@ -521,9 +455,9 @@ sequence_ = mapM_ id
 -- | Monadic map over vector.
 mapM :: (Vector v a, Vector v b, Monad m) => (a -> m b) -> v a -> m (v b)
 {-# INLINE mapM #-}
-mapM f v = inspectV v
-         $ mapFM f
-         $ construct
+mapM f = C.vectorM
+       . C.mapM f
+       . C.cvec
 
 -- | Apply monadic action to each element of vector and ignore result.
 mapM_ :: (Vector v a, Monad m) => (a -> m b) -> v a -> m ()
@@ -531,50 +465,27 @@ mapM_ :: (Vector v a, Monad m) => (a -> m b) -> v a -> m ()
 mapM_ f = foldl (\m a -> m >> f a >> return ()) (return ())
 
 
-newtype T_map b c n = T_map (Fn n b c)
-
-mapFM :: forall m n a b c. (Arity n, Monad m) => (a -> m b) -> Fun n b c -> Fun n a (m c)
-{-# INLINE mapFM #-}
-mapFM f (Fun h) = Fun $ accumM (\(T_map g) a -> do { b <- f a; return (T_map (g b)) })
-                               (\(T_map g) -> return g)
-                               (return $ T_map h :: m (T_map b c n))
-
-
 -- | Apply function to every element of the vector and its index.
 imap :: (Vector v a, Vector v b) =>
     (Int -> a -> b) -> v a -> v b
 {-# INLINE imap #-}
-imap f v = create $ Cont
-         $ inspectV v
-         . fmap runID
-         . imapFM (\i a -> return $ f i a)
+imap f = C.vector
+       . C.imap f
+       . C.cvec
 
 -- | Apply monadic function to every element of the vector and its index.
 imapM :: (Vector v a, Vector v b, Monad m) =>
     (Int -> a -> m b) -> v a -> m (v b)
 {-# INLINE imapM #-}
-imapM f v = inspectV v
-          $ imapFM f
-          $ construct
+imapM f = C.vectorM
+        . C.imapM f
+        . C.cvec
 
 -- | Apply monadic function to every element of the vector and its
 --   index and discard result.
 imapM_ :: (Vector v a, Monad m) => (Int -> a -> m b) -> v a -> m ()
 {-# INLINE imapM_ #-}
 imapM_ f = ifoldl (\m i a -> m >> f i a >> return ()) (return ())
-
-
-data T_imap b c n = T_imap {-# UNPACK #-} !Int (Fn n b c)
-
-imapFM :: forall m n a b c. (Arity n, Monad m)
-       => (Int -> a -> m b) -> Fun n b c -> Fun n a (m c)
-{-# INLINE imapFM #-}
-imapFM f (Fun h) = Fun $
-  accumM (\(T_imap i g) a -> do b <- f i a
-                                return (T_imap (i + 1) (g b)))
-         (\(T_imap _ g) -> return g)
-         (return $ T_imap 0 h :: m (T_imap b c n))
-
 
 
 ----------------------------------------------------------------
@@ -598,57 +509,31 @@ imapFM f (Fun h) = Fun $
 zipWith :: (Vector v a, Vector v b, Vector v c)
         => (a -> b -> c) -> v a -> v b -> v c
 {-# INLINE zipWith #-}
-zipWith f v u = create $ Cont
-              $ inspectV u
-              . inspectV v
-              . (fmap (fmap runID))
-              . izipWithFM (\_ a b -> return (f a b))
+zipWith f v u = C.vector
+              $ C.zipWith f (C.cvec v) (C.cvec u)
 
 -- | Zip two vector together using monadic function.
 zipWithM :: (Vector v a, Vector v b, Vector v c, Monad m)
          => (a -> b -> m c) -> v a -> v b -> m (v c)
 {-# INLINE zipWithM #-}
-zipWithM f v u = inspectV u
-               $ inspectV v
-               $ izipWithFM (const f)
-               $ construct
+zipWithM f v u = C.vectorM
+               $ C.zipWithM f (C.cvec v) (C.cvec u)  
 
 -- | Zip two vector together using function which takes element index
 --   as well.
 izipWith :: (Vector v a, Vector v b, Vector v c)
          => (Int -> a -> b -> c) -> v a -> v b -> v c
 {-# INLINE izipWith #-}
-izipWith f v u = create $ Cont
-               $ inspectV u
-               . inspectV v
-               . fmap (fmap runID)
-               . izipWithFM (\i a b -> return $ f i a b)
+izipWith f v u = C.vector
+               $ C.izipWith f (C.cvec v) (C.cvec u)
 
 -- | Zip two vector together using monadic function which takes element
 --   index as well..
 izipWithM :: (Vector v a, Vector v b, Vector v c, Monad m)
           => (Int -> a -> b -> m c) -> v a -> v b -> m (v c)
 {-# INLINE izipWithM #-}
-izipWithM f v u = inspectV u
-                $ inspectV v
-                $ izipWithFM f
-                $ construct
-
-data T_izip a c r n = T_izip Int (VecList n a) (Fn n c r)
-
--- FIXME: explain function
-izipWithFM :: forall m n a b c d. (Arity n, Monad m)
-           => (Int -> a -> b -> m c) -> Fun n c d -> Fun n a (Fun n b (m d))
-{-# INLINE izipWithFM #-}
-izipWithFM f (Fun g0) =
-  fmap (\v -> Fun $ accumM
-              (\(T_izip i (VecList (a:as)) g) b -> do x <- f i a b
-                                                      return $ T_izip (i+1) (VecList as) (g x)
-              )
-              (\(T_izip _ _ x) -> return x)
-              (return $ T_izip 0 v g0 :: m (T_izip a c d n))
-       ) construct
-
+izipWithM f v u = C.vectorM
+                $ C.izipWithM f (C.cvec v) (C.cvec u)  
 
 
 ----------------------------------------------------------------
@@ -656,8 +541,7 @@ izipWithFM f (Fun g0) =
 -- | Convert between different vector types
 convert :: (Vector v a, Vector w a, Dim v ~ Dim w) => v a -> w a
 {-# INLINE convert #-}
-convert v = inspectV v construct
--- FIXME: check for fusion rules!
+convert = C.vector . C.cvec
 
 -- | Convert vector to the list
 toList :: (Vector v a) => v a -> [a]

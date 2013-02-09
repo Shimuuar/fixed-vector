@@ -95,7 +95,7 @@ class Arity n where
   applyM :: Monad m
          => (forall k. t (S k) -> m (a, t k)) -- ^ Get value to apply to function
          -> t n                               -- ^ Initial value
-         -> Fn n a b                          -- ^ N-ary function
+         -> Fn n a (m b)                      -- ^ N-ary function
          -> m b
   -- | Arity of function.
   arity :: n -> Int
@@ -104,7 +104,7 @@ instance Arity Z where
   accum  _ g t = g t
   accumM _ g t = g =<< t
   apply  _ _ h = h
-  applyM _ _ h = return h
+  applyM _ _ h = h
   arity  _ = 0
   {-# INLINE accum  #-}
   {-# INLINE accumM #-}
