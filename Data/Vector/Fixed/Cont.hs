@@ -353,6 +353,11 @@ vectorM :: (Vector v a, Dim v ~ n, Monad m) => ContVecT (v a) m n a -> m (v a)
 vectorM = runContVecT construct
 {-# INLINE[1] vectorM #-}
 
+{-# RULES "cvec/vector"
+   forall x. cvec (vector x) = x
+  #-}
+
+
 head :: forall n a. Arity (S n) => Fun (S n) a a
 head = Fun $ accum (\(T_head m) a -> T_head $ case m of { Nothing -> Just a; x -> x })
                    (\(T_head (Just x)) -> x)
