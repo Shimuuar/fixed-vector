@@ -61,6 +61,9 @@ instance (Unbox n a) => Vector (Vec n) a where
   {-# INLINE inspect   #-}
 instance (Unbox n a) => VectorN Vec n a
 
+instance (Unbox n a, Eq a) => Eq (Vec n a) where
+  (==) = eq
+  {-# INLINE (==) #-}
 
 
 ----------------------------------------------------------------

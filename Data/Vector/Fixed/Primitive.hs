@@ -87,3 +87,7 @@ instance (Arity n, Prim a) => Vector (Vec n) a where
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
 instance (Arity n, Prim a) => VectorN Vec n a
+
+instance (Arity n, Prim a, Eq a) => Eq (Vec n a) where
+  (==) = eq
+  {-# INLINE (==) #-}
