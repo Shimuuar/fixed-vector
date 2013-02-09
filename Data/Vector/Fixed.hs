@@ -18,12 +18,12 @@ module Data.Vector.Fixed (
   , Z
   , S
     -- ** Synonyms for small numerals
-  , N1
-  , N2
-  , N3
-  , N4
-  , N5
-  , N6
+  , C.N1
+  , C.N2
+  , C.N3
+  , C.N4
+  , C.N5
+  , C.N6
     -- ** Type class
   , Vector(..)
   , VectorN
@@ -36,6 +36,12 @@ module Data.Vector.Fixed (
   , vec
   , con
   , (|>)
+    -- ** Constructors functions
+  , mk1
+  , mk2
+  , mk3
+  , mk4
+  , mk5
     -- ** Construction
   , replicate
   , replicateM
@@ -102,14 +108,6 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
 -- Generic functions
 ----------------------------------------------------------------
 
-type N1 = S Z
-type N2 = S N1
-type N3 = S N2
-type N4 = S N3
-type N5 = S N4
-type N6 = S N5
-
-
 -- TODO: does not fuse!
 
 -- | Generic function for construction of arbitrary vectors. It
@@ -147,6 +145,31 @@ infixl 1 |>
 f2n :: Fun n a (v a) -> New n v a
 {-# INLINE f2n #-}
 f2n (Fun f) = New f
+
+
+
+----------------------------------------------------------------
+
+mk1 :: (Vector v a, Dim v ~ C.N1) => a -> v a
+mk1 a1 = C.vector $ C.mk1 a1
+{-# INLINE mk1 #-}
+
+mk2 :: (Vector v a, Dim v ~ C.N2) => a -> a -> v a
+mk2 a1 a2 = C.vector $ C.mk2 a1 a2
+{-# INLINE mk2 #-}
+
+mk3 :: (Vector v a, Dim v ~ C.N3) => a -> a -> a -> v a
+mk3 a1 a2 a3 = C.vector $ C.mk3 a1 a2 a3
+{-# INLINE mk3 #-}
+
+mk4 :: (Vector v a, Dim v ~ C.N4) => a -> a -> a -> a -> v a
+mk4 a1 a2 a3 a4 = C.vector $ C.mk4 a1 a2 a3 a4
+{-# INLINE mk4 #-}
+
+mk5 :: (Vector v a, Dim v ~ C.N5) => a -> a -> a -> a -> a -> v a
+mk5 a1 a2 a3 a4 a5 = C.vector $ C.mk5 a1 a2 a3 a4 a5
+{-# INLINE mk5 #-}
+
 
 
 ----------------------------------------------------------------

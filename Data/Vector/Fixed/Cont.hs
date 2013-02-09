@@ -10,6 +10,13 @@ module Data.Vector.Fixed.Cont (
     -- * Vector as continuation
     ContVecT
   , ContVec
+    -- ** Synonyms for small numerals
+  , N1
+  , N2
+  , N3
+  , N4
+  , N5
+  , N6
     -- * Construction of ContVec
   , cvec
   , fromList
@@ -17,6 +24,12 @@ module Data.Vector.Fixed.Cont (
   , replicateM
   , generate
   , generateM
+    -- ** Constructors
+  , mk1
+  , mk2
+  , mk3
+  , mk4
+  , mk5
     -- * Transformations
   , map
   , imap
@@ -63,6 +76,13 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,any,all
                       , head,tail,mapM,mapM_,sequence,sequence_
                       )
 
+
+type N1 = S Z
+type N2 = S N1
+type N3 = S N2
+type N4 = S N3
+type N5 = S N4
+type N6 = S N5
 
 ----------------------------------------------------------------
 -- Cont. vectors and their instances
@@ -145,6 +165,27 @@ generateM f = ContVecT $ \(Fun fun) ->
          (fun :: Fn n a (m r))
 
 newtype T_generate n = T_generate Int
+
+
+mk1 :: a -> ContVecT r m N1 a
+mk1 a1 = ContVecT $ \(Fun f) -> f a1
+{-# INLINE mk1 #-}
+
+mk2 :: a -> a -> ContVecT r m N2 a
+mk2 a1 a2 = ContVecT $ \(Fun f) -> f a1 a2
+{-# INLINE mk2 #-}
+
+mk3 :: a -> a -> a -> ContVecT r m N3 a
+mk3 a1 a2 a3 = ContVecT $ \(Fun f) -> f a1 a2 a3
+{-# INLINE mk3 #-}
+
+mk4 :: a -> a -> a -> a -> ContVecT r m N4 a
+mk4 a1 a2 a3 a4 = ContVecT $ \(Fun f) -> f a1 a2 a3 a4
+{-# INLINE mk4 #-}
+
+mk5 :: a -> a -> a -> a -> a -> ContVecT r m N5 a
+mk5 a1 a2 a3 a4 a5 = ContVecT $ \(Fun f) -> f a1 a2 a3 a4 a5
+{-# INLINE mk5 #-}
 
 
 ----------------------------------------------------------------
