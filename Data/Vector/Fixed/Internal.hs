@@ -16,6 +16,13 @@ module Data.Vector.Fixed.Internal (
     -- * Type-level naturals
     Z
   , S
+    -- ** Synonyms for small numerals
+  , N1
+  , N2
+  , N3
+  , N4
+  , N5
+  , N6
     -- * N-ary functions
   , Fn
   , Fun(..)
@@ -41,6 +48,12 @@ data Z
 -- | Successor of n
 data S n
 
+type N1 = S Z
+type N2 = S N1
+type N3 = S N2
+type N4 = S N3
+type N5 = S N4
+type N6 = S N5
 
 ----------------------------------------------------------------
 -- N-ary functions
@@ -165,8 +178,36 @@ instance Monad Id where
 -- Instances
 ----------------------------------------------------------------
 
-type instance Dim Complex = S (S Z)
+type instance Dim Complex = N2
 
 instance RealFloat a => Vector Complex a where
   construct = Fun (:+)
   inspect (x :+ y) (Fun f) = f x y
+
+
+type instance Dim ((,) a) = N2
+
+instance (b~a) => Vector ((,) b) a where
+  construct = Fun (,)
+  inspect (a,b) (Fun f) = f a b
+
+
+type instance Dim ((,,) a b) = N3
+
+instance (b~a, c~a) => Vector ((,,) b c) a where
+  construct = Fun (,,)
+  inspect (a,b,c) (Fun f) = f a b c
+
+
+type instance Dim ((,,,) a b c) = N4
+
+instance (b~a, c~a, d~a) => Vector ((,,,) b c d) a where
+  construct = Fun (,,,)
+  inspect (a,b,c,d) (Fun f) = f a b c d
+
+
+type instance Dim ((,,,,) a b c d) = N5
+
+instance (b~a, c~a, d~a, e~a) => Vector ((,,,,) b c d e) a where
+  construct = Fun (,,,,)
+  inspect (a,b,c,d,e) (Fun f) = f a b c d e

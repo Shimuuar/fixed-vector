@@ -79,14 +79,6 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,any,all
                       , head,tail,mapM,mapM_,sequence,sequence_
                       )
 
-
-type N1 = S Z
-type N2 = S N1
-type N3 = S N2
-type N4 = S N3
-type N5 = S N4
-type N6 = S N5
-
 ----------------------------------------------------------------
 -- Cont. vectors and their instances
 ----------------------------------------------------------------
