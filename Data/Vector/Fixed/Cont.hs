@@ -45,9 +45,11 @@ module Data.Vector.Fixed.Cont (
   , zipWithM
   , izipWithM
     -- * Running ContVec
+    -- $running
   , runContVecT
   , runContVecM
   , runContVec
+    -- ** Getters
   , head
     -- ** Vector construction
   , vector
@@ -83,10 +85,10 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,any,all
 -- Cont. vectors and their instances
 ----------------------------------------------------------------
 
--- | Vector as continuation.
+-- | Vector represented as continuation.
 newtype ContVecT m n a = ContVecT (forall r. Fun n a (m r) -> m r)
 
--- | Vector as continuation without monadic context
+-- | Vector as continuation without monadic context.
 type ContVec = ContVecT Id
 
 instance (Arity n) => Functor (ContVecT m n) where
@@ -110,6 +112,8 @@ cvec :: (Vector v a, Dim v ~ n, Monad m) => v a -> ContVecT m n a
 cvec v = ContVecT (inspect v)
 {-# INLINE[1] cvec #-}
 
+-- | Convert list to continuation-based vector. Will throw error if
+--   list is shorter than resulting vector.
 fromList :: forall m n a. Arity n => [a] -> ContVecT m n a
 {-# INLINE fromList #-}
 fromList xs = ContVecT $ \(Fun fun) ->
@@ -123,7 +127,7 @@ fromList xs = ContVecT $ \(Fun fun) ->
 data T_flist a n = T_flist [a]
 
 
--- | Execute monadic action for every element of vector.
+-- | Execute monadic action for every element of vector. Synonym for 'pure'.
 replicate :: forall m n a. (Arity n)
           => a -> ContVecT m n a
 {-# INLINE replicate #-}
@@ -143,7 +147,7 @@ replicateM act = ContVecT $ \(Fun fun) ->
 
 data T_replicate n = T_replicate
 
-
+-- | Generate vector from function which maps element's index to its value.
 generate :: forall m n a. (Arity n) => (Int -> a) -> ContVecT m n a
 {-# INLINE generate #-}
 generate f = ContVecT $ \(Fun fun) ->
@@ -151,6 +155,8 @@ generate f = ContVecT $ \(Fun fun) ->
         (T_generate 0 :: T_generate n)
          fun
 
+-- | Generate vector from monadic function which maps element's index
+--   to its value.
 generateM :: forall m n a. (Monad m, Arity n)
            => (Int -> m a) -> ContVecT m n a
 {-# INLINE generateM #-}
@@ -161,14 +167,15 @@ generateM f = ContVecT $ \(Fun fun) ->
 
 newtype T_generate n = T_generate Int
 
-newtype T_basis n = T_basis Int
-
+-- | Unit vector along Nth axis.
 basis :: forall m n a. (Num a, Arity n) => Int -> ContVecT m n a
 {-# INLINE basis #-}
 basis n0 = ContVecT $ \(Fun fun) ->
   apply (\(T_basis n) -> ((if n == 0 then 1 else 0) :: a, T_basis (n - 1)))
         (T_basis n0 :: T_basis n)
         fun
+
+newtype T_basis n = T_basis Int
 
 
 mk1 :: a -> ContVecT m N1 a
@@ -196,19 +203,23 @@ mk5 a1 a2 a3 a4 a5 = ContVecT $ \(Fun f) -> f a1 a2 a3 a4 a5
 -- Transforming vectors
 ----------------------------------------------------------------
 
+-- | Map over vector. Synonym for 'fmap'
 map :: (Arity n) => (a -> b) -> ContVecT m n a -> ContVecT m n b
 {-# INLINE map #-}
 map = imap . const
 
+-- | Apply function to every element of the vector and its index.
 imap :: (Arity n) => (Int -> a -> b) -> ContVecT m n a -> ContVecT m n b
 {-# INLINE imap #-}
 imap f (ContVecT contA) = ContVecT $
   contA . imapF f
 
+-- | Monadic map over vector.
 mapM :: (Arity n, Monad m) => (a -> m b) -> ContVecT m n a -> ContVecT m n b
 {-# INLINE mapM #-}
 mapM = imapM . const
 
+-- | Apply monadic function to every element of the vector and its index.
 imapM :: (Arity n, Monad m) => (Int -> a -> m b) -> ContVecT m n a -> ContVecT m n b
 {-# INLINE imapM #-}
 imapM f (ContVecT contA) = ContVecT $
@@ -235,7 +246,7 @@ imapFM f (Fun h) = Fun $
 data T_map a r n = T_map Int (Fn n a r)
 
 
--- | Get tail
+-- | /O(1)/ Tail of vector.
 tail :: ContVecT m (S n) a
      -> ContVecT m n a
 tail (ContVecT cont) = ContVecT $ \(Fun f) -> cont (Fun $ \_ -> f)
@@ -243,8 +254,8 @@ tail (ContVecT cont) = ContVecT $ \(Fun f) -> cont (Fun $ \_ -> f)
 
 -- | /O(1)/ Prepend element to vector
 cons :: a -> ContVecT m n a -> ContVecT m (S n) a
-{-# INLINE cons #-}
 cons a (ContVecT cont) = ContVecT $ \(Fun f) -> cont $ Fun $ f a
+{-# INLINE cons #-}
 
 -- | Zip two vector together using function.
 zipWith :: (Arity n) => (a -> b -> c)
@@ -263,6 +274,7 @@ izipWith f (ContVecT contA) (ContVecT contB) = ContVecT $ \funC ->
 -- | Zip two vector together using monadic function.
 zipWithM :: (Arity n, Monad m) => (a -> b -> m c)
          -> ContVecT m n a -> ContVecT m n b -> ContVecT m n c
+{-# INLINE zipWithM #-}
 zipWithM = izipWithM . const
 
 -- | Zip two vector together using monadic function which takes element
@@ -304,23 +316,34 @@ data T_izip a c r n = T_izip Int (VecList n a) (Fn n c r)
 
 
 ----------------------------------------------------------------
--- Folds
+-- Running vector
 ----------------------------------------------------------------
 
+-- $running
+--
+-- Only way to get result from continuation vector is to apply
+-- finalizer function to them using 'runContVecT', 'runContVecM' or
+-- 'runContVec'. Getters and folds are defined as such finalizer
+-- functions.
+
+
+-- | Run continuation vector using non-monadic finalizer.
 runContVecT :: (Monad m, Arity n)
-            => Fun n a r
-            -> ContVecT m n a
+            => Fun n a r        -- ^ finalizer function
+            -> ContVecT m n a   -- ^ vector
             -> m r
 runContVecT f (ContVecT c) = c $ fmap return f
 {-# INLINE runContVecT #-}
 
+-- | Run continuation vector using monadic finalizer.
 runContVecM :: Arity n
-            => Fun n a (m r)
-            -> ContVecT m n a
+            => Fun n a (m r)    -- ^ finalizer function
+            -> ContVecT m n a   -- ^ vector
             -> m r
 runContVecM f (ContVecT c) = c f
 {-# INLINE runContVecM #-}
 
+-- | Run continuation vector.
 runContVec :: Arity n
            => Fun n a r
            -> ContVec n a
@@ -343,7 +366,9 @@ vectorM = runContVecT construct
   #-}
 
 
+-- | Finalizer function for getting head of the vector.
 head :: forall n a. Arity (S n) => Fun (S n) a a
+{-# INLINE head #-}
 head = Fun $ accum (\(T_head m) a -> T_head $ case m of { Nothing -> Just a; x -> x })
                    (\(T_head (Just x)) -> x)
                    (T_head Nothing :: T_head a (S n))
@@ -351,12 +376,13 @@ head = Fun $ accum (\(T_head m) a -> T_head $ case m of { Nothing -> Just a; x -
 data T_head a n = T_head (Maybe a)
 
 
-
+-- | Left fold over continuation vector.
 foldl :: forall n a b. Arity n
       => (b -> a -> b) -> b -> Fun n a b
 {-# INLINE foldl #-}
 foldl f = ifoldl (\b _ a -> f b a)
 
+-- | Left fold over continuation vector.
 ifoldl :: forall n a b. Arity n
        => (b -> Int -> a -> b) -> b -> Fun n a b
 {-# INLINE ifoldl #-}
@@ -364,12 +390,14 @@ ifoldl f b = Fun $ accum (\(T_ifoldl i r) a -> T_ifoldl (i+1) (f r i a))
                          (\(T_ifoldl _ r) -> r)
                          (T_ifoldl 0 b :: T_ifoldl b n)
 
+-- | Monadic left fold over continuation vector.
 foldM :: forall n m a b. (Arity n, Monad m)
       => (b -> a -> m b) -> b -> Fun n a (m b)
 {-# INLINE foldM #-}
 foldM f x
   = foldl (\m a -> do{ b <- m; f b a}) (return x)
 
+-- | Monadic left fold over continuation vector.
 ifoldM :: forall n m a b. (Arity n, Monad m)
       => (b -> Int -> a -> m b) -> b -> Fun n a (m b)
 {-# INLINE ifoldM #-}
@@ -389,13 +417,13 @@ data T_ifoldl b n = T_ifoldl !Int b
 
 newtype T_foldl1 a n = T_foldl1 (Maybe a)
 
+-- | Left fold.
 foldl1 :: forall n a. (Arity (S n))
        => (a -> a -> a) -> Fun (S n) a a
 {-# INLINE foldl1 #-}
 foldl1 f = Fun $ accum (\(T_foldl1 r) a -> T_foldl1 $ Just $ maybe a (flip f a) r)
                        (\(T_foldl1 (Just x)) -> x)
                        (T_foldl1 Nothing :: T_foldl1 a (S n))
-
 
 -- | Right fold over continuation vector
 foldr :: forall n a b. Arity n
@@ -415,34 +443,41 @@ ifoldr f z = Fun $
 
 data T_ifoldr b n = T_ifoldr Int (b -> b)
 
-
+-- | Sum all elements in the vector.
 sum :: (Num a, Arity n) => Fun n a a
 sum = foldl (+) 0
 {-# INLINE sum #-}
 
+-- | Minimal element of vector.
 minimum :: (Ord a, Arity (S n)) => Fun (S n) a a
 minimum = foldl1 min
 {-# INLINE minimum #-}
 
+-- | Maximal element of vector.
 maximum :: (Ord a, Arity (S n)) => Fun (S n) a a
 maximum = foldl1 max
 {-# INLINE maximum #-}
 
+-- | Conjunction of elements of a vector.
 and :: Arity n => Fun n Bool Bool
 and = foldr (&&) True
 {-# INLINE and #-}
 
+-- | Disjunction of all elements of a vector.
 or :: Arity n => Fun n Bool Bool
 or = foldr (||) False
 {-# INLINE or #-}
 
+-- | Determines whether all elements of vector satisfy predicate.
 all :: Arity n => (a -> Bool) -> Fun n a Bool
 all f = foldr (\x b -> f x && b) True
 {-# INLINE all #-}
 
+-- | Determines whether any of element of vector satisfy predicate.
 any :: Arity n => (a -> Bool) -> Fun n a Bool
 any f = foldr (\x b -> f x && b) True
 {-# INLINE any #-}
+
 
 ----------------------------------------------------------------
 -- VecList

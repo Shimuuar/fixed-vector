@@ -188,7 +188,6 @@ mk5 a1 a2 a3 a4 a5 = C.vector $ C.mk5 a1 a2 a3 a4 a5
 --   >>> import Data.Vector.Fixed.Boxed (Vec)
 --   >>> replicate "foo" :: Vec N5 String
 --   fromList ["foo","foo","foo","foo","foo"]
---
 replicate :: Vector v a => a -> v a
 {-# INLINE replicate #-}
 replicate
@@ -205,7 +204,6 @@ replicate
 --   Hi!
 --   Hi!
 --   fromList [(),()]
---
 replicateM :: (Vector v a, Monad m) => m a -> m (v a)
 {-# INLINE replicateM #-}
 replicateM
@@ -226,7 +224,6 @@ replicateM
 --   fromList [0,1,0]
 --   >>> basis 2 :: Vec3 Int
 --   fromList [0,0,1]
---
 basis :: forall v a. (Vector v a, Num a) => Int -> v a
 {-# INLINE basis #-}
 basis = C.vector . C.basis
@@ -235,19 +232,20 @@ basis = C.vector . C.basis
 
 ----------------------------------------------------------------
 
--- | Generate vector from function which maps element's index to its value.
+-- | Generate vector from function which maps element's index to its
+--   value.
 --
 --   Examples:
 --
 --   >>> import Data.Vector.Fixed.Unboxed (Vec)
 --   >>> generate (^2) :: Vec N4 Int
 --   fromList [0,1,4,9]
---
 generate :: forall v a. (Vector v a) => (Int -> a) -> v a
 {-# INLINE generate #-}
 generate = C.vector . C.generate
 
--- | Monadic generation
+-- | Generate vector from monadic function which maps element's index
+--   to its value.
 generateM :: forall m v a. (Monad m, Vector v a) => (Int -> m a) -> m (v a)
 {-# INLINE generateM #-}
 generateM = C.vectorM . C.generateM
@@ -341,12 +339,12 @@ ifoldM f x v = ifoldl go (return x) v
 
 ----------------------------------------------------------------
 
--- | Sum all elements in the vector
+-- | Sum all elements in the vector.
 sum :: (Vector v a, Num a) => v a -> a
 sum = C.runContVec C.sum . C.cvec
 {-# INLINE sum #-}
 
--- | Maximum element of vector
+-- | Maximal element of vector.
 --
 --   Examples:
 --
@@ -359,7 +357,7 @@ maximum :: (Vector v a, Dim v ~ S n, Ord a) => v a -> a
 maximum = C.runContVec C.maximum . C.cvec
 {-# INLINE maximum #-}
 
--- | Minimum element of vector
+-- | Minimal element of vector.
 --
 --   Examples:
 --
@@ -372,18 +370,22 @@ minimum :: (Vector v a, Dim v ~ S n, Ord a) => v a -> a
 minimum = C.runContVec C.minimum . C.cvec
 {-# INLINE minimum #-}
 
+-- | Conjunction of all elements of a vector.
 and :: (Vector v Bool) => v Bool -> Bool
 and = C.runContVec C.and . C.cvec
 {-# INLINE and #-}
 
+-- | Disjunction of all elements of a vector.
 or :: (Vector v Bool) => v Bool -> Bool
 or = C.runContVec C.or . C.cvec
 {-# INLINE or #-}
 
+-- | Determines whether all elements of vector satisfy predicate.
 all :: (Vector v a) => (a -> Bool) -> v a -> Bool
 all f = C.runContVec (C.all f) . C.cvec
 {-# INLINE all #-}
 
+-- | Determines whether any of element of vector satisfy predicate.
 any :: (Vector v a) => (a -> Bool) -> v a -> Bool
 any f = C.runContVec (C.any f) . C.cvec
 {-# INLINE any #-}
@@ -524,8 +526,8 @@ convert = C.vector . C.cvec
 toList :: (Vector v a) => v a -> [a]
 toList = foldr (:) []
 
--- | Create vector form list. List must have same length as the
---   vector.
+-- | Create vector form list. Will throw error if list is shorter than
+--   resulting vector.
 fromList :: (Vector v a) => [a] -> v a
 {-# INLINE fromList #-}
 fromList = C.vector . C.fromList
