@@ -30,30 +30,32 @@ module Data.Vector.Fixed (
   , Arity
   , Fun(..)
   , length
-    -- * Generic functions
-    -- ** Literal vectors
-  , New
-  , vec
-  , con
-  , (|>)
-    -- ** Constructors functions
+    -- * Constructors
+    -- ** Small dimensions
+    -- $smallDim
   , mk1
   , mk2
   , mk3
   , mk4
   , mk5
-    -- ** Construction
+    -- ** Generic constructor
+  , New
+  , vec
+  , con
+  , (|>)
+    -- ** Functions
   , replicate
   , replicateM
   , basis
   , generate
   , generateM
-    -- ** Element access
+    -- * Modifying vectors
+    -- ** Transformations
   , head
   , tail
     -- ** Comparison
   , eq
-    -- ** Map
+    -- ** Maps
   , map
   , mapM
   , mapM_
@@ -62,7 +64,7 @@ module Data.Vector.Fixed (
   , imapM_
   , sequence
   , sequence_
-    -- ** Folding
+    -- * Folding
   , foldl
   , foldr
   , foldl1
@@ -70,7 +72,7 @@ module Data.Vector.Fixed (
   , ifoldr
   , foldM
   , ifoldM
-    -- *** Special folds
+    -- ** Special folds
   , sum
   , maximum
   , minimum
@@ -78,16 +80,16 @@ module Data.Vector.Fixed (
   , or
   , all
   , any
-    -- ** Zips
+    -- * Zips
   , zipWith
   , zipWithM
   , izipWith
   , izipWithM
-    -- ** Conversion
+    -- * Conversion
   , convert
   , toList
   , fromList
-    -- * Special types
+    -- * Data types
   , VecList
   ) where
 
@@ -122,7 +124,6 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
 --   >>> import Data.Complex
 --   >>> vec $ con |> 1 |> 3 :: Complex Double
 --   1.0 :+ 3.0
---
 newtype New n v a = New (Fn n a (v a))
 
 -- | Convert fully applied constructor to vector
@@ -148,6 +149,10 @@ f2n (Fun f) = New f
 
 
 ----------------------------------------------------------------
+
+-- $smallDim
+--
+-- Constructors for vectors with small dimensions.
 
 mk1 :: (Vector v a, Dim v ~ C.N1) => a -> v a
 mk1 a1 = C.vector $ C.mk1 a1
@@ -178,12 +183,11 @@ mk5 a1 a2 a3 a4 a5 = C.vector $ C.mk5 a1 a2 a3 a4 a5
 --   Examples:
 --
 --   >>> import Data.Vector.Fixed.Boxed (Vec2)
---   >>> replicate 1 :: Vec2 Int     -- Two element vector
+--   >>> replicate 1 :: Vec2 Int
 --   fromList [1,1]
 --
---   >>> import Data.Vector.Fixed.Boxed (Vec3)
---   >>> replicate 2 :: Vec3 Double  -- Three element vector
---   fromList [2.0,2.0,2.0]
+--   >>> replicate 2 :: (Double,Double,Double)
+--   (2.0,2.0,2.0)
 --
 --   >>> import Data.Vector.Fixed.Boxed (Vec)
 --   >>> replicate "foo" :: Vec N5 String
@@ -213,7 +217,8 @@ replicateM
 
 ----------------------------------------------------------------
 
--- | Unit vector along Nth axis,
+-- | Unit vector along Nth axis. If index is larger than vector
+--   dimensions returns zero vector.
 --
 --   Examples:
 --
@@ -222,8 +227,8 @@ replicateM
 --   fromList [1,0,0]
 --   >>> basis 1 :: Vec3 Int
 --   fromList [0,1,0]
---   >>> basis 2 :: Vec3 Int
---   fromList [0,0,1]
+--   >>> basis 3 :: Vec3 Int
+--   fromList [0,0,0]
 basis :: forall v a. (Vector v a, Num a) => Int -> v a
 {-# INLINE basis #-}
 basis = C.vector . C.basis
@@ -259,10 +264,9 @@ generateM = C.vectorM . C.generateM
 --   Examples:
 --
 --   >>> import Data.Vector.Fixed.Boxed (Vec3)
---   >>> let x = vec $ con |> 1 |> 2 |> 3 :: Vec3 Int
+--   >>> let x = mk3 1 2 3 :: Vec3 Int
 --   >>> head x
 --   1
---
 head :: (Vector v a, Dim v ~ S n) => v a -> a
 {-# INLINE head #-}
 head = C.runContVec C.head . C.cvec
@@ -274,11 +278,9 @@ head = C.runContVec C.head . C.cvec
 --
 --   Examples:
 --
---   >>> import Data.Vector.Fixed.Boxed (Vec2, Vec3)
---   >>> let x = vec $ con |> 1 |> 2 |> 3 :: Vec3 Int
---   >>> tail x :: Vec2 Int
---   fromList [2,3]
---
+--   >>> import Data.Complex
+--   >>> tail (1,2,3) :: Complex Double
+--   2.0 :+ 3.0
 tail :: (Vector v a, Vector w a, Dim v ~ S (Dim w))
      => v a -> w a
 {-# INLINE tail #-}
@@ -349,10 +351,9 @@ sum = C.runContVec C.sum . C.cvec
 --   Examples:
 --
 --   >>> import Data.Vector.Fixed.Boxed (Vec3)
---   >>> let x = vec $ con |> 1 |> 2 |> 3 :: Vec3 Int
+--   >>> let x = mk3 1 2 3 :: Vec3 Int
 --   >>> maximum x
 --   3
---
 maximum :: (Vector v a, Dim v ~ S n, Ord a) => v a -> a
 maximum = C.runContVec C.maximum . C.cvec
 {-# INLINE maximum #-}
@@ -362,10 +363,9 @@ maximum = C.runContVec C.maximum . C.cvec
 --   Examples:
 --
 --   >>> import Data.Vector.Fixed.Boxed (Vec3)
---   >>> let x = vec $ con |> 1 |> 2 |> 3 :: Vec3 Int
+--   >>> let x = mk3 1 2 3 :: Vec3 Int
 --   >>> minimum x
 --   1
---
 minimum :: (Vector v a, Dim v ~ S n, Ord a) => v a -> a
 minimum = C.runContVec C.minimum . C.cvec
 {-# INLINE minimum #-}
@@ -404,7 +404,6 @@ any f = C.runContVec (C.any f) . C.cvec
 --   True
 --   >>> v0 `eq` v1
 --   False
---
 eq :: (Vector v a, Eq a) => v a -> v a -> Bool
 {-# INLINE eq #-}
 eq v w = C.runContVec (C.foldl (&&) True)
@@ -484,7 +483,6 @@ imapM_ f = ifoldl (\m i a -> m >> f i a >> return ()) (return ())
 --   fromList [1,0,1]
 --   >>> vplus b1 b2
 --   fromList [0,1,1]
---
 zipWith :: (Vector v a, Vector v b, Vector v c)
         => (a -> b -> c) -> v a -> v b -> v c
 {-# INLINE zipWith #-}
