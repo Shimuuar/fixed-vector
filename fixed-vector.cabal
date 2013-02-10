@@ -1,5 +1,5 @@
 Name:           fixed-vector
-Version:        0.1.2.1
+Version:        0.2.0.0
 Synopsis:       Generic vectors with fixed length
 Description:
   Generic vectors with fixed length. Package is structured as follows:
@@ -7,6 +7,9 @@ Description:
   [@Data.Vector.Fixed@]
   Generic API. It's suitable for both ADT-based vector like @Complex@
   and array-based ones.
+  .
+  [@Data.Vector.Fixed.Cont@]
+  Continuation based vectors.
   .
   [@Data.Vector.Fixed.Mutable@]
   Type classes for array-based implementation.
@@ -23,10 +26,29 @@ Description:
   [@Data.Vector.Fixed.Primitive@]
   Unboxed vectors based on pritimive package.
   .
+  Changes in 0.2.0.0
+  .
+  * Continuation-based vector added.
+  .
+  * Right fold added.
+  .
+  * @tailWith@, @convertContinuation@, and @!@ from
+    @Data.Vector.Fixed@ removed.
+  .
+  * @Vector@ instance for tuples added.
+  .
+  Changes in 0.1.2
+  .
+  * @imap@, @imapM@, @ifoldl@, @ifoldM@, @zipWithM@, @izipWithM@
+    functions are added.
+  .
+  * @VectorN@ type class added.
+  .
   Changes in 0.1.1
   .
   * @foldM@ and @tailWith@ added. Type synonyms for numbers up to 6 are
     added. @Fun@ is reexported from @Data.Vector.Fixed@.
+
 
 Cabal-Version:  >= 1.8
 License:        BSD3
