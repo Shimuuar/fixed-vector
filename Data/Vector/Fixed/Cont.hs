@@ -25,6 +25,7 @@ module Data.Vector.Fixed.Cont (
   , replicateM
   , generate
   , generateM
+  , unfoldr
   , basis
     -- ** Constructors
   , mk1
@@ -147,6 +148,7 @@ replicateM act = ContVecT $ \(Fun fun) ->
 
 data T_replicate n = T_replicate
 
+
 -- | Generate vector from function which maps element's index to its value.
 generate :: forall m n a. (Arity n) => (Int -> a) -> ContVecT m n a
 {-# INLINE generate #-}
@@ -166,6 +168,17 @@ generateM f = ContVecT $ \(Fun fun) ->
           fun
 
 newtype T_generate n = T_generate Int
+
+-- | Unfold vector.
+unfoldr :: forall m n b a. Arity n => (b -> (a,b)) -> b -> ContVecT m n a
+{-# INLINE unfoldr #-}
+unfoldr f b0 = ContVecT $ \(Fun fun) ->
+  apply (\(T_unfoldr b) -> let (a,b') = f b in (a, T_unfoldr b'))
+        (T_unfoldr b0 :: T_unfoldr b n)
+         fun
+
+newtype T_unfoldr b n = T_unfoldr b
+
 
 -- | Unit vector along Nth axis.
 basis :: forall m n a. (Num a, Arity n) => Int -> ContVecT m n a

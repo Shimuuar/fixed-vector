@@ -46,9 +46,10 @@ module Data.Vector.Fixed (
     -- ** Functions
   , replicate
   , replicateM
-  , basis
   , generate
   , generateM
+  , unfoldr
+  , basis
     -- * Modifying vectors
     -- ** Transformations
   , head
@@ -234,6 +235,10 @@ basis :: forall v a. (Vector v a, Num a) => Int -> v a
 basis = C.vector . C.basis
 
 
+-- | Unfold vector.
+unfoldr :: (Vector v a) => (b -> (a,b)) -> b -> v a
+{-# INLINE unfoldr #-}
+unfoldr f = C.vector . C.unfoldr f
 
 ----------------------------------------------------------------
 
