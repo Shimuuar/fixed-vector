@@ -13,6 +13,8 @@ module Data.Vector.Fixed.Primitive (
   , Vec3
     -- * Mutable
   , MVec
+    -- * Type classes
+  , Prim
   ) where
 
 import Control.Monad

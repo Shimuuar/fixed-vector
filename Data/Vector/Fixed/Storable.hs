@@ -15,6 +15,8 @@ module Data.Vector.Fixed.Storable (
   , unsafeWith
     -- * Mutable
   , MVec(..)
+    -- * Type classes
+  , Storable
   ) where
 
 import Control.Monad.Primitive
