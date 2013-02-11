@@ -198,6 +198,7 @@ replicate :: Vector v a => a -> v a
 replicate
   = C.vector . C.replicate
 
+
 -- | Execute monadic action for every element of vector.
 --
 --   Examples:
@@ -215,9 +216,6 @@ replicateM
   = C.vectorM . C.replicateM
 
 
-
-----------------------------------------------------------------
-
 -- | Unit vector along Nth axis. If index is larger than vector
 --   dimensions returns zero vector.
 --
@@ -230,7 +228,7 @@ replicateM
 --   fromList [0,1,0]
 --   >>> basis 3 :: Vec3 Int
 --   fromList [0,0,0]
-basis :: forall v a. (Vector v a, Num a) => Int -> v a
+basis :: (Vector v a, Num a) => Int -> v a
 {-# INLINE basis #-}
 basis = C.vector . C.basis
 
@@ -240,7 +238,6 @@ unfoldr :: (Vector v a) => (b -> (a,b)) -> b -> v a
 {-# INLINE unfoldr #-}
 unfoldr f = C.vector . C.unfoldr f
 
-----------------------------------------------------------------
 
 -- | Generate vector from function which maps element's index to its
 --   value.
@@ -250,13 +247,14 @@ unfoldr f = C.vector . C.unfoldr f
 --   >>> import Data.Vector.Fixed.Unboxed (Vec)
 --   >>> generate (^2) :: Vec N4 Int
 --   fromList [0,1,4,9]
-generate :: forall v a. (Vector v a) => (Int -> a) -> v a
+generate :: (Vector v a) => (Int -> a) -> v a
 {-# INLINE generate #-}
 generate = C.vector . C.generate
 
+
 -- | Generate vector from monadic function which maps element's index
 --   to its value.
-generateM :: forall m v a. (Monad m, Vector v a) => (Int -> m a) -> m (v a)
+generateM :: (Monad m, Vector v a) => (Int -> m a) -> m (v a)
 {-# INLINE generateM #-}
 generateM = C.vectorM . C.generateM
 
@@ -277,8 +275,6 @@ head :: (Vector v a, Dim v ~ S n) => v a -> a
 head = C.runContVec C.head . C.cvec
 
 
-----------------------------------------------------------------
-
 -- | Tail of vector.
 --
 --   Examples:
@@ -291,10 +287,6 @@ tail :: (Vector v a, Vector w a, Dim v ~ S (Dim w))
 {-# INLINE tail #-}
 tail = C.vector . C.tail . C.cvec
 
-
-
-----------------------------------------------------------------
-
 -- | Left fold over vector
 foldl :: Vector v a => (b -> a -> b) -> b -> v a -> b
 {-# INLINE foldl #-}
@@ -306,6 +298,7 @@ foldr :: Vector v a => (a -> b -> b) -> b -> v a -> b
 {-# INLINE foldr #-}
 foldr f x = C.runContVec (C.foldr f x)
           . C.cvec
+
 
 -- | Left fold over vector
 foldl1 :: (Vector v a, Dim v ~ S n) => (a -> a -> a) -> v a -> a
@@ -411,7 +404,7 @@ any f = C.runContVec (C.any f) . C.cvec
 --   False
 eq :: (Vector v a, Eq a) => v a -> v a -> Bool
 {-# INLINE eq #-}
-eq v w = C.runContVec (C.foldl (&&) True)
+eq v w = C.runContVec C.and
        $ C.zipWith (==) (C.cvec v) (C.cvec w)
 
 
