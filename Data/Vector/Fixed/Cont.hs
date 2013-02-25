@@ -52,6 +52,7 @@ module Data.Vector.Fixed.Cont (
   , runContVec
     -- ** Getters
   , head
+  , index
     -- ** Vector construction
   , vector
   , vectorM
@@ -387,6 +388,24 @@ head = Fun $ accum (\(T_head m) a -> T_head $ case m of { Nothing -> Just a; x -
                    (T_head Nothing :: T_head a (S n))
 
 data T_head a n = T_head (Maybe a)
+
+-- | /O(n)/ Get value at specified index.
+index :: forall n a. Arity n => Int -> Fun n a a
+index n
+  | n < 0     = error "Data.Vector.Fixed.Cont.index: index out of range"
+  | otherwise = Fun $ accum
+     (\(T_Index x) a -> T_Index $ case x of
+                          Left  0 -> Right a
+                          Left  i -> Left (i - 1)
+                          r       -> r
+     )
+     (\(T_Index x) -> case x of
+                        Left  _ -> error "Data.Vector.Fixed.index: index out of range"
+                        Right a -> a
+     )
+     ( T_Index (Left n) :: T_Index a n)
+
+newtype T_Index a n = T_Index (Either Int a)
 
 
 -- | Left fold over continuation vector.

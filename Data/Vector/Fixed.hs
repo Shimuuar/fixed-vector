@@ -54,6 +54,7 @@ module Data.Vector.Fixed (
     -- ** Transformations
   , head
   , tail
+  , index
     -- ** Comparison
   , eq
     -- ** Maps
@@ -286,6 +287,11 @@ tail :: (Vector v a, Vector w a, Dim v ~ S (Dim w))
      => v a -> w a
 {-# INLINE tail #-}
 tail = C.vector . C.tail . C.cvec
+
+index :: (Vector v a) => v a -> Int -> a
+{-# INLINE index #-}
+index v n = C.runContVec (C.index n)
+          $ C.cvec v
 
 -- | Left fold over vector
 foldl :: Vector v a => (b -> a -> b) -> b -> v a -> b
