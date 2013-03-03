@@ -393,11 +393,6 @@ vectorM :: (Vector v a, Dim v ~ n, Monad m) => ContVecT m n a -> m (v a)
 vectorM = runContVecT construct
 {-# INLINE[1] vectorM #-}
 
-{-# RULES "cvec/vector"
-   forall x. cvec (vector x) = x
-  #-}
-
-
 -- | Finalizer function for getting head of the vector.
 head :: forall n a. Arity (S n) => Fun (S n) a a
 {-# INLINE head #-}
@@ -528,6 +523,15 @@ any :: Arity n => (a -> Bool) -> Fun n a Bool
 any f = foldr (\x b -> f x && b) True
 {-# INLINE any #-}
 
+
+----------------------------------------------------------------
+-- Fusion
+----------------------------------------------------------------
+
+{-# RULES
+"cvec/vector" forall x.
+  cvec (vector x) = changeMonad runID x
+  #-}
 
 ----------------------------------------------------------------
 -- VecList
