@@ -40,6 +40,7 @@ module Data.Vector.Fixed.Cont (
   , imapM
   , tail
   , cons
+  , changeMonad
     -- ** Zips
   , zipWith
   , izipWith
@@ -102,6 +103,23 @@ instance (Arity n) => Applicative (ContVecT m n) where
   (<*>) = zipWith ($)
   {-# INLINE pure  #-}
   {-# INLINE (<*>) #-}
+
+-- | Change monad type for the continuation vector.
+changeMonad :: (Monad p, Monad m, Arity n)
+            => (forall x. p x -> x) -- ^ Function to extract result from monad
+            -> ContVecT p n a -> ContVecT m n a
+{-# INLINE changeMonad #-}
+changeMonad run (ContVecT cont)
+  = ContVecT $ convertCont run return cont
+
+convertCont :: (Arity n)
+            => (b -> c)
+            -> (c -> b)
+            -> (Fun n a b -> b)
+            -> (Fun n a c -> c)
+{-# INLINE convertCont #-}
+convertCont fB2C fC2B cont = \funC ->
+  fB2C $ cont (fmap fC2B funC)
 
 
 
