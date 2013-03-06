@@ -1,4 +1,3 @@
-{-# LANGUAGE NoMonomorphismRestriction #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE FlexibleContexts      #-}
@@ -105,6 +104,11 @@ class Arity (Dim v) => Vector v a where
   construct :: Fun (Dim v) a (v a)
   -- | Deconstruction of vector.
   inspect   :: v a -> Fun (Dim v) a b -> b
+  -- | Optional more efficient implementation of indexing. Shouldn't
+  --   be used directly, use 'Data.Vector.Fixed.!' instead.
+  basicIndex :: v a -> Int -> a
+  basicIndex v i = runContVec (index i) (cvec v)
+  {-# INLINE basicIndex #-}
 
 -- | Vector parametrized by length. In ideal world it should be:
 --
@@ -166,7 +170,7 @@ convertCont fB2C fC2B cont = \funC ->
 -- | Convert regular vector to continuation
 cvec :: (Vector v a, Dim v ~ n, Monad m) => v a -> ContVecT m n a
 cvec v = ContVecT (inspect v)
-{-# INLINE[1] cvec #-}
+{-# INLINE[0] cvec #-}
 
 -- | Convert list to continuation-based vector. Will throw error if
 --   list is shorter than resulting vector.

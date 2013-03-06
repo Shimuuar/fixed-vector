@@ -24,7 +24,7 @@ import Data.Int  (     Int8, Int16, Int32, Int64 )
 import Data.Word (Word,Word8,Word16,Word32,Word64)
 import Prelude hiding (length,replicate,zipWith,map,foldl)
 
-import Data.Vector.Fixed
+import Data.Vector.Fixed (Dim,Arity,Vector(..),VectorN,S,Z,toList,eq)
 import Data.Vector.Fixed.Mutable
 import qualified Data.Vector.Fixed.Primitive as P
 
@@ -55,10 +55,14 @@ type instance Dim  (Vec  n) = n
 type instance DimM (MVec n) = n
 
 instance (Unbox n a) => Vector (Vec n) a where
-  construct = constructVec
-  inspect   = inspectVec
-  {-# INLINE construct #-}
-  {-# INLINE inspect   #-}
+  construct  = constructVec
+  inspect    = inspectVec
+  basicIndex = index
+  {-# INLINE construct  #-}
+  {-# INLINE inspect    #-}
+  {-# INLINE basicIndex #-}
+
+
 instance (Unbox n a) => VectorN Vec n a
 
 instance (Unbox n a, Eq a) => Eq (Vec n a) where

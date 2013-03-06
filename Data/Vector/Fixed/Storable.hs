@@ -130,10 +130,12 @@ type instance Dim  (Vec  n) = n
 type instance DimM (MVec n) = n
 
 instance (Arity n, Storable a) => Vector (Vec n) a where
-  construct = constructVec
-  inspect   = inspectVec
-  {-# INLINE construct #-}
-  {-# INLINE inspect   #-}
+  construct  = constructVec
+  inspect    = inspectVec
+  basicIndex = index
+  {-# INLINE construct  #-}
+  {-# INLINE inspect    #-}
+  {-# INLINE basicIndex #-}
 instance (Arity n, Storable a) => VectorN Vec n a
 
 instance (Arity n, Storable a, Eq a) => Eq (Vec n a) where

@@ -82,6 +82,8 @@ Library
     Data.Vector.Fixed.Primitive
     Data.Vector.Fixed.Unboxed
     Data.Vector.Fixed.Storable
+  Other-modules:
+    Data.Vector.Fixed.Internal
 
 Test-Suite doctests
   Type:           exitcode-stdio-1.0
