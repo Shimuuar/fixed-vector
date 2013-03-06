@@ -29,6 +29,8 @@ Description:
   .
   Changes in 0.3.0.0
   .
+  * @Vector@ type class definition is moved to the @D.V.F.Cont@ module.
+  .
   * Indexing function restored.
   .
   * @unfoldr@ added.
