@@ -36,3 +36,4 @@ You can create and contribute patches using either mercurial or git:
 
 # Authors
 
+Library is written and maintained by Aleksey Khudyakov <alexey.skladnoy@gmail.com>
