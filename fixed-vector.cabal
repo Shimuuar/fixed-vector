@@ -2,8 +2,10 @@ Name:           fixed-vector
 Version:        0.3.0.0
 Synopsis:       Generic vectors with statically known size.
 Description:
-  Generic library for vectors with statically known size. Same
-  functions could be used to work with both ADT based vector like
+  Generic library for vectors with statically known
+  size. Implementation is based on
+  <http://unlines.wordpress.com/2010/11/15/generics-for-small-fixed-size-vectors/>
+  Same functions could be used to work with both ADT based vector like
   .
   > data Vec3 a = a a a
   .
