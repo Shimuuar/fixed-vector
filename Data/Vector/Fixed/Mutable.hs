@@ -29,7 +29,8 @@ module Data.Vector.Fixed.Mutable (
 
 import Control.Monad.ST
 import Control.Monad.Primitive
-import Data.Vector.Fixed.Internal
+import Data.Vector.Fixed.Internal.Arity
+import Data.Vector.Fixed.Cont (Dim)
 import Prelude hiding (read)
 
 

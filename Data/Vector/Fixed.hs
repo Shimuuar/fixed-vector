@@ -95,8 +95,8 @@ module Data.Vector.Fixed (
   , VecList
   ) where
 
-import Data.Vector.Fixed.Internal
-import Data.Vector.Fixed.Cont     (VecList)
+import Data.Vector.Fixed.Internal.Arity
+import Data.Vector.Fixed.Cont     (VecList,Vector(..),VectorN,Dim,length)
 import qualified Data.Vector.Fixed.Cont as C
 
 import qualified Prelude as P

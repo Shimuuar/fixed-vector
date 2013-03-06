@@ -8,8 +8,13 @@
 -- |
 -- Continuations-based API
 module Data.Vector.Fixed.Cont (
+    -- * Vector type class
+    Dim
+  , Vector(..)
+  , VectorN
+  , length
     -- * Vector as continuation
-    ContVecT
+  , ContVecT
   , ContVec
     -- ** Synonyms for small numerals
   , N1
@@ -78,11 +83,42 @@ module Data.Vector.Fixed.Cont (
   ) where
 
 import Control.Applicative
-import Data.Vector.Fixed.Internal
+import Data.Complex (Complex(..))
+import Data.Vector.Fixed.Internal.Arity
+import Data.Vector.Fixed.Internal.Id
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,any,all
                       , foldl,foldr,foldl1,length,sum
                       , head,tail,mapM,mapM_,sequence,sequence_
                       )
+
+
+----------------------------------------------------------------
+-- Type class for fixed vectors
+----------------------------------------------------------------
+
+-- | Size of vector expressed as type-level natural.
+type family Dim (v :: * -> *)
+
+-- | Type class for vectors with fixed length.
+class Arity (Dim v) => Vector v a where
+  -- | N-ary function for creation of vectors.
+  construct :: Fun (Dim v) a (v a)
+  -- | Deconstruction of vector.
+  inspect   :: v a -> Fun (Dim v) a b -> b
+
+-- | Vector parametrized by length. In ideal world it should be:
+--
+-- > forall n. (Arity n, Vector (v n) a, Dim (v n) ~ n) => VectorN v a
+--
+-- Alas polymorphic constraints aren't allowed in haskell.
+class (Vector (v n) a, Dim (v n) ~ n) => VectorN v n a
+
+-- | Length of vector. Function doesn't evaluate its argument.
+length :: forall v a. Arity (Dim v) => v a -> Int
+{-# INLINE length #-}
+length _ = arity (undefined :: Dim v)
+
+
 
 ----------------------------------------------------------------
 -- Cont. vectors and their instances
@@ -562,3 +598,41 @@ instance Arity n => Vector (VecList n) a where
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
 instance Arity n => VectorN VecList n a
+
+----------------------------------------------------------------
+-- Instances
+----------------------------------------------------------------
+
+type instance Dim Complex = N2
+
+instance RealFloat a => Vector Complex a where
+  construct = Fun (:+)
+  inspect (x :+ y) (Fun f) = f x y
+
+
+type instance Dim ((,) a) = N2
+
+instance (b~a) => Vector ((,) b) a where
+  construct = Fun (,)
+  inspect (a,b) (Fun f) = f a b
+
+
+type instance Dim ((,,) a b) = N3
+
+instance (b~a, c~a) => Vector ((,,) b c) a where
+  construct = Fun (,,)
+  inspect (a,b,c) (Fun f) = f a b c
+
+
+type instance Dim ((,,,) a b c) = N4
+
+instance (b~a, c~a, d~a) => Vector ((,,,) b c d) a where
+  construct = Fun (,,,)
+  inspect (a,b,c,d) (Fun f) = f a b c d
+
+
+type instance Dim ((,,,,) a b c d) = N5
+
+instance (b~a, c~a, d~a, e~a) => Vector ((,,,,) b c d e) a where
+  construct = Fun (,,,,)
+  inspect (a,b,c,d,e) (Fun f) = f a b c d e

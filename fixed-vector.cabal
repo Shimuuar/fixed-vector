@@ -73,11 +73,11 @@ Library
     primitive
   Exposed-modules:
     -- API
-    Data.Vector.Fixed
-    Data.Vector.Fixed.Internal
+    Data.Vector.Fixed.Internal.Arity
     Data.Vector.Fixed.Cont
-    Data.Vector.Fixed.Mutable
+    Data.Vector.Fixed
     -- Arrays
+    Data.Vector.Fixed.Mutable
     Data.Vector.Fixed.Boxed
     Data.Vector.Fixed.Primitive
     Data.Vector.Fixed.Unboxed
