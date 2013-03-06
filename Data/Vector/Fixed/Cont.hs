@@ -662,3 +662,17 @@ type instance Dim ((,,,,) a b c d) = N5
 instance (b~a, c~a, d~a, e~a) => Vector ((,,,,) b c d e) a where
   construct = Fun (,,,,)
   inspect (a,b,c,d,e) (Fun f) = f a b c d e
+
+
+type instance Dim ((,,,,,) a b c d e) = N6
+
+instance (b~a, c~a, d~a, e~a, f~a) => Vector ((,,,,,) b c d e f) a where
+  construct = Fun (,,,,,)
+  inspect (a,b,c,d,e,f) (Fun fun) = fun a b c d e f
+
+
+type instance Dim ((,,,,,,) a b c d e f) = S N6
+
+instance (b~a, c~a, d~a, e~a, f~a, g~a) => Vector ((,,,,,,) b c d e f g) a where
+  construct = Fun (,,,,,,)
+  inspect (a,b,c,d,e,f,g) (Fun fun) = fun a b c d e f g
