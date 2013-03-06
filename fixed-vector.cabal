@@ -1,5 +1,5 @@
 Name:           fixed-vector
-Version:        0.2.0.0
+Version:        0.3.0.0
 Synopsis:       Generic vectors with fixed length
 Description:
   Generic vectors with fixed length. Package is structured as follows:
@@ -9,10 +9,11 @@ Description:
   and array-based ones.
   .
   [@Data.Vector.Fixed.Cont@]
-  Continuation based vectors.
+  Continuation based vectors. Internally all functions use them.
   .
   [@Data.Vector.Fixed.Mutable@]
-  Type classes for array-based implementation.
+  Type classes for array-based implementation and API for working with
+  mutable state.
   .
   [@Data.Vector.Fixed.Unboxed@]
   Unboxed vectors.
@@ -25,6 +26,12 @@ Description:
   .
   [@Data.Vector.Fixed.Primitive@]
   Unboxed vectors based on pritimive package.
+  .
+  Changes in 0.3.0.0
+  .
+  * Indexing function restored.
+  .
+  * @unfoldr@ added.
   .
   Changes in 0.2.0.0
   .
