@@ -1,8 +1,21 @@
 Name:           fixed-vector
 Version:        0.3.0.0
-Synopsis:       Generic vectors with fixed length
+Synopsis:       Generic vectors with statically known size.
 Description:
-  Generic vectors with fixed length. Package is structured as follows:
+  Generic library for vectors with statically known size. Same
+  functions could be used to work with both ADT based vector like
+  .
+  > data Vec3 a = a a a
+  .
+  Tuples are vectors too:
+  .
+  >>> sum (1,2,3)
+  6
+  .
+  Vectors which are represented internally by arrays are provided by
+  library. Both boxed and unboxed arrays are supported.
+  .
+  Library is structured as follows:
   .
   [@Data.Vector.Fixed@]
   Generic API. It's suitable for both ADT-based vector like @Complex@
