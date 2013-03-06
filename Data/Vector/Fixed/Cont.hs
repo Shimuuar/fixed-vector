@@ -561,12 +561,34 @@ any f = foldr (\x b -> f x && b) True
 
 
 ----------------------------------------------------------------
--- Fusion
+-- Deforestation
 ----------------------------------------------------------------
 
+-- Deforestation uses following assertion: if we convert continuation
+-- to vector and immediately back to the continuation we can eliminate
+-- intermediate vector. This optimization can however turn
+-- nonterminating programs into terminating.
+--
+-- > runContVec head $ cvec $ vector $ mk2 () ⊥
+--
+-- If intermediate vector is strict in its elements expression above
+-- evaluates to ⊥ too. But if we apply rewrite rule resuling expression:
+--
+-- > runContVec head $ mk2 () ⊥
+--
+-- will evaluate to () since ContVec is not strict in its elements.
+-- It has been considered acceptable.
+--
+--
+-- In order to get rule fire reliably (it still doesn't). `vector' in
+-- inlined starting from phase 1. `cvec' is inlined even later (only
+-- during phase 0) because it need to participate in rewriting of
+-- indexing functions.
+
+
 {-# RULES
-"cvec/vector" forall x.
-  cvec (vector x) = changeMonad runID x
+"cvec/vector" forall v.
+  cvec (vector v) = changeMonad runID v
   #-}
 
 ----------------------------------------------------------------
