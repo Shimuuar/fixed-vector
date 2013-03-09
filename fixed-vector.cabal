@@ -101,6 +101,7 @@ Library
     Data.Vector.Fixed.Internal.Id
     Data.Vector.Fixed.Cont
     Data.Vector.Fixed
+    Data.Vector.Fixed.Monomorphic
     -- Arrays
     Data.Vector.Fixed.Mutable
     Data.Vector.Fixed.Boxed
