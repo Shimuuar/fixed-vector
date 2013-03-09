@@ -98,7 +98,11 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,any,all
 -- | Size of vector expressed as type-level natural.
 type family Dim (v :: * -> *)
 
--- | Type class for vectors with fixed length.
+-- | Type class for vectors with fixed length. Instance should provide
+-- two functions: one to create vector and another for vector
+-- deconstruction. They must obey following law:
+--
+-- > inspect v construct = v
 class Arity (Dim v) => Vector v a where
   -- | N-ary function for creation of vectors.
   construct :: Fun (Dim v) a (v a)

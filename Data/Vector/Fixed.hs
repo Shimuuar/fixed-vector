@@ -25,6 +25,7 @@ module Data.Vector.Fixed (
   , Fun(..)
   , length
     -- * Constructors
+    -- $construction
     -- ** Small dimensions
     -- $smallDim
   , mk1
@@ -99,6 +100,21 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
                       , foldl,foldr,foldl1,length,sum
                       , head,tail,mapM,mapM_,sequence,sequence_
                       )
+
+
+-- $construction
+--
+-- In addition to functions list above it's possible to use tuples in
+-- conjunction with 'convert' function to create vectors. For example:
+--
+-- v = convert (x,y,z)
+--
+-- It will work on if type of @v@ is know from elsewhere. Same trick
+-- could be used to pattern match on the vector with opaque
+-- representation using view patterns
+--
+-- > function :: Vec N3 Double -> ...
+-- > function (convert -> (x,y,z)) = ...
 
 -- $smallDim
 --
