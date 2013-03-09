@@ -211,7 +211,7 @@ foldl :: Vector v a => (b -> a -> b) -> b -> v a -> b
 foldl f x = C.runContVec (C.foldl f x)
           . C.cvec
 
--- | Left fold over vector
+-- | Right fold over vector
 foldr :: Vector v a => (a -> b -> b) -> b -> v a -> b
 {-# INLINE foldr #-}
 foldr f x = C.runContVec (C.foldr f x)
