@@ -3,9 +3,92 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeFamilies #-}
 -- |
--- Wrapper for monomorphic vectors.
-module Data.Vector.Fixed.Monomorphic
-  where
+-- Wrapper function for working with monomorphic vectors. Standard API
+-- require vector to be parametric in their element type making it
+-- impossible to work with vectors like
+--
+-- > data Vec3 = Vec3 Double Double Double
+--
+-- This module provides newtype wrapper which allows use of functions
+-- from "Data.Vector.Fixed" with such data types and function which
+-- works with such vectors.
+--
+-- Functions have same meaning as ones from "Data.Vector.Fixed" and
+-- documented there.
+module Data.Vector.Fixed.Monomorphic (
+    -- * Vector type class
+    -- ** Vector size
+    DimMono
+  , Z
+  , S
+    -- ** Synonyms for small numerals
+  , F.N1
+  , F.N2
+  , F.N3
+  , F.N4
+  , F.N5
+  , F.N6
+    -- ** Type class
+  , VectorMono(..)
+  , Arity
+  , Fun(..)
+  -- , length
+    -- * Constructors
+    -- $construction
+    -- ** Small dimensions
+    -- $smallDim
+  , mk1
+  , mk2
+  , mk3
+  , mk4
+  , mk5
+    -- ** Functions
+  , replicate
+  , replicateM
+  , generate
+  , generateM
+  , unfoldr
+  , basis
+    -- * Modifying vectors
+    -- ** Transformations
+  , head
+  , tail
+  , (!)
+    -- ** Comparison
+  , eq
+    -- ** Maps
+  , map
+  , mapM
+  , mapM_
+  , imap
+  , imapM
+  , imapM_
+    -- * Folding
+  , foldl
+  , foldr
+  , foldl1
+  , ifoldl
+  , ifoldr
+  , foldM
+  , ifoldM
+    -- ** Special folds
+  , sum
+  , maximum
+  , minimum
+  , and
+  , or
+  , all
+  , any
+    -- * Zips
+  , zipWith
+  , zipWithM
+  , izipWith
+  , izipWithM
+    -- * Conversion
+  , convert
+  , toList
+  , fromList
+  ) where
 
 import Control.Monad (liftM)
 import Data.Vector.Fixed.Internal.Arity
@@ -20,23 +103,42 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
 -- Wrappers for monomorphic vectors
 ----------------------------------------------------------------
 
--- | Wrapper for monomorphic vectors
+-- | Wrapper for monomorphic vectors it provides 'Vector' instance for
+--   monomorphic vectors. Trick is to restrict type parameter @a@ to
+--   single possible value.
 newtype Mono v a = Mono { getMono :: v }
 
 type instance F.Dim (Mono v) = DimMono v
 
 instance (VectorMono v, a ~ VectorElm v, Arity (DimMono v)) => F.Vector (Mono v) a where
-  construct = fmap Mono construct
-  inspect   = inspect . getMono
+  construct  = fmap Mono construct
+  inspect    = inspect . getMono
+  basicIndex = basicIndex . getMono
+  {-# INLINE construct  #-}
+  {-# INLINE inspect    #-}
+  {-# INLINE basicIndex #-}
 
 
+-- | Dimensions of monomorphic vector.
 type family DimMono v :: *
 
+-- | Counterpart of 'Vector' type class for monomorphic vectors.
 class Arity (DimMono v) => VectorMono v where
+  -- | Type of vector elements.
   type VectorElm v :: *
+  -- | Construct vector
   construct :: Fun (DimMono v) (VectorElm v) v
+  -- | Inspect vector
   inspect   :: v -> Fun (DimMono v) (VectorElm v) r -> r
+  -- | Optional more efficient implementation of indexing
+  basicIndex :: v -> Int -> VectorElm v
+  basicIndex v i = Mono v F.! i
+  {-# INLINE basicIndex #-}
 
+-- | Length of vector
+length :: Arity (DimMono v) => v -> Int
+length = F.length . Mono
+{-# INLINE length #-}
 
 
 ----------------------------------------------------------------
@@ -243,7 +345,7 @@ izipWithM :: (VectorMono v, VectorElm v ~ a, Monad m)
 izipWithM f v u = getMono `liftM` F.izipWithM f (Mono v) (Mono u)
 
 
-                  
+
 ----------------------------------------------------------------
 
 convert :: (VectorMono v, VectorMono w, VectorElm v ~ VectorElm w, DimMono v ~ DimMono w)
