@@ -1,4 +1,8 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 -- |
 -- Generic API for vectors with fixed length.
 --
@@ -90,8 +94,12 @@ module Data.Vector.Fixed (
   , VecList
   ) where
 
+import Control.Applicative (Applicative(..))
+import qualified Data.Foldable    as F
+import qualified Data.Traversable as T
+
 import Data.Vector.Fixed.Internal.Arity
-import Data.Vector.Fixed.Cont     (VecList,Vector(..),VectorN,Dim,length)
+import Data.Vector.Fixed.Cont     (Vector(..),VectorN,Dim,length)
 import qualified Data.Vector.Fixed.Cont as C
 import Data.Vector.Fixed.Internal
 
@@ -144,3 +152,38 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
 "fixed-vector:index/basicIndex"[1] forall vv i.
   runIndex i (C.cvec vv) = C.basicIndex vv i
  #-}
+
+
+-- | Vector based on the lists. Not very useful by itself but is
+--   necessary for implementation.
+newtype VecList n a = VecList [a]
+                      deriving (Show,Eq)
+
+type instance Dim (VecList n) = n
+
+newtype Flip f a n = Flip (f n a)
+
+newtype T_list a n = T_list ([a] -> [a])
+
+-- It's vital to avoid 'reverse' and build list using [a]->[a]
+-- functions. Reverse is recursive and interferes with inlining.
+instance Arity n => Vector (VecList n) a where
+  construct = Fun $ accum
+    (\(T_list xs) x -> T_list (xs . (x:)))
+    (\(T_list xs) -> VecList (xs []) :: VecList n a)
+    (T_list id :: T_list a n)
+  inspect v (Fun f) = apply
+    (\(Flip (VecList (x:xs))) -> (x, Flip (VecList xs)))
+    (Flip v)
+    f
+  {-# INLINE construct #-}
+  {-# INLINE inspect   #-}
+instance Arity n => VectorN VecList n a
+
+instance Arity n => Functor (VecList n) where
+  fmap = map
+instance Arity n => Applicative (VecList n) where
+  pure  = replicate
+  (<*>) = zipWith ($)
+instance Arity n => F.Foldable (VecList n) where
+  foldr = foldr
