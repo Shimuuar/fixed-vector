@@ -363,31 +363,40 @@ izipWithM f (ContVecT contA) (ContVecT contB) = ContVecT $ \funC ->
 
 
 
--- FIXME: explain function
 izipWithF :: forall n a b c r. (Arity n)
           => (Int -> a -> b -> c) -> Fun n c r -> Fun n a (Fun n b r)
 {-# INLINE izipWithF #-}
 izipWithF f (Fun g0) =
   fmap (\v -> Fun $ accum
-              (\(T_izip i (VecList (a:as)) g) b -> T_izip (i+1) (VecList as) (g $ f i a b)
+              (\(T_izip i (a:as) g) b -> T_izip (i+1) as (g $ f i a b)
               )
               (\(T_izip _ _ x) -> x)
               (T_izip 0 v g0 :: (T_izip a c r n))
-       ) construct
+       ) makeList
 
 izipWithFM :: forall m n a b c r. (Arity n, Monad m)
            => (Int -> a -> b -> m c) -> Fun n c (m r) -> Fun n a (Fun n b (m r))
 {-# INLINE izipWithFM #-}
 izipWithFM f (Fun g0) =
   fmap (\v -> Fun $ accumM
-              (\(T_izip i (VecList (a:as)) g) b -> do x <- f i a b
-                                                      return $ T_izip (i+1) (VecList as) (g x)
+              (\(T_izip i (a:as) g) b -> do x <- f i a b
+                                            return $ T_izip (i+1) as (g x)
               )
               (\(T_izip _ _ x) -> x)
               (return $ T_izip 0 v g0 :: m (T_izip a c (m r) n))
-       ) construct
+       ) makeList
 
-data T_izip a c r n = T_izip Int (VecList n a) (Fn n c r)
+
+makeList :: forall n a. Arity n => Fun n a [a]
+{-# INLINE makeList #-}
+makeList = Fun $ accum
+    (\(T_mkList xs) x -> T_mkList (xs . (x:)))
+    (\(T_mkList xs) -> xs [])
+    (T_mkList id :: T_mkList a n)
+
+newtype T_mkList a n = T_mkList ([a] -> [a])
+
+data T_izip a c r n = T_izip Int [a] (Fn n c r)
 
 
 
