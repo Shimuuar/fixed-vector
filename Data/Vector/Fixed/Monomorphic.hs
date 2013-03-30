@@ -32,7 +32,7 @@ module Data.Vector.Fixed.Monomorphic (
   , VectorMono(..)
   , Arity
   , Fun(..)
-  -- , length
+  , length
     -- * Constructors
     -- $construction
     -- ** Small dimensions
