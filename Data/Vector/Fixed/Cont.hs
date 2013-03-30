@@ -24,6 +24,7 @@ module Data.Vector.Fixed.Cont (
   , N6
     -- * Construction of ContVec
   , cvec
+  , empty
   , fromList
   , replicate
   , replicateM
@@ -79,8 +80,8 @@ module Data.Vector.Fixed.Cont (
   , any
   ) where
 
-import Control.Applicative
-import Data.Complex (Complex(..))
+import Control.Applicative (Applicative(..))
+import Data.Complex        (Complex(..))
 import Data.Vector.Fixed.Internal.Arity
 import Data.Vector.Fixed.Internal.Id
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,any,all
@@ -173,6 +174,11 @@ convertCont fB2C fC2B cont = \funC ->
 cvec :: (Vector v a, Dim v ~ n, Monad m) => v a -> ContVecT m n a
 cvec v = ContVecT (inspect v)
 {-# INLINE[0] cvec #-}
+
+-- | Create empty vector.
+empty :: ContVecT m Z a
+{-# INLINE empty #-}
+empty = ContVecT (\(Fun r) -> r)
 
 -- | Convert list to continuation-based vector. Will throw error if
 --   list is shorter than resulting vector.
