@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE GADTs #-}
 -- |
 -- Generic API for vectors with fixed length.
 --
@@ -91,7 +92,7 @@ module Data.Vector.Fixed (
   , toList
   , fromList
     -- * Data types
-  , VecList
+  , VecList(..)
   ) where
 
 import Control.Applicative (Applicative(..))
@@ -156,30 +157,36 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
 
 -- | Vector based on the lists. Not very useful by itself but is
 --   necessary for implementation.
-newtype VecList n a = VecList [a]
-                      deriving (Show,Eq)
+data VecList n a where
+  Nil  :: VecList Z a
+  Cons :: a -> VecList n a -> VecList (S n) a
 
+-- Vector instance
 type instance Dim (VecList n) = n
 
-newtype Flip f a n = Flip (f n a)
-
-newtype T_list a n = T_list ([a] -> [a])
-
--- It's vital to avoid 'reverse' and build list using [a]->[a]
--- functions. Reverse is recursive and interferes with inlining.
 instance Arity n => Vector (VecList n) a where
   construct = Fun $ accum
-    (\(T_list xs) x -> T_list (xs . (x:)))
-    (\(T_list xs) -> VecList (xs []) :: VecList n a)
-    (T_list id :: T_list a n)
-  inspect v (Fun f) = apply
-    (\(Flip (VecList (x:xs))) -> (x, Flip (VecList xs)))
-    (Flip v)
-    f
+    (\(T_List f) a -> T_List (f . Cons a))
+    (\(T_List f)   -> f Nil)
+    (T_List id :: T_List a n n)
+  inspect v (Fun f) = apply step (Flip v) f
+    where
+      step :: Flip VecList a (S k)  -> (a, Flip VecList a k)
+      step (Flip (Cons a xs)) = (a, Flip xs)
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
 instance Arity n => VectorN VecList n a
 
+newtype Flip f a n = Flip (f n a)
+
+newtype T_List a n k = T_List (VecList k a -> VecList n a)
+
+
+-- Standard instances
+instance (Show a, Arity n) => Show (VecList n a) where
+  show = show . foldr (:) []
+instance (Eq a, Arity n) => Eq (VecList n a) where
+  (==) = eq
 instance Arity n => Functor (VecList n) where
   fmap = map
 instance Arity n => Applicative (VecList n) where
