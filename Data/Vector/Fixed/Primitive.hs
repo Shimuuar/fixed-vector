@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE DeriveDataTypeable    #-}
 -- |
 -- Unboxed vectors with fixed length. Vectors from
 -- "Data.Vector.Fixed.Unboxed" provide more flexibility at no
@@ -18,6 +19,7 @@ module Data.Vector.Fixed.Primitive (
   ) where
 
 import Control.Monad
+import Data.Typeable            (Typeable)
 import Data.Primitive.ByteArray
 import Data.Primitive
 import Prelude hiding (length,replicate,zipWith,map,foldl)
@@ -34,9 +36,11 @@ import Data.Vector.Fixed.Mutable
 
 -- | Unboxed vector with fixed length
 newtype Vec n a = Vec ByteArray
+                  deriving (Typeable)
 
 -- | Mutable unboxed vector with fixed length
 newtype MVec n s a = MVec (MutableByteArray s)
+                     deriving (Typeable)
 
 type Vec2 = Vec (S (S Z))
 type Vec3 = Vec (S (S (S Z)))

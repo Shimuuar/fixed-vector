@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE DeriveDataTypeable    #-}
 -- |
 -- Storable-based unboxed vectors.
 module Data.Vector.Fixed.Storable (
@@ -20,6 +21,7 @@ module Data.Vector.Fixed.Storable (
   ) where
 
 import Control.Monad.Primitive
+import Data.Typeable         (Typeable)
 import Foreign.Storable
 import Foreign.ForeignPtr
 import Foreign.Marshal.Array ( advancePtr, copyArray, moveArray )
@@ -40,9 +42,11 @@ import Data.Vector.Fixed.Mutable
 
 -- | Storable-based vector with fixed length
 newtype Vec n a = Vec (ForeignPtr a)
+                  deriving (Typeable)
 
 -- | Storable-based mutable vector with fixed length
 newtype MVec n s a = MVec (ForeignPtr a)
+                     deriving (Typeable)
 
 type Vec2 = Vec (S (S Z))
 type Vec3 = Vec (S (S (S Z)))
