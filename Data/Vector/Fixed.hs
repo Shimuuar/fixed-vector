@@ -3,7 +3,8 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE GADTs               #-}
+{-# LANGUAGE DeriveDataTypeable  #-}
 -- |
 -- Generic API for vectors with fixed length.
 --
@@ -98,6 +99,7 @@ module Data.Vector.Fixed (
   ) where
 
 import Control.Applicative (Applicative(..))
+import Data.Typeable       (Typeable)
 import qualified Data.Foldable    as F
 import qualified Data.Traversable as T
 
@@ -162,6 +164,7 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
 data VecList n a where
   Nil  :: VecList Z a
   Cons :: a -> VecList n a -> VecList (S n) a
+  deriving (Typeable)
 
 -- Vector instance
 type instance Dim (VecList n) = n
