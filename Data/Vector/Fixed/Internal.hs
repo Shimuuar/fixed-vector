@@ -5,10 +5,12 @@
 -- Implementation of fixed-vectors
 module Data.Vector.Fixed.Internal where
 
+import Control.Applicative (Applicative)
+import qualified Data.Traversable as T
+
 import Data.Vector.Fixed.Internal.Arity
 import Data.Vector.Fixed.Cont     (Vector(..),Dim)
 import qualified Data.Vector.Fixed.Cont as C
-
 import qualified Prelude as P
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
                       , foldl,foldr,foldl1,length,sum
@@ -381,6 +383,18 @@ imapM_ :: (Vector v a, Monad m) => (Int -> a -> m b) -> v a -> m ()
 {-# INLINE imapM_ #-}
 imapM_ f = ifoldl (\m i a -> m >> f i a >> return ()) (return ())
 
+
+-- | Analog of 'T.sequenceA' from 'T.Traversable'.
+sequenceA :: (Vector v a, Vector v (f a), Applicative f)
+          => v (f a) -> f (v a)
+{-# INLINE sequenceA #-}
+sequenceA = fmap fromList . T.sequenceA . toList
+
+-- | Analog of 'T.traverse' from 'T.Traversable'.
+traverse :: (Vector v a, Vector v b, Applicative f)
+          => (a -> f b) -> v a -> f (v b)
+{-# INLINE traverse #-}
+traverse f = fmap fromList . T.traverse f . toList
 
 ----------------------------------------------------------------
 

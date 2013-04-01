@@ -66,6 +66,8 @@ module Data.Vector.Fixed (
   , imapM_
   , sequence
   , sequence_
+  , sequenceA
+  , traverse
     -- * Folding
   , foldl
   , foldr
