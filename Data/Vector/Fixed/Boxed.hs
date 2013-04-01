@@ -1,7 +1,8 @@
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE DeriveDataTypeable    #-}
 -- |
 -- Boxed vector.
 module Data.Vector.Fixed.Boxed (
@@ -13,9 +14,12 @@ module Data.Vector.Fixed.Boxed (
   , MVec
   ) where
 
-import Control.Monad
+import Control.Applicative  (Applicative(..))
 import Data.Primitive.Array
-import Prelude hiding (length,replicate,zipWith,map,foldl)
+import Data.Typeable        (Typeable)
+import qualified Data.Foldable    as F
+import qualified Data.Traversable as T
+import Prelude hiding (length,replicate,zipWith,map,foldl,foldr)
 
 import Data.Vector.Fixed
 import Data.Vector.Fixed.Internal.Arity
@@ -29,9 +33,11 @@ import Data.Vector.Fixed.Mutable
 
 -- | Vector with fixed length which can hold any value.
 newtype Vec n a = Vec (Array a)
+                  deriving (Typeable)
 
 -- | Mutable unboxed vector with fixed length
 newtype MVec n s a = MVec (MutableArray s a)
+                     deriving (Typeable)
 
 type Vec2 = Vec (S (S Z))
 type Vec3 = Vec (S (S (S Z)))
@@ -90,6 +96,25 @@ instance (Arity n, Eq a) => Eq (Vec n a) where
   (==) = eq
   {-# INLINE (==) #-}
 
+instance Arity n => Functor (Vec n) where
+  {-# INLINE fmap #-}
+  fmap = map
+
+instance Arity n => Applicative (Vec n) where
+  pure  = replicate
+  (<*>) = zipWith ($)
+  {-# INLINE pure  #-}
+  {-# INLINE (<*>) #-}
+
+instance Arity n => F.Foldable (Vec n) where
+  foldr = foldr
+  {-# INLINE foldr #-}
+
+instance Arity n => T.Traversable (Vec n) where
+  sequenceA = sequenceA
+  traverse  = traverse
+  {-# INLINE sequenceA #-}
+  {-# INLINE traverse #-}
 
 uninitialised :: a
 uninitialised = error "Data.Vector.Fixed.Boxed: uninitialised element"
