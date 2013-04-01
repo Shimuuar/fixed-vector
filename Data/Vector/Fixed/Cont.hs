@@ -13,7 +13,7 @@ module Data.Vector.Fixed.Cont (
   , VectorN
   , length
     -- * Vector as continuation
-  , ContVecT
+  , ContVecT(..)
   , ContVec
     -- ** Synonyms for small numerals
   , N1
