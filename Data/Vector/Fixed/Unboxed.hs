@@ -5,6 +5,8 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE UndecidableInstances  #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 -- |
 -- Unboxed vectors with fixed length.
 module Data.Vector.Fixed.Unboxed(
@@ -20,6 +22,7 @@ module Data.Vector.Fixed.Unboxed(
 
 import Control.Monad
 import Data.Complex
+import Data.Typeable (Typeable2,Typeable3)
 import Data.Int  (     Int8, Int16, Int32, Int64 )
 import Data.Word (Word,Word8,Word16,Word32,Word64)
 import Prelude hiding (length,replicate,zipWith,map,foldl)
@@ -35,6 +38,9 @@ import qualified Data.Vector.Fixed.Primitive as P
 
 data family Vec  n a
 data family MVec n s a
+
+deriving instance Typeable2 Vec
+deriving instance Typeable3 MVec
 
 type Vec2 = Vec (S (S Z))
 type Vec3 = Vec (S (S (S Z)))
