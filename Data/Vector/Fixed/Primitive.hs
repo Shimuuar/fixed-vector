@@ -12,6 +12,8 @@ module Data.Vector.Fixed.Primitive (
     Vec
   , Vec2
   , Vec3
+  , Vec4
+  , Vec5
     -- * Mutable
   , MVec
     -- * Type classes
@@ -44,6 +46,8 @@ newtype MVec n s a = MVec (MutableByteArray s)
 
 type Vec2 = Vec (S (S Z))
 type Vec3 = Vec (S (S (S Z)))
+type Vec4 = Vec (S (S (S (S Z))))
+type Vec5 = Vec (S (S (S (S (S Z)))))
 
 
 

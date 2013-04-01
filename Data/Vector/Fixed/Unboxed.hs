@@ -14,6 +14,8 @@ module Data.Vector.Fixed.Unboxed(
     Vec
   , Vec2
   , Vec3
+  , Vec4
+  , Vec5
     -- * Mutable
   , MVec
     -- * Type classes
@@ -44,6 +46,8 @@ deriving instance Typeable3 MVec
 
 type Vec2 = Vec (S (S Z))
 type Vec3 = Vec (S (S (S Z)))
+type Vec4 = Vec (S (S (S (S Z))))
+type Vec5 = Vec (S (S (S (S (S Z)))))
 
 class (IVector (Vec n) a, MVector (MVec n) a) => Unbox n a
 

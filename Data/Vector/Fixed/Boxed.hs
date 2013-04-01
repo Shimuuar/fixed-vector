@@ -10,6 +10,8 @@ module Data.Vector.Fixed.Boxed (
     Vec
   , Vec2
   , Vec3
+  , Vec4
+  , Vec5
     -- * Mutable
   , MVec
   ) where
@@ -41,6 +43,8 @@ newtype MVec n s a = MVec (MutableArray s a)
 
 type Vec2 = Vec (S (S Z))
 type Vec3 = Vec (S (S (S Z)))
+type Vec4 = Vec (S (S (S (S Z))))
+type Vec5 = Vec (S (S (S (S (S Z)))))
 
 
 

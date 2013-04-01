@@ -10,6 +10,8 @@ module Data.Vector.Fixed.Storable (
     Vec
   , Vec2
   , Vec3
+  , Vec4
+  , Vec5
     -- * Raw pointers
   , unsafeFromForeignPtr
   , unsafeToForeignPtr
@@ -50,6 +52,8 @@ newtype MVec n s a = MVec (ForeignPtr a)
 
 type Vec2 = Vec (S (S Z))
 type Vec3 = Vec (S (S (S Z)))
+type Vec4 = Vec (S (S (S (S Z))))
+type Vec5 = Vec (S (S (S (S (S Z)))))
 
 
 
