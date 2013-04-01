@@ -148,7 +148,7 @@ instance (Arity n) => Applicative (ContVecT m n) where
   {-# INLINE (<*>) #-}
 
 -- | Change monad type for the continuation vector.
-changeMonad :: (Monad p, Monad m, Arity n)
+changeMonad :: (Monad p, Arity n)
             => (forall x. p x -> x) -- ^ Function to extract result from monad
             -> ContVecT p n a -> ContVecT m n a
 {-# INLINE changeMonad #-}
