@@ -196,3 +196,6 @@ instance Arity n => Applicative (VecList n) where
   (<*>) = zipWith ($)
 instance Arity n => F.Foldable (VecList n) where
   foldr = foldr
+instance Arity n => T.Traversable (VecList n) where
+  sequenceA = sequenceA
+  traverse  = traverse
