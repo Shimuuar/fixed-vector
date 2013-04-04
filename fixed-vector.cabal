@@ -1,5 +1,5 @@
 Name:           fixed-vector
-Version:        0.3.1.0
+Version:        0.4.0.0
 Synopsis:       Generic vectors with statically known size.
 Description:
   Generic library for vectors with statically known
@@ -51,7 +51,9 @@ Description:
   .
   * @VecList@ is reimplemented as GADT and constructors are exported.
   .
-  * Constructor fo ContVecT is exported
+  * Constructor of ContVecT is exported
+  .
+  * Empty @ContVecT@ is implemented as @empty@.
   .
   * @Typeable@, @Foldable@ and @Traversable@ instances are added where
     appropriate
