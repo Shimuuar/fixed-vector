@@ -45,6 +45,17 @@ Description:
   [@Data.Vector.Fixed.Monomorphic@]
   Wrappers for monomorphic vectors
   .
+  Changes in 0.4.0.0
+  .
+  * Wrapper for monomorphics vectors is added.
+  .
+  * @VecList@ is reimplemented as GADT and constructors are exported.
+  .
+  * Constructor fo ContVecT is exported
+  .
+  * @Typeable@, @Foldable@ and @Traversable@ instances are added where
+    appropriate
+  .
   Changes in 0.3.0.0
   .
   * Wrappers for monomorphic types added.
