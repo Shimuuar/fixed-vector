@@ -55,6 +55,7 @@ module Data.Vector.Fixed (
     -- ** Transformations
   , head
   , tail
+  , cons
   , (!)
     -- ** Comparison
   , eq

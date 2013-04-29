@@ -196,6 +196,12 @@ tail :: (Vector v a, Vector w a, Dim v ~ S (Dim w))
 {-# INLINE tail #-}
 tail = C.vector . C.tail . C.cvec
 
+-- | Cons element to the vector
+cons :: (Vector v a, Vector w a, S (Dim v) ~ Dim w)
+     => a -> v a -> w a
+{-# INLINE cons #-}
+cons a = C.vector . C.cons a . C.cvec
+
 -- | Retrieve vector's element at index. Generic implementation is
 --   /O(n)/ but more efficient one is used when possible.
 (!) :: (Vector v a) => v a -> Int -> a
