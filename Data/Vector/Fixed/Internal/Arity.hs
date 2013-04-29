@@ -49,7 +49,7 @@ type instance Fn Z     a b = b
 type instance Fn (S n) a b = a -> Fn n a b
 
 -- | Newtype wrapper which is used to make 'Fn' injective.
-newtype Fun n a b = Fun (Fn n a b)
+newtype Fun n a b = Fun { unFun :: Fn n a b }
 
 newtype T_fmap a b n = T_fmap (Fn n a b)
 
