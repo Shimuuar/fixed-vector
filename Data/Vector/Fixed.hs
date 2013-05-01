@@ -97,6 +97,7 @@ module Data.Vector.Fixed (
   , fromList
   , fromList'
   , fromListM
+  , fromFoldable
     -- * Data types
   , VecList(..)
   , Only(..)

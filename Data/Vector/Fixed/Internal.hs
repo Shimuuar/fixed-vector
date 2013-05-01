@@ -6,6 +6,7 @@
 module Data.Vector.Fixed.Internal where
 
 import Control.Applicative (Applicative)
+import qualified Data.Foldable    as T
 import qualified Data.Traversable as T
 
 import Data.Vector.Fixed.Internal.Arity
@@ -472,8 +473,14 @@ fromList' :: (Vector v a) => [a] -> v a
 {-# INLINE fromList' #-}
 fromList' = C.vector . C.fromList'
 
--- | Create vector form list. Will return 'Nothing' if list has different
+-- | Create vector form list. Will return @Nothing@ if list has different
 --   length from resulting vector.
 fromListM :: (Vector v a) => [a] -> Maybe (v a)
 {-# INLINE fromListM #-}
 fromListM = C.vectorM . C.fromListM
+
+-- | Create vector from 'Foldable' data type. Will return @Nothing@ if
+--   data type different number of elements that resulting vector.
+fromFoldable :: (Vector v a, T.Foldable f) => f a -> Maybe (v a)
+{-# INLINE fromFoldable #-}
+fromFoldable = fromListM . T.toList
