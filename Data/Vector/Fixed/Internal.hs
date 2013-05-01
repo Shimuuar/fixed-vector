@@ -465,3 +465,15 @@ toList = foldr (:) []
 fromList :: (Vector v a) => [a] -> v a
 {-# INLINE fromList #-}
 fromList = C.vector . C.fromList
+
+-- | Create vector form list. Will throw error if list has different
+--   length from resulting vector.
+fromList' :: (Vector v a) => [a] -> v a
+{-# INLINE fromList' #-}
+fromList' = C.vector . C.fromList'
+
+-- | Create vector form list. Will return 'Nothing' if list has different
+--   length from resulting vector.
+fromListM :: (Vector v a) => [a] -> Maybe (v a)
+{-# INLINE fromListM #-}
+fromListM = C.vectorM . C.fromListM

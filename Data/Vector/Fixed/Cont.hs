@@ -26,6 +26,8 @@ module Data.Vector.Fixed.Cont (
   , cvec
   , empty
   , fromList
+  , fromList'
+  , fromListM
   , replicate
   , replicateM
   , generate
@@ -192,7 +194,33 @@ fromList xs = ContVecT $ \(Fun fun) ->
     step (T_flist []    ) = error "Data.Vector.Fixed.Cont.fromList: too few elements"
     step (T_flist (a:as)) = (a, T_flist as)
 
+-- | Same as 'fromList' bu throws error is list doesn't have same
+--   length as vector.
+fromList' :: forall m n a. Arity n => [a] -> ContVecT m n a
+{-# INLINE fromList' #-}
+fromList' xs = ContVecT $ \(Fun fun) ->
+  let (r,rest) = applyFun step (T_flist xs :: T_flist a n) fun
+      step (T_flist []    ) = error "Data.Vector.Fixed.Cont.fromList': too few elements"
+      step (T_flist (a:as)) = (a, T_flist as)
+  in case rest of
+       T_flist [] -> r
+       _          -> error "Data.Vector.Fixed.Cont.fromList': too many elements"
+
+-- | Convert list to continuation-based vector. Will fail with
+--   'Nothing' if list doesn't have right length.
+fromListM :: forall n a. Arity n => [a] -> ContVecT Maybe n a
+fromListM xs = ContVecT $ \(Fun fun) -> do
+  (r,rest) <- applyFunM step (T_flist xs :: T_flist a n) fun
+  case rest of
+    T_flist [] -> return r
+    _          -> Nothing
+  where
+    step (T_flist []    ) = Nothing
+    step (T_flist (a:as)) = return (a, T_flist as)
+
+
 data T_flist a n = T_flist [a]
+
 
 
 -- | Execute monadic action for every element of vector. Synonym for 'pure'.
