@@ -19,6 +19,8 @@ module Data.Vector.Fixed.Internal.Arity (
   , Fn
   , Fun(..)
   , Arity(..)
+  , apply
+  , applyM
   ) where
 
 ----------------------------------------------------------------
@@ -78,42 +80,63 @@ class Arity n where
          -> Fn n a (m b)                        -- ^ Reduction function
 
   -- | Apply all parameters to the function.
-  apply :: (forall k. t (S k) -> (a, t k)) -- ^ Get value to apply to function
-        -> t n                             -- ^ Initial value
-        -> Fn n a b                        -- ^ N-ary function
-        -> b
+  applyFun :: (forall k. t (S k) -> (a, t k)) -- ^ Get value to apply to function
+           -> t n                             -- ^ Initial value
+           -> Fn n a b                        -- ^ N-ary function
+           -> (b, t Z)
 
   -- | Monadic apply
-  applyM :: Monad m
-         => (forall k. t (S k) -> m (a, t k)) -- ^ Get value to apply to function
-         -> t n                               -- ^ Initial value
-         -> Fn n a (m b)                      -- ^ N-ary function
-         -> m b
+  applyFunM :: Monad m
+            => (forall k. t (S k) -> m (a, t k)) -- ^ Get value to apply to function
+            -> t n                               -- ^ Initial value
+            -> Fn n a (m b)                      -- ^ N-ary function
+            -> m (b, t Z)
   -- | Arity of function.
   arity :: n -> Int
 
+-- | Apply all parameters to the function.
+apply :: Arity n
+      => (forall k. t (S k) -> (a, t k)) -- ^ Get value to apply to function
+      -> t n                             -- ^ Initial value
+      -> Fn n a b                        -- ^ N-ary function
+      -> b
+{-# INLINE apply #-}
+apply step z f = fst $ applyFun step z f
+
+-- | Apply all parameters to the function.
+applyM :: (Arity n, Monad m)
+       => (forall k. t (S k) -> m (a, t k)) -- ^ Get value to apply to function
+       -> t n                               -- ^ Initial value
+       -> Fn n a (m b)                      -- ^ N-ary function
+       -> m b
+{-# INLINE applyM #-}
+applyM step z f = do
+  (r,_) <- applyFunM step z f
+  return r
+
 instance Arity Z where
-  accum  _ g t = g t
-  accumM _ g t = g =<< t
-  apply  _ _ h = h
-  applyM _ _ h = h
+  accum     _ g t = g t
+  accumM    _ g t = g =<< t
+  applyFun  _ t h = (h,t)
+  applyFunM _ t h = do r <- h
+                       return (r,t)
   arity  _ = 0
-  {-# INLINE accum  #-}
-  {-# INLINE accumM #-}
-  {-# INLINE apply  #-}
-  {-# INLINE arity  #-}
+  {-# INLINE accum     #-}
+  {-# INLINE accumM    #-}
+  {-# INLINE applyFun  #-}
+  {-# INLINE applyFunM #-}
+  {-# INLINE arity     #-}
+
 
 instance Arity n => Arity (S n) where
-  accum  f g t = \a -> accum  f g (f t a)
-  accumM f g t = \a -> accumM f g $ flip f a =<< t
-  apply  f t h = case f t of (a,u) -> apply f u (h a)
-  applyM f t h = do (a,u) <- f t
-                    applyM f u (h a)
-  arity  n = 1 + arity (prevN n)
-    where
-      prevN :: S n -> n
-      prevN _ = undefined
-  {-# INLINE accum  #-}
-  {-# INLINE accumM #-}
-  {-# INLINE apply  #-}
-  {-# INLINE arity  #-}
+  accum     f g t = \a -> accum  f g (f t a)
+  accumM    f g t = \a -> accumM f g $ flip f a =<< t
+  applyFun  f t h = case f t of (a,u) -> applyFun f u (h a)
+  applyFunM f t h = do (a,u) <- f t
+                       applyFunM f u (h a)
+  arity _ = 1 + arity (undefined :: n)
+  {-# INLINE accum     #-}
+  {-# INLINE accumM    #-}
+  {-# INLINE applyFun  #-}
+  {-# INLINE applyFunM #-}
+  {-# INLINE arity     #-}
