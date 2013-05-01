@@ -97,10 +97,11 @@ module Data.Vector.Fixed (
   , fromList
     -- * Data types
   , VecList(..)
+  , Only(..)
   ) where
 
-import Control.Applicative (Applicative(..))
-import Data.Typeable       (Typeable)
+import Control.Applicative (Applicative(..),(<$>))
+import Data.Data           (Typeable,Data)
 import qualified Data.Foldable    as F
 import qualified Data.Traversable as T
 
@@ -203,3 +204,24 @@ instance Arity n => F.Foldable (VecList n) where
 instance Arity n => T.Traversable (VecList n) where
   sequenceA = sequenceA
   traverse  = traverse
+
+
+-- | Single-element tuple.
+newtype Only a = Only a
+                 deriving (Show,Eq,Ord,Typeable,Data)
+
+instance Functor Only where
+  fmap f (Only a) = Only (f a)
+instance F.Foldable Only where
+  foldr = foldr
+instance T.Traversable Only where
+  sequenceA  (Only f) = Only <$> f
+  traverse f (Only a) = Only <$> f a
+
+type instance Dim Only = S Z
+
+instance Vector Only a where
+  construct = Fun Only
+  inspect (Only a) (Fun f) = f a
+  {-# INLINE construct #-}
+  {-# INLINE inspect   #-}
