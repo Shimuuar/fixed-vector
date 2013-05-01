@@ -95,6 +95,8 @@ module Data.Vector.Fixed (
   , convert
   , toList
   , fromList
+  , fromList'
+  , fromListM
     -- * Data types
   , VecList(..)
   , Only(..)
