@@ -2,6 +2,7 @@
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE Rank2Types            #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE DeriveDataTypeable    #-}
 -- |
 -- Type class for working with N-ary functions
 module Data.Vector.Fixed.Internal.Arity (
@@ -23,14 +24,18 @@ module Data.Vector.Fixed.Internal.Arity (
   , applyM
   ) where
 
+import Data.Typeable (Typeable)
+
+
+
 ----------------------------------------------------------------
 -- Naturals
 ----------------------------------------------------------------
 
 -- | Type level zero
-data Z
+data Z   deriving Typeable
 -- | Successor of n
-data S n
+data S n deriving Typeable
 
 type N1 = S Z
 type N2 = S N1
