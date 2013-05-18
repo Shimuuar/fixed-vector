@@ -1,5 +1,5 @@
 Name:           fixed-vector
-Version:        0.4.2.0
+Version:        0.4.3.0
 Synopsis:       Generic vectors with statically known size.
 Description:
   Generic library for vectors with statically known
@@ -44,6 +44,10 @@ Description:
   .
   [@Data.Vector.Fixed.Monomorphic@]
   Wrappers for monomorphic vectors
+  .
+  Changes in 0.4.3.0
+  .
+  * Typeable instance for @S@ and @Z@ added.
   .
   Changes in 0.4.2.0
   .
