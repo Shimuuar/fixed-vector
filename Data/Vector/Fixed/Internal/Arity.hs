@@ -24,7 +24,8 @@ module Data.Vector.Fixed.Internal.Arity (
   , applyM
   ) where
 
-import Data.Typeable (Typeable)
+import Control.Applicative (Applicative(..))
+import Data.Typeable       (Typeable)
 
 
 
@@ -58,7 +59,6 @@ type instance Fn (S n) a b = a -> Fn n a b
 -- | Newtype wrapper which is used to make 'Fn' injective.
 newtype Fun n a b = Fun { unFun :: Fn n a b }
 
-newtype T_fmap a b n = T_fmap (Fn n a b)
 
 instance Arity n => Functor (Fun n a) where
   fmap (f :: b -> c) (Fun g0 :: Fun n a b)
@@ -68,6 +68,26 @@ instance Arity n => Functor (Fun n a) where
              (T_fmap g0 :: T_fmap a b n)
   {-# INLINE fmap #-}
 
+instance Arity n => Applicative (Fun n a) where
+  pure (x :: x) = Fun $ accum (\(T_pure r) (_::a) -> T_pure r)
+                              (\(T_pure r)        -> r)
+                              (T_pure x :: T_pure x n)
+  (Fun f0 :: Fun n a (p -> q)) <*> (Fun g0 :: Fun n a p)
+    = Fun $ accum (\(T_ap f g) a -> T_ap (f a) (g a))
+                  (\(T_ap f g)   -> f g)
+                  (T_ap f0 g0 :: T_ap a (p -> q) p n)
+  {-# INLINE pure  #-}
+  {-# INLINE (<*>) #-}
+
+newtype T_fmap a b   n = T_fmap (Fn n a b)
+data    T_pure a     n = T_pure a
+data    T_ap   a b c n = T_ap (Fn n a b) (Fn n a c)
+
+
+
+----------------------------------------------------------------
+-- Generic operations of N-ary functions
+----------------------------------------------------------------
 
 -- | Type class for handling /n/-ary functions.
 class Arity n where
