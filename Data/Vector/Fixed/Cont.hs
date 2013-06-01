@@ -209,6 +209,7 @@ fromList' xs = ContVecT $ \(Fun fun) ->
 -- | Convert list to continuation-based vector. Will fail with
 --   'Nothing' if list doesn't have right length.
 fromListM :: forall n a. Arity n => [a] -> ContVecT Maybe n a
+{-# INLINE fromListM #-}
 fromListM xs = ContVecT $ \(Fun fun) -> do
   (r,rest) <- applyFunM step (T_flist xs :: T_flist a n) fun
   case rest of
