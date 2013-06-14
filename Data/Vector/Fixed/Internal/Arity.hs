@@ -22,6 +22,9 @@ module Data.Vector.Fixed.Internal.Arity (
   , Arity(..)
   , apply
   , applyM
+  , apFun
+  , constFun
+  , stepFun
   ) where
 
 import Control.Applicative (Applicative(..))
@@ -165,3 +168,19 @@ instance Arity n => Arity (S n) where
   {-# INLINE applyFun  #-}
   {-# INLINE applyFunM #-}
   {-# INLINE arity     #-}
+
+
+
+-- | Apply single parameter to function
+apFun :: Fun (S n) a b -> a -> Fun n a b
+apFun (Fun f) x = Fun (f x)
+{-# INLINE apFun #-}
+
+-- | Add one parameter to function which is ignored.
+constFun :: Fun n a b -> Fun (S n) a b
+constFun (Fun f) = Fun $ \_ -> f
+{-# INLINE constFun #-}
+
+stepFun :: (Fun n a b -> Fun m a c) -> Fun (S n) a b -> Fun (S m) a c
+stepFun g f = Fun $ unFun . g . apFun f
+{-# INLINE stepFun #-}
