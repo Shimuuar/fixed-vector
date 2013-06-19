@@ -22,9 +22,11 @@ module Data.Vector.Fixed.Internal.Arity (
   , Arity(..)
   , apply
   , applyM
+    -- ** Combinators
   , apFun
   , constFun
   , stepFun
+  , shuffleFun
   ) where
 
 import Control.Applicative (Applicative(..))
@@ -59,7 +61,8 @@ type family   Fn n a b
 type instance Fn Z     a b = b
 type instance Fn (S n) a b = a -> Fn n a b
 
--- | Newtype wrapper which is used to make 'Fn' injective.
+-- | Newtype wrapper which is used to make 'Fn' injective. It's also a
+--   reader monad.
 newtype Fun n a b = Fun { unFun :: Fn n a b }
 
 
@@ -81,6 +84,13 @@ instance Arity n => Applicative (Fun n a) where
                   (T_ap f0 g0 :: T_ap a (p -> q) p n)
   {-# INLINE pure  #-}
   {-# INLINE (<*>) #-}
+
+instance Arity n => Monad (Fun n a) where
+  return  = pure
+  f >>= g = shuffleFun g <*> f
+  {-# INLINE return #-}
+  {-# INLINE (>>=)  #-}
+
 
 newtype T_fmap a b   n = T_fmap (Fn n a b)
 data    T_pure a     n = T_pure a
@@ -171,6 +181,10 @@ instance Arity n => Arity (S n) where
 
 
 
+----------------------------------------------------------------
+-- Combinators
+----------------------------------------------------------------
+
 -- | Apply single parameter to function
 apFun :: Fun (S n) a b -> a -> Fun n a b
 apFun (Fun f) x = Fun (f x)
@@ -184,3 +198,14 @@ constFun (Fun f) = Fun $ \_ -> f
 stepFun :: (Fun n a b -> Fun m a c) -> Fun (S n) a b -> Fun (S m) a c
 stepFun g f = Fun $ unFun . g . apFun f
 {-# INLINE stepFun #-}
+
+-- | Move function parameter to the result of N-ary function.
+shuffleFun :: forall n a b r. Arity n
+           => (b -> Fun n a r) -> Fun n a (b -> r)
+{-# INLINE shuffleFun #-}
+shuffleFun f0
+  = Fun $ accum (\(T_shuffle f) a -> T_shuffle $ \x -> f x a)
+                (\(T_shuffle f)   -> f)
+                (T_shuffle (fmap unFun f0) :: T_shuffle b a r n)
+
+newtype T_shuffle x a r n = T_shuffle (x -> Fn n a r)
