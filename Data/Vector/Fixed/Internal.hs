@@ -85,6 +85,9 @@ mk5 :: (Vector v a, Dim v ~ C.N5) => a -> a -> a -> a -> a -> v a
 mk5 a1 a2 a3 a4 a5 = C.vector $ C.mk5 a1 a2 a3 a4 a5
 {-# INLINE mk5 #-}
 
+mkN :: (Vector v a, n ~ Dim v) => Fun n a (v a)
+mkN = fmap C.vector C.mkN
+{-# INLINE mkN #-}
 
 
 ----------------------------------------------------------------
