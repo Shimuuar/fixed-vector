@@ -372,12 +372,12 @@ data T_map a r n = T_map Int (Fn n a r)
 -- | /O(1)/ Tail of vector.
 tail :: ContVecT m (S n) a
      -> ContVecT m n a
-tail (ContVecT cont) = ContVecT $ \(Fun f) -> cont (Fun $ \_ -> f)
+tail (ContVecT cont) = ContVecT $ \f -> cont $ constFun f
 {-# INLINE tail #-}
 
 -- | /O(1)/ Prepend element to vector
 cons :: a -> ContVecT m n a -> ContVecT m (S n) a
-cons a (ContVecT cont) = ContVecT $ \(Fun f) -> cont $ Fun $ f a
+cons a (ContVecT cont) = ContVecT $ \f -> cont $ apFun f a
 {-# INLINE cons #-}
 
 -- | Zip two vector together using function.
