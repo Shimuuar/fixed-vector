@@ -40,6 +40,7 @@ module Data.Vector.Fixed.Cont (
   , mk3
   , mk4
   , mk5
+  , mkN
     -- * Transformations
   , map
   , imap
@@ -320,6 +321,15 @@ mk4 a1 a2 a3 a4 = ContVecT $ \(Fun f) -> f a1 a2 a3 a4
 mk5 :: a -> a -> a -> a -> a -> ContVecT m N5 a
 mk5 a1 a2 a3 a4 a5 = ContVecT $ \(Fun f) -> f a1 a2 a3 a4 a5
 {-# INLINE mk5 #-}
+
+-- | N-ary constructor for vectors
+mkN :: forall m n a. Arity n => Fn n a (ContVecT m n a)
+mkN = accum (\(T_mkN f) a -> T_mkN (f . cons a))
+            (\(T_mkN f)   -> f empty)
+            (T_mkN id :: T_mkN n m a n)
+{-# INLINE mkN #-}
+
+newtype T_mkN n_tot m a n = T_mkN (ContVecT m n a -> ContVecT m n_tot a)
 
 
 ----------------------------------------------------------------
