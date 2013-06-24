@@ -148,7 +148,8 @@ instance Index k n => Index (S k) (S n) where
 -- Cont. vectors and their instances
 ----------------------------------------------------------------
 
--- | Vector represented as continuation.
+-- | Vector represented as continuation. Alternative wording: it's
+--   Church encoding of N-ary vector.
 newtype ContVecT m n a = ContVecT (forall r. Fun n a (m r) -> m r)
 
 -- | Vector as continuation without monadic context.
