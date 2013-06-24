@@ -323,11 +323,12 @@ mk5 :: a -> a -> a -> a -> a -> ContVecT m N5 a
 mk5 a1 a2 a3 a4 a5 = ContVecT $ \(Fun f) -> f a1 a2 a3 a4 a5
 {-# INLINE mk5 #-}
 
--- | N-ary constructor for vectors
-mkN :: forall m n a. Arity n => Fn n a (ContVecT m n a)
-mkN = accum (\(T_mkN f) a -> T_mkN (f . cons a))
-            (\(T_mkN f)   -> f empty)
-            (T_mkN id :: T_mkN n m a n)
+-- | N-ary constructor for vectors. It's wrapped into 'Fun' so that
+--   GHC could instantiate it to concrete types.
+mkN :: forall m n a. Arity n => Fun n a (ContVecT m n a)
+mkN = Fun $ accum (\(T_mkN f) a -> T_mkN (f . cons a))
+                  (\(T_mkN f)   -> f empty)
+                  (T_mkN id :: T_mkN n m a n)
 {-# INLINE mkN #-}
 
 newtype T_mkN n_tot m a n = T_mkN (ContVecT m n a -> ContVecT m n_tot a)
