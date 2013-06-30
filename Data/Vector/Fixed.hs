@@ -122,10 +122,17 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
 
 -- $construction
 --
--- In addition to functions list above it's possible to use tuples in
--- conjunction with 'convert' function to create vectors. For example:
+-- There are several ways to construct fixed vectors except using
+-- their constructor if it's available. For small ones it's possible
+-- to use functions 'mk1', 'mk2', etc.
+-- 
+-- >>> mk3 'a' 'b' 'c' :: (Char,Char,Char)
+-- > ('a','b','c')
 --
--- v = convert (x,y,z)
+-- Another option is to create tuple and 'convert' it to desired
+-- vector type. For example:
+--
+-- > v = convert (x,y,z)
 --
 -- It will work on if type of @v@ is know from elsewhere. Same trick
 -- could be used to pattern match on the vector with opaque
