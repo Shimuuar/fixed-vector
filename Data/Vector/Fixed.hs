@@ -141,6 +141,20 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
 --
 -- > function :: Vec N3 Double -> ...
 -- > function (convert -> (x,y,z)) = ...
+--
+-- Third way is to use variadic function 'mkN'. It works similarly to
+-- 'Text.Printf.printf' except it produces result of type 'ContVec'
+-- which should be converted to vector of desired type by 'vector':
+--
+-- >>> vector $ mkN 'a' 'b' 'c' :: (Char,Char,Char)
+-- ('a','b','c')
+--
+-- Probably most generic way is to cons values to the @ContVec@ and
+-- convert it vector of desired type using 'vector':
+--
+-- >>> vector $ 'a' <| 'b' <| 'c' <| empty
+
+
 
 -- $smallDim
 --
