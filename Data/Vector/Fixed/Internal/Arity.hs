@@ -26,6 +26,7 @@ module Data.Vector.Fixed.Internal.Arity (
   , apFun
   , constFun
   , stepFun
+  , hideLast
   , shuffleFun
   ) where
 
@@ -132,6 +133,11 @@ class Arity n where
   -- | Arity of function.
   arity :: n -> Int
 
+  -- | Reverse order of parameters.
+  reverseF :: Fun n a b -> Fun n a b
+
+
+
 -- | Apply all parameters to the function.
 apply :: Arity n
       => (forall k. t (S k) -> (a, t k)) -- ^ Get value to apply to function
@@ -159,11 +165,13 @@ instance Arity Z where
   applyFunM _ t h = do r <- h
                        return (r,t)
   arity  _ = 0
+  reverseF = id
   {-# INLINE accum     #-}
   {-# INLINE accumM    #-}
   {-# INLINE applyFun  #-}
   {-# INLINE applyFunM #-}
   {-# INLINE arity     #-}
+  {-# INLINE reverseF  #-}
 
 
 instance Arity n => Arity (S n) where
@@ -172,12 +180,14 @@ instance Arity n => Arity (S n) where
   applyFun  f t h = case f t of (a,u) -> applyFun f u (h a)
   applyFunM f t h = do (a,u) <- f t
                        applyFunM f u (h a)
-  arity _ = 1 + arity (undefined :: n)
+  arity    _ = 1 + arity (undefined :: n)
+  reverseF f = Fun $ \a -> unFun (reverseF $ fmap ($ a) $ hideLast f) 
   {-# INLINE accum     #-}
   {-# INLINE accumM    #-}
   {-# INLINE applyFun  #-}
   {-# INLINE applyFunM #-}
   {-# INLINE arity     #-}
+  {-# INLINE reverseF  #-}
 
 
 
@@ -198,6 +208,22 @@ constFun (Fun f) = Fun $ \_ -> f
 stepFun :: (Fun n a b -> Fun m a c) -> Fun (S n) a b -> Fun (S m) a c
 stepFun g f = Fun $ unFun . g . apFun f
 {-# INLINE stepFun #-}
+
+-- | Move last parameter into function result
+hideLast :: forall n a b. Arity n => Fun (S n) a b -> Fun n a (a -> b)
+hideLast (Fun f0) = Fun $ accum step fini start
+  where
+    step :: forall k. T_fun a b (S k) -> a -> T_fun a b k
+    step = \(T_fun f) a -> T_fun (f a)
+    --
+    fini :: T_fun a b Z -> (a -> b)
+    fini = \(T_fun f) -> f 
+    --
+    start :: T_fun a b n
+    start = T_fun f0
+  
+newtype T_fun a b n = T_fun (Fn (S n) a b)
+
 
 -- | Move function parameter to the result of N-ary function.
 shuffleFun :: forall n a b r. Arity n
