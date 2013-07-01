@@ -1,6 +1,8 @@
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE Rank2Types            #-}
-{-# LANGUAGE FlexibleContexts      #-}
 -- |
 -- Implementation of fixed-vectors
 module Data.Vector.Fixed.Internal where
@@ -12,6 +14,7 @@ import qualified Data.Traversable as T
 import Data.Vector.Fixed.Internal.Arity
 import Data.Vector.Fixed.Cont     (Vector(..),Dim)
 import qualified Data.Vector.Fixed.Cont as C
+import           Data.Vector.Fixed.Cont   (ContVec)
 import qualified Prelude as P
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
                       , foldl,foldr,foldl1,length,sum,reverse
@@ -23,6 +26,35 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
 ----------------------------------------------------------------
 -- Generic functions
 ----------------------------------------------------------------
+
+-- | Variadic vector constructor. Resulting vector should be converted
+--   from 'ContVec' using 'vector' function.  For example:
+--
+-- >>> vector $ mkN 'a' 'b' 'c' :: (Char,Char,Char)
+-- ('a','b','c')
+mkN :: Make (S Z) a r => a -> r
+mkN = unGo $ make id
+{-# INLINE mkN #-}
+
+
+-- | Type class variadic vector construction.
+class Make n a r where
+  make :: (ContVec Z a -> ContVec n a) -> r
+
+instance (a'~a, Make (S n) a r) => Make n a' (a -> r) where
+  make f a = make (C.cons a . f)
+  {-# INLINE make #-}
+
+instance Arity n =>  Make n a (ContVec n a) where
+  make f = C.reverse $ f C.empty
+  {-# INLINE make #-}
+
+newtype Go r = Go { unGo :: r }
+
+instance Make Z a r => Make Z a (Go r) where
+  make f = Go $ make f
+  {-# INLINE make #-}
+
 
 -- TODO: does not fuse!
 
@@ -85,9 +117,6 @@ mk5 :: (Vector v a, Dim v ~ C.N5) => a -> a -> a -> a -> a -> v a
 mk5 a1 a2 a3 a4 a5 = C.vector $ C.mk5 a1 a2 a3 a4 a5
 {-# INLINE mk5 #-}
 
-mkN :: (Vector v a, n ~ Dim v) => Fun n a (v a)
-mkN = fmap C.vector C.mkN
-{-# INLINE mkN #-}
 
 
 ----------------------------------------------------------------
