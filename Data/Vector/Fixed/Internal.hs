@@ -204,6 +204,12 @@ cons :: (Vector v a, Vector w a, S (Dim v) ~ Dim w)
 {-# INLINE cons #-}
 cons a = C.vector . C.cons a . C.cvec
 
+-- | Cons element to the vector
+snoc :: (Vector v a, Vector w a, S (Dim v) ~ Dim w)
+     => a -> v a -> w a
+{-# INLINE snoc #-}
+snoc a = C.vector . C.snoc a . C.cvec
+
 -- | Reverse order of elements in the vector
 reverse :: Vector v a => v a -> v a
 reverse = C.vector . C.reverse . C.cvec

@@ -59,6 +59,7 @@ module Data.Vector.Fixed (
   , head
   , tail
   , cons
+  , snoc
   , reverse
   , (!)
     -- ** Comparison

@@ -24,6 +24,7 @@ module Data.Vector.Fixed.Internal.Arity (
   , applyM
     -- ** Combinators
   , apFun
+  , apLast
   , constFun
   , stepFun
   , hideLast
@@ -199,6 +200,12 @@ instance Arity n => Arity (S n) where
 apFun :: Fun (S n) a b -> a -> Fun n a b
 apFun (Fun f) x = Fun (f x)
 {-# INLINE apFun #-}
+
+-- | Apply last parameter to function
+apLast :: Arity n => Fun (S n) a b -> a -> Fun n a b
+apLast f x = fmap ($ x) $ hideLast f
+{-# INLINE apLast #-}
+
 
 -- | Add one parameter to function which is ignored.
 constFun :: Fun n a b -> Fun (S n) a b

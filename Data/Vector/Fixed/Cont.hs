@@ -48,6 +48,7 @@ module Data.Vector.Fixed.Cont (
   , imapM
   , tail
   , cons
+  , snoc
   , reverse
   , changeMonad
     -- ** Zips
@@ -392,6 +393,11 @@ tail (ContVecT cont) = ContVecT $ \f -> cont $ constFun f
 cons :: a -> ContVecT m n a -> ContVecT m (S n) a
 cons a (ContVecT cont) = ContVecT $ \f -> cont $ apFun f a
 {-# INLINE cons #-}
+
+-- | /O(1)/ Append element to vector
+snoc :: Arity n => a -> ContVecT m n a -> ContVecT m (S n) a
+snoc a (ContVecT cont) = ContVecT $ \f -> cont $ apLast f a
+{-# INLINE snoc #-}
 
 -- | Reverse order of elements in the vector
 reverse :: Arity n => ContVecT m n a -> ContVecT m n a
