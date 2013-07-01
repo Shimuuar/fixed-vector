@@ -55,43 +55,12 @@ instance Make Z a r => Make Z a (Go r) where
   make f = Go $ make f
   {-# INLINE make #-}
 
+-- | Cons value to continuation based vector.
+(<|) :: a -> ContVec n a -> ContVec (S n) a
+(<|) = C.cons
+{-# INLINE (<|) #-}
 
--- TODO: does not fuse!
-
--- | Generic function for construction of arbitrary vectors. It
---   represents partially constructed vector where /n/ is number of
---   uninitialized elements, /v/ is type of vector and /a/ element type.
---
---   Uninitialized vector could be obtained from 'con' and vector
---   elements could be added from left to right using '|>' operator.
---   Finally it could be converted to vector using 'vec' function.
---
---   Construction of complex number which could be seen as 2-element vector:
---
---   >>> import Data.Complex
---   >>> vec $ con |> 1 |> 3 :: Complex Double
---   1.0 :+ 3.0
-newtype New n v a = New (Fn n a (v a))
-
--- | Convert fully applied constructor to vector
-vec :: New Z v a -> v a
-{-# INLINE vec #-}
-vec (New v) = v
-
--- | Seed constructor
-con :: Vector v a => New (Dim v) v a
-{-# INLINE con #-}
-con = f2n construct
-
--- | Apply another element to vector
-(|>) :: New (S n) v a -> a -> New n v a
-{-# INLINE  (|>) #-}
-New f |> a = New (f a)
-infixl 1 |>
-
-f2n :: Fun n a (v a) -> New n v a
-{-# INLINE f2n #-}
-f2n (Fun f) = New f
+infixr 1 <|
 
 
 

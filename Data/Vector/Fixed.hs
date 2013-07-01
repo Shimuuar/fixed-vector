@@ -39,11 +39,14 @@ module Data.Vector.Fixed (
   , mk3
   , mk4
   , mk5
-    -- ** Generic constructor
-  , New
-  , vec
-  , con
-  , (|>)
+    -- ** Consing
+  , ContVec
+  , empty
+  , vector
+  , (<|)
+    -- ** Variadic function
+  , Make
+  , mkN
     -- ** Functions
   , replicate
   , replicateM
@@ -110,7 +113,7 @@ import qualified Data.Foldable    as F
 import qualified Data.Traversable as T
 
 import Data.Vector.Fixed.Internal.Arity
-import Data.Vector.Fixed.Cont     (Vector(..),VectorN,Dim,length)
+import Data.Vector.Fixed.Cont     (Vector(..),VectorN,Dim,length,ContVec,vector,empty)
 import qualified Data.Vector.Fixed.Cont as C
 import Data.Vector.Fixed.Internal
 
