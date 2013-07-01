@@ -48,6 +48,7 @@ module Data.Vector.Fixed.Cont (
   , imapM
   , tail
   , cons
+  , reverse
   , changeMonad
     -- ** Zips
   , zipWith
@@ -88,7 +89,7 @@ import Data.Complex        (Complex(..))
 import Data.Vector.Fixed.Internal.Arity
 import Data.Vector.Fixed.Internal.Id
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,any,all
-                      , foldl,foldr,foldl1,length,sum
+                      , foldl,foldr,foldl1,length,sum,reverse
                       , head,tail,mapM,mapM_,sequence,sequence_
                       )
 
@@ -391,6 +392,11 @@ tail (ContVecT cont) = ContVecT $ \f -> cont $ constFun f
 cons :: a -> ContVecT m n a -> ContVecT m (S n) a
 cons a (ContVecT cont) = ContVecT $ \f -> cont $ apFun f a
 {-# INLINE cons #-}
+
+-- | Reverse order of elements in the vector
+reverse :: Arity n => ContVecT m n a -> ContVecT m n a
+reverse (ContVecT cont) = ContVecT $ cont . reverseF
+{-# INLINE reverse #-}
 
 -- | Zip two vector together using function.
 zipWith :: (Arity n) => (a -> b -> c)

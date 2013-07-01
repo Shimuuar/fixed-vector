@@ -14,7 +14,7 @@ import Data.Vector.Fixed.Cont     (Vector(..),Dim)
 import qualified Data.Vector.Fixed.Cont as C
 import qualified Prelude as P
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
-                      , foldl,foldr,foldl1,length,sum
+                      , foldl,foldr,foldl1,length,sum,reverse
                       , head,tail,mapM,mapM_,sequence,sequence_
                       )
 
@@ -205,6 +205,11 @@ cons :: (Vector v a, Vector w a, S (Dim v) ~ Dim w)
      => a -> v a -> w a
 {-# INLINE cons #-}
 cons a = C.vector . C.cons a . C.cvec
+
+-- | Reverse order of elements in the vector
+reverse :: Vector v a => v a -> v a
+reverse = C.vector . C.reverse . C.cvec
+{-# INLINE reverse #-}
 
 -- | Retrieve vector's element at index. Generic implementation is
 --   /O(n)/ but more efficient one is used when possible.

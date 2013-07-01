@@ -56,6 +56,7 @@ module Data.Vector.Fixed (
   , head
   , tail
   , cons
+  , reverse
   , (!)
     -- ** Comparison
   , eq
@@ -115,7 +116,7 @@ import Data.Vector.Fixed.Internal
 
 import qualified Prelude as P
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
-                      , foldl,foldr,foldl1,length,sum
+                      , foldl,foldr,foldl1,length,sum,reverse
                       , head,tail,mapM,mapM_,sequence,sequence_
                       )
 
