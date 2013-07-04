@@ -48,6 +48,7 @@ module Data.Vector.Fixed.Cont (
   , imapM
   , tail
   , cons
+  , consV
   , snoc
   , reverse
   , changeMonad
@@ -393,6 +394,14 @@ tail (ContVecT cont) = ContVecT $ \f -> cont $ constFun f
 cons :: a -> ContVecT m n a -> ContVecT m (S n) a
 cons a (ContVecT cont) = ContVecT $ \f -> cont $ apFun f a
 {-# INLINE cons #-}
+
+-- | Prepend single element to vector.
+consV :: forall m n a. Monad m => ContVecT m (S Z) a -> ContVecT m n a -> ContVecT m (S n) a
+{-# INLINE consV #-}
+consV (ContVecT cont1) (ContVecT cont)
+  = ContVecT $ \f -> do a <- cont1 $ Fun return
+                        cont $ apFun f a 
+
 
 -- | /O(1)/ Append element to vector
 snoc :: Arity n => a -> ContVecT m n a -> ContVecT m (S n) a
