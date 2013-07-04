@@ -106,6 +106,11 @@ module Data.Vector.Fixed (
     -- * Data types
   , VecList(..)
   , Only(..)
+    -- ** Tuple synonyms
+  , Tuple2
+  , Tuple3
+  , Tuple4
+  , Tuple5
   ) where
 
 import Control.Applicative (Applicative(..),(<$>))
@@ -254,3 +259,9 @@ instance Vector Only a where
   inspect (Only a) (Fun f) = f a
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
+
+
+type Tuple2 a = (a,a)
+type Tuple3 a = (a,a,a)
+type Tuple4 a = (a,a,a,a)
+type Tuple5 a = (a,a,a,a,a)
