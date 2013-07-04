@@ -201,11 +201,11 @@ apFun :: Fun (S n) a b -> a -> Fun n a b
 apFun (Fun f) x = Fun (f x)
 {-# INLINE apFun #-}
 
--- | Apply last parameter to function
+-- | Apply last parameter to function. Unlike 'apFun' we need to
+--   traverse all parameters but last hence 'Arity' constraint.
 apLast :: Arity n => Fun (S n) a b -> a -> Fun n a b
 apLast f x = fmap ($ x) $ hideLast f
 {-# INLINE apLast #-}
-
 
 -- | Add one parameter to function which is ignored.
 constFun :: Fun n a b -> Fun (S n) a b
