@@ -226,6 +226,12 @@ runIndex :: Arity n => Int -> C.ContVec n r -> r
 runIndex n = C.runContVec (C.index n)
 {-# INLINE[0] runIndex #-}
 
+-- | Get element from vector at statically known index
+index :: (Vector v a, C.Index k (Dim v)) => v a -> k -> a
+{-# INLINE index #-}
+index v k = C.runContVec (C.getF k)
+          $ C.cvec v  
+
 -- | Left fold over vector
 foldl :: Vector v a => (b -> a -> b) -> b -> v a -> b
 {-# INLINE foldl #-}

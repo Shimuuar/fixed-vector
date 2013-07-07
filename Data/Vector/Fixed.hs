@@ -61,7 +61,10 @@ module Data.Vector.Fixed (
   , cons
   , snoc
   , reverse
+    -- ** Indexing & lenses
+  , C.Index
   , (!)
+  , index
     -- ** Comparison
   , eq
     -- ** Maps
