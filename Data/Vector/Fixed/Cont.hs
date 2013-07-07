@@ -12,6 +12,7 @@ module Data.Vector.Fixed.Cont (
   , Vector(..)
   , VectorN
   , length
+  , Index(..)
     -- * Vector as continuation
   , ContVecT(..)
   , ContVec
