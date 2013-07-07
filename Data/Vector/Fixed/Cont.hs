@@ -66,6 +66,7 @@ module Data.Vector.Fixed.Cont (
     -- ** Getters
   , head
   , index
+  , lensF
     -- ** Vector construction
   , vector
   , vectorM
@@ -553,6 +554,26 @@ index n
      ( T_Index (Left n) :: T_Index a n)
 
 newtype T_Index a n = T_Index (Either Int a)
+
+-- | Helper for implementation of Twan van Laarhoven lens.
+lensF :: forall a n f r. (Arity n,Functor f)
+      => Int -> (a -> f a) -> Fun n a r -> Fun n a (f r)
+lensF n f (Fun fun0) = Fun $ accum step fini start
+  where
+    step :: forall k. T_lens f a r (S k) -> a -> T_lens f a r k
+    step (T_lens (Left (0,fun))) a = T_lens $ Right $ fmap fun $ f a
+    step (T_lens (Left (i,fun))) a = T_lens $ Left (i-1, fun a)
+    step (T_lens (Right fun))    a = T_lens $ Right $ fmap ($ a) fun
+    --
+    fini :: T_lens f a r Z -> f r
+    fini (T_lens (Left  _)) = error "Data.Vector.Fixed.lensF: Index out of range"
+    fini (T_lens (Right r)) = r 
+    --
+    start :: T_lens f a r n
+    start = T_lens $ Left (n,fun0)
+
+data T_lens f a r n = T_lens (Either (Int,(Fn n a r)) (f (Fn n a r)))
+
 
 
 -- | Left fold over continuation vector.

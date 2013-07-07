@@ -232,6 +232,12 @@ index :: (Vector v a, C.Index k (Dim v)) => v a -> k -> a
 index v k = C.runContVec (C.getF k)
           $ C.cvec v  
 
+-- | Twan van Laarhoven's lens for element of vector
+element :: (Vector v a, Functor f) => Int -> (a -> f a) -> (v a -> f (v a))
+element i f v = inspect v
+              $ C.lensF i f construct
+
+
 -- | Left fold over vector
 foldl :: Vector v a => (b -> a -> b) -> b -> v a -> b
 {-# INLINE foldl #-}
