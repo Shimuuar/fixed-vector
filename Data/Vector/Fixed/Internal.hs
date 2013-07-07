@@ -24,7 +24,7 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
 
 
 ----------------------------------------------------------------
--- Generic functions
+-- Constructors
 ----------------------------------------------------------------
 
 -- | Variadic vector constructor. Resulting vector should be converted
@@ -64,8 +64,6 @@ infixr 1 <|
 
 
 
-----------------------------------------------------------------
-
 mk1 :: (Vector v a, Dim v ~ C.N1) => a -> v a
 mk1 a1 = C.vector $ C.mk1 a1
 {-# INLINE mk1 #-}
@@ -88,6 +86,8 @@ mk5 a1 a2 a3 a4 a5 = C.vector $ C.mk5 a1 a2 a3 a4 a5
 
 
 
+----------------------------------------------------------------
+-- Generic functions
 ----------------------------------------------------------------
 
 -- | Replicate value /n/ times.
