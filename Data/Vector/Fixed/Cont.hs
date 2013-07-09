@@ -67,6 +67,7 @@ module Data.Vector.Fixed.Cont (
   , head
   , index
   , element
+  , elementTy
     -- ** Vector construction
   , vector
   , vectorM
@@ -580,7 +581,15 @@ element :: (Arity n, Functor f)
 {-# INLINE element #-}
 element i f v = inspect v
               $ elementF i f mkN
-    
+
+-- | Twan van Laarhoven's lens for element of vector with statically
+--   known index.
+elementTy :: (Arity n, Index k n, Functor f)
+          => k -> (a -> f a) -> ContVec n a -> f (ContVec n a)
+{-# INLINE elementTy #-}
+elementTy k f v = inspect v
+                $ lensF k f mkN
+
 
 -- | Helper for implementation of Twan van Laarhoven lens.
 elementF :: forall a n f r. (Arity n, Functor f)

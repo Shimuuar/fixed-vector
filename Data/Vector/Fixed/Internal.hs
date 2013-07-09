@@ -14,7 +14,7 @@ import qualified Data.Traversable as T
 import Data.Vector.Fixed.Internal.Arity
 import Data.Vector.Fixed.Cont     (Vector(..),Dim)
 import qualified Data.Vector.Fixed.Cont as C
-import           Data.Vector.Fixed.Cont   (ContVec)
+import           Data.Vector.Fixed.Cont   (ContVec,Index)
 import qualified Prelude as P
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
                       , foldl,foldr,foldl1,length,sum,reverse
@@ -235,7 +235,14 @@ index v k = C.runContVec (C.getF k)
 -- | Twan van Laarhoven's lens for element of vector
 element :: (Vector v a, Functor f) => Int -> (a -> f a) -> (v a -> f (v a))
 {-# INLINE element #-}
-element i f v = C.vector `fmap` (C.element i f $ C.cvec v)
+element i f v = C.vector `fmap` C.element i f (C.cvec v)
+
+-- | Twan van Laarhoven's lens for element of vector with statically
+--   known index.
+elementTy :: (Vector v a, Index k (Dim v), Functor f)
+          => k -> (a -> f a) -> (v a -> f (v a))
+{-# INLINE elementTy #-}
+elementTy k f v = C.vector `fmap` C.elementTy k f (C.cvec v)
 
 
 

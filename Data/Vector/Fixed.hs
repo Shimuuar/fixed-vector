@@ -66,6 +66,7 @@ module Data.Vector.Fixed (
   , (!)
   , index
   , element
+  , elementTy
     -- ** Comparison
   , eq
     -- ** Maps
