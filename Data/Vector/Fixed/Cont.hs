@@ -339,8 +339,9 @@ mk5 :: a -> a -> a -> a -> a -> ContVecT m N5 a
 mk5 a1 a2 a3 a4 a5 = ContVecT $ \(Fun f) -> f a1 a2 a3 a4 a5
 {-# INLINE mk5 #-}
 
--- | N-ary constructor for vectors. It's wrapped into 'Fun' so that
---   GHC could instantiate it to concrete types.
+-- | N-ary constructor for vectors. It's more generic variant of
+--   'contruct' because it works with arbitrary monad type not only
+--   'Id'.
 mkN :: forall m n a. Arity n => Fun n a (ContVecT m n a)
 mkN = Fun $ accum (\(T_mkN f) a -> T_mkN (f . cons a))
                   (\(T_mkN f)   -> f empty)
@@ -521,7 +522,8 @@ runContVecM :: Arity n
 runContVecM f (ContVecT c) = c f
 {-# INLINE runContVecM #-}
 
--- | Run continuation vector.
+-- | Run continuation vector. It's same as 'inspect' but with
+--   arguments flipped.
 runContVec :: Arity n
            => Fun n a r
            -> ContVec n a
