@@ -160,6 +160,17 @@ newtype ContVecT m n a = ContVecT (forall r. Fun n a (m r) -> m r)
 -- | Vector as continuation without monadic context.
 type ContVec = ContVecT Id
 
+
+type instance Dim (ContVecT m n) = n
+
+instance Arity n => Vector (ContVecT Id n) a where
+  construct = mkN
+  inspect   = flip runContVec
+  {-# INLINE construct #-}
+  {-# INLINE inspect   #-}
+
+instance Arity n => VectorN (ContVecT Id) n a
+
 instance (Arity n) => Functor (ContVecT m n) where
   fmap = map
   {-# INLINE fmap #-}
