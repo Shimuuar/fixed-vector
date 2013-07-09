@@ -234,6 +234,7 @@ index v k = C.runContVec (C.getF k)
 
 -- | Twan van Laarhoven's lens for element of vector
 element :: (Vector v a, Functor f) => Int -> (a -> f a) -> (v a -> f (v a))
+{-# INLINE element #-}
 element i f v = inspect v
               $ C.lensF i f construct
 
