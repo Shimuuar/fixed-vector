@@ -88,7 +88,7 @@ module Data.Vector.Fixed.Cont (
   , any
   ) where
 
-import Control.Applicative (Applicative(..))
+import Control.Applicative (Applicative(..),(<$>))
 import Data.Complex        (Complex(..))
 import Data.Vector.Fixed.Internal.Arity
 import Data.Vector.Fixed.Internal.Id
@@ -136,16 +136,21 @@ length _ = arity (undefined :: Dim v)
 -- | Type class for indexing of vector when index value is known at
 --   compile time.
 class Index k n where
-  getF :: k -> Fun n a a
-  putF :: k -> a -> Fun n a a -> Fun n a a
+  getF  :: k -> Fun n a a
+  lensF :: Functor f => k -> (a -> f a) -> Fun n a r -> Fun n a (f r)
 
 instance Arity n => Index Z (S n) where
-  getF _           = Fun $ \(a :: a) -> unFun (pure a :: Fun n a a)
-  putF _ x (Fun f) = Fun $ \_ -> f x
+  getF  _       = Fun $ \(a :: a) -> unFun (pure a :: Fun n a a)
+  lensF _ f fun = Fun $ \(a :: a) -> unFun $
+    (\g -> g <$> f a) <$> shuffleFun (apFun fun)
+  {-# INLINE getF  #-}
+  {-# INLINE lensF #-}
 
 instance Index k n => Index (S k) (S n) where
-  getF _           = Fun $ \(_::a) -> unFun (getF (undefined :: k) :: Fun n a a)
-  putF _ x (Fun f) = Fun $ \(a::a) -> unFun $ putF (undefined :: k) x (Fun (f a) :: Fun n a a)
+  getF  _       = Fun $ \(_::a) -> unFun (getF  (undefined :: k) :: Fun n a a)
+  lensF _ f fun = Fun $ \a      -> unFun (lensF (undefined :: k) f (apFun fun a))
+  {-# INLINE getF  #-}
+  {-# INLINE lensF #-}
 
 
 
