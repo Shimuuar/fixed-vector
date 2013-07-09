@@ -575,7 +575,7 @@ newtype T_Index a n = T_Index (Either Int a)
 
 
 -- | Twan van Laarhoven lens for continuation based vector
-element :: forall n a f. (Arity n, Functor f)
+element :: (Arity n, Functor f)
         => Int -> (a -> f a) -> ContVec n a -> f (ContVec n a)
 {-# INLINE element #-}
 element i f v = inspect v
