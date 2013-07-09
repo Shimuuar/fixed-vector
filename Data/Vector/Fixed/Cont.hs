@@ -67,7 +67,6 @@ module Data.Vector.Fixed.Cont (
   , head
   , index
   , element
-  , lensF
     -- ** Vector construction
   , vector
   , vectorM
@@ -575,13 +574,13 @@ element :: forall n a f. (Arity n, Functor f)
         => Int -> (a -> f a) -> ContVec n a -> f (ContVec n a)
 {-# INLINE element #-}
 element i f v = inspect v
-              $ lensF i f mkN
+              $ elementF i f mkN
     
 
 -- | Helper for implementation of Twan van Laarhoven lens.
-lensF :: forall a n f r. (Arity n,Functor f)
-      => Int -> (a -> f a) -> Fun n a r -> Fun n a (f r)
-lensF n f (Fun fun0) = Fun $ accum step fini start
+elementF :: forall a n f r. (Arity n, Functor f)
+         => Int -> (a -> f a) -> Fun n a r -> Fun n a (f r)
+elementF n f (Fun fun0) = Fun $ accum step fini start
   where
     step :: forall k. T_lens f a r (S k) -> a -> T_lens f a r k
     step (T_lens (Left (0,fun))) a = T_lens $ Right $ fmap fun $ f a
