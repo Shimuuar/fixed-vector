@@ -23,7 +23,7 @@ import qualified Data.Foldable    as F
 import qualified Data.Traversable as T
 import Prelude hiding (length,replicate,zipWith,map,foldl,foldr)
 
-import Data.Vector.Fixed
+import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Internal.Arity
 import Data.Vector.Fixed.Mutable
 

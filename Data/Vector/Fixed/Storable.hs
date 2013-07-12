@@ -32,7 +32,7 @@ import GHC.Ptr               ( Ptr(..) )
 
 import Prelude hiding (length,replicate,zipWith,map,foldl)
 
-import Data.Vector.Fixed
+import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Internal.Arity
 import Data.Vector.Fixed.Mutable
 
