@@ -91,6 +91,8 @@ module Data.Vector.Fixed.Cont (
 
 import Control.Applicative (Applicative(..),(<$>))
 import Data.Complex        (Complex(..))
+import qualified Data.Foldable as F
+
 import Data.Vector.Fixed.Internal.Arity
 import Data.Vector.Fixed.Internal.Id
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,any,all
@@ -186,6 +188,10 @@ instance (Arity n) => Applicative (ContVecT m n) where
   (<*>) = zipWith ($)
   {-# INLINE pure  #-}
   {-# INLINE (<*>) #-}
+
+instance (Arity n) => F.Foldable (ContVecT Id n) where
+  foldr f z = runContVec (foldr f z)
+  {-# INLINE foldr #-}
 
 -- | Change monad type for the continuation vector.
 changeMonad :: (Monad p, Arity n)
