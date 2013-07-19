@@ -91,7 +91,8 @@ module Data.Vector.Fixed.Cont (
 
 import Control.Applicative (Applicative(..),(<$>))
 import Data.Complex        (Complex(..))
-import qualified Data.Foldable as F
+import qualified Data.Foldable    as F
+import qualified Data.Traversable as F
 
 import Data.Vector.Fixed.Internal.Arity
 import Data.Vector.Fixed.Internal.Id
@@ -192,6 +193,22 @@ instance (Arity n) => Applicative (ContVecT m n) where
 instance (Arity n) => F.Foldable (ContVecT Id n) where
   foldr f z = runContVec (foldr f z)
   {-# INLINE foldr #-}
+
+instance (Arity n) => F.Traversable (ContVecT Id n) where
+  sequenceA v = inspect v $ sequenceAF construct
+  {-# INLINE sequenceA #-}
+
+sequenceAF :: forall f n a b. (Applicative f, Arity n)
+     => Fun n a b -> Fun n (f a) (f b)
+{-# INLINE sequenceAF #-}
+sequenceAF (Fun f0)
+  = Fun $ accum (\(T_sequenceA f) a -> T_sequenceA (f <*> a))
+                (\(T_sequenceA f)   -> f)
+                (T_sequenceA (pure f0) :: T_sequenceA f a b n)
+
+newtype T_sequenceA f a b n = T_sequenceA (f (Fn n a b))
+
+
 
 -- | Change monad type for the continuation vector.
 changeMonad :: (Monad p, Arity n)
