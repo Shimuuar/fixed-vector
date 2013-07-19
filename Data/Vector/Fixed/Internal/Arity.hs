@@ -131,6 +131,10 @@ class Arity n where
             -> t n                               -- ^ Initial value
             -> Fn n a (m b)                      -- ^ N-ary function
             -> m (b, t Z)
+  applyMon :: Monad m
+           => (forall k. t (S k) -> m (a, t k))
+           -> t n
+           -> m (Fn n a b -> b)
   -- | Arity of function.
   arity :: n -> Int
 
@@ -165,6 +169,7 @@ instance Arity Z where
   applyFun  _ t h = (h,t)
   applyFunM _ t h = do r <- h
                        return (r,t)
+  applyMon  _ _ = return id
   arity  _ = 0
   reverseF = id
   {-# INLINE accum     #-}
@@ -181,6 +186,9 @@ instance Arity n => Arity (S n) where
   applyFun  f t h = case f t of (a,u) -> applyFun f u (h a)
   applyFunM f t h = do (a,u) <- f t
                        applyFunM f u (h a)
+  applyMon  f t = do (a,t') <- f t
+                     cont   <- applyMon f t'
+                     return $ \f -> cont (f a)
   arity    _ = 1 + arity (undefined :: n)
   reverseF f = Fun $ \a -> unFun (reverseF $ fmap ($ a) $ hideLast f) 
   {-# INLINE accum     #-}
