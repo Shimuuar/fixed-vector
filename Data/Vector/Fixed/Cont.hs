@@ -197,12 +197,6 @@ class Arity n where
            -> Fn n a b                        -- ^ N-ary function
            -> (b, t Z)
 
-  -- | Monadic apply
-  applyFunM :: Monad m
-            => (forall k. t (S k) -> m (a, t k)) -- ^ Get value to apply to function
-            -> t n                               -- ^ Initial value
-            -> Fn n a (m b)                      -- ^ N-ary function
-            -> m (b, t Z)
   applyFunMon :: Monad m
               => (forall k. t (S k) -> m (a, t k))
               -> t n
@@ -235,14 +229,12 @@ applyMon f t = do (v,_) <- applyFunMon f t
 instance Arity Z where
   accum     _ g t = g t
   applyFun  _ t h = (h,t)
-  applyFunM _ t h = do r <- h
-                       return (r,t)
   applyFunMon  _ t = return (empty, t)
   arity  _ = 0
   reverseF = id
   {-# INLINE accum     #-}
   {-# INLINE applyFun  #-}
-  {-# INLINE applyFunM #-}
+  {-# INLINE applyFunMon #-}
   {-# INLINE arity     #-}
   {-# INLINE reverseF  #-}
 
@@ -250,8 +242,6 @@ instance Arity Z where
 instance Arity n => Arity (S n) where
   accum     f g t = \a -> accum  f g (f t a)
   applyFun  f t h = case f t of (a,u) -> applyFun f u (h a)
-  applyFunM f t h = do (a,u) <- f t
-                       applyFunM f u (h a)
   applyFunMon  f t = do (a,t') <- f t
                         (ContVec cont, tZ) <- applyFunMon f t'
                         return (ContVec $ \g -> cont (apFun g a) , tZ)
@@ -259,7 +249,7 @@ instance Arity n => Arity (S n) where
   reverseF f = Fun $ \a -> unFun (reverseF $ fmap ($ a) $ hideLast f) 
   {-# INLINE accum     #-}
   {-# INLINE applyFun  #-}
-  {-# INLINE applyFunM #-}
+  {-# INLINE applyFunMon #-}
   {-# INLINE arity     #-}
   {-# INLINE reverseF  #-}
 
