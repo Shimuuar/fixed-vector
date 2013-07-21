@@ -1,3 +1,4 @@
+{-# LANGUAGE EmptyDataDecls        #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances     #-}

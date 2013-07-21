@@ -123,8 +123,8 @@ import Data.Data           (Typeable,Data)
 import qualified Data.Foldable    as F
 import qualified Data.Traversable as T
 
-import Data.Vector.Fixed.Internal.Arity
-import Data.Vector.Fixed.Cont     (Vector(..),VectorN,Dim,length,ContVec,vector,empty)
+import Data.Vector.Fixed.Cont     (Vector(..),VectorN,Dim,length,ContVec,vector,
+                                   empty,S,Z,Arity,Fun(..),accum,apply)
 import qualified Data.Vector.Fixed.Cont as C
 import Data.Vector.Fixed.Internal
 
@@ -270,3 +270,4 @@ type Tuple2 a = (a,a)
 type Tuple3 a = (a,a,a)
 type Tuple4 a = (a,a,a,a)
 type Tuple5 a = (a,a,a,a,a)
+                

@@ -8,11 +8,12 @@
 module Data.Vector.Fixed.Internal where
 
 import Control.Applicative (Applicative)
+import Control.Monad       (liftM)
 import qualified Data.Foldable    as T
 import qualified Data.Traversable as T
 
-import Data.Vector.Fixed.Internal.Arity
-import Data.Vector.Fixed.Cont     (Vector(..),Dim)
+
+import Data.Vector.Fixed.Cont     (Vector(..),Dim,S,Z,Arity)
 import qualified Data.Vector.Fixed.Cont as C
 import           Data.Vector.Fixed.Cont   (ContVec,Index)
 import qualified Prelude as P
@@ -124,7 +125,7 @@ replicate
 replicateM :: (Vector v a, Monad m) => m a -> m (v a)
 {-# INLINE replicateM #-}
 replicateM
-  = C.vectorM . C.replicateM
+  = liftM C.vector . C.replicateM
 
 
 -- | Unit vector along Nth axis. If index is larger than vector
@@ -167,7 +168,7 @@ generate = C.vector . C.generate
 --   to its value.
 generateM :: (Monad m, Vector v a) => (Int -> m a) -> m (v a)
 {-# INLINE generateM #-}
-generateM = C.vectorM . C.generateM
+generateM = liftM C.vector . C.generateM
 
 
 
@@ -181,9 +182,9 @@ generateM = C.vectorM . C.generateM
 --   >>> let x = mk3 1 2 3 :: Vec3 Int
 --   >>> head x
 --   1
-head :: (Vector v a, Dim v ~ S n) => v a -> a
+head :: (Arity n, Vector v a, Dim v ~ S n) => v a -> a
 {-# INLINE head #-}
-head = C.runContVec C.head . C.cvec
+head = C.head . C.cvec
 
 
 -- | Tail of vector.
@@ -223,7 +224,7 @@ v ! n = runIndex n (C.cvec v)
 
 -- Used in rewriting of index function.
 runIndex :: Arity n => Int -> C.ContVec n r -> r
-runIndex n = C.runContVec (C.index n)
+runIndex = C.index
 {-# INLINE[0] runIndex #-}
 
 -- | Get element from vector at statically known index
@@ -249,33 +250,33 @@ elementTy k f v = C.vector `fmap` C.elementTy k f (C.cvec v)
 -- | Left fold over vector
 foldl :: Vector v a => (b -> a -> b) -> b -> v a -> b
 {-# INLINE foldl #-}
-foldl f x = C.runContVec (C.foldl f x)
+foldl f x = C.foldl f x
           . C.cvec
 
 -- | Right fold over vector
 foldr :: Vector v a => (a -> b -> b) -> b -> v a -> b
 {-# INLINE foldr #-}
-foldr f x = C.runContVec (C.foldr f x)
+foldr f x = C.foldr f x
           . C.cvec
 
 
 -- | Left fold over vector
 foldl1 :: (Vector v a, Dim v ~ S n) => (a -> a -> a) -> v a -> a
 {-# INLINE foldl1 #-}
-foldl1 f = C.runContVec (C.foldl1 f)
+foldl1 f = C.foldl1 f
          . C.cvec
 
 -- | Left fold over vector
 ifoldr :: Vector v a => (Int -> a -> b -> b) -> b -> v a -> b
 {-# INLINE ifoldr #-}
-ifoldr f x = C.runContVec (C.ifoldr f x)
+ifoldr f x = C.ifoldr f x
            . C.cvec
 
 -- | Left fold over vector. Function is applied to each element and
 --   its index.
 ifoldl :: Vector v a => (b -> Int -> a -> b) -> b -> v a -> b
 {-# INLINE ifoldl #-}
-ifoldl f z = C.runContVec (C.ifoldl f z)
+ifoldl f z = C.ifoldl f z
            . C.cvec
 
 -- | Monadic fold over vector.
@@ -300,7 +301,7 @@ ifoldM f x v = ifoldl go (return x) v
 
 -- | Sum all elements in the vector.
 sum :: (Vector v a, Num a) => v a -> a
-sum = C.runContVec C.sum . C.cvec
+sum = C.sum . C.cvec
 {-# INLINE sum #-}
 
 -- | Maximal element of vector.
@@ -312,7 +313,7 @@ sum = C.runContVec C.sum . C.cvec
 --   >>> maximum x
 --   3
 maximum :: (Vector v a, Dim v ~ S n, Ord a) => v a -> a
-maximum = C.runContVec C.maximum . C.cvec
+maximum = C.maximum . C.cvec
 {-# INLINE maximum #-}
 
 -- | Minimal element of vector.
@@ -324,27 +325,27 @@ maximum = C.runContVec C.maximum . C.cvec
 --   >>> minimum x
 --   1
 minimum :: (Vector v a, Dim v ~ S n, Ord a) => v a -> a
-minimum = C.runContVec C.minimum . C.cvec
+minimum = C.minimum . C.cvec
 {-# INLINE minimum #-}
 
 -- | Conjunction of all elements of a vector.
 and :: (Vector v Bool) => v Bool -> Bool
-and = C.runContVec C.and . C.cvec
+and = C.and . C.cvec
 {-# INLINE and #-}
 
 -- | Disjunction of all elements of a vector.
 or :: (Vector v Bool) => v Bool -> Bool
-or = C.runContVec C.or . C.cvec
+or = C.or . C.cvec
 {-# INLINE or #-}
 
 -- | Determines whether all elements of vector satisfy predicate.
 all :: (Vector v a) => (a -> Bool) -> v a -> Bool
-all f = C.runContVec (C.all f) . C.cvec
+all f = (C.all f) . C.cvec
 {-# INLINE all #-}
 
 -- | Determines whether any of element of vector satisfy predicate.
 any :: (Vector v a) => (a -> Bool) -> v a -> Bool
-any f = C.runContVec (C.any f) . C.cvec
+any f = (C.any f) . C.cvec
 {-# INLINE any #-}
 
 
@@ -363,7 +364,7 @@ any f = C.runContVec (C.any f) . C.cvec
 --   False
 eq :: (Vector v a, Eq a) => v a -> v a -> Bool
 {-# INLINE eq #-}
-eq v w = C.runContVec C.and
+eq v w = C.and
        $ C.zipWith (==) (C.cvec v) (C.cvec w)
 
 
@@ -390,7 +391,7 @@ sequence_ = mapM_ id
 -- | Monadic map over vector.
 mapM :: (Vector v a, Vector v b, Monad m) => (a -> m b) -> v a -> m (v b)
 {-# INLINE mapM #-}
-mapM f = C.vectorM
+mapM f = liftM C.vector
        . C.mapM f
        . C.cvec
 
@@ -412,7 +413,7 @@ imap f = C.vector
 imapM :: (Vector v a, Vector v b, Monad m) =>
     (Int -> a -> m b) -> v a -> m (v b)
 {-# INLINE imapM #-}
-imapM f = C.vectorM
+imapM f = liftM C.vector
         . C.imapM f
         . C.cvec
 
@@ -462,7 +463,7 @@ zipWith f v u = C.vector
 zipWithM :: (Vector v a, Vector v b, Vector v c, Monad m)
          => (a -> b -> m c) -> v a -> v b -> m (v c)
 {-# INLINE zipWithM #-}
-zipWithM f v u = C.vectorM
+zipWithM f v u = liftM C.vector
                $ C.zipWithM f (C.cvec v) (C.cvec u)
 
 -- | Zip two vector together using function which takes element index
@@ -478,7 +479,7 @@ izipWith f v u = C.vector
 izipWithM :: (Vector v a, Vector v b, Vector v c, Monad m)
           => (Int -> a -> b -> m c) -> v a -> v b -> m (v c)
 {-# INLINE izipWithM #-}
-izipWithM f v u = C.vectorM
+izipWithM f v u = liftM C.vector
                 $ C.izipWithM f (C.cvec v) (C.cvec u)
 
 
@@ -509,7 +510,7 @@ fromList' = C.vector . C.fromList'
 --   length from resulting vector.
 fromListM :: (Vector v a) => [a] -> Maybe (v a)
 {-# INLINE fromListM #-}
-fromListM = C.vectorM . C.fromListM
+fromListM = liftM C.vector . C.fromListM
 
 -- | Create vector from 'Foldable' data type. Will return @Nothing@ if
 --   data type different number of elements that resulting vector.

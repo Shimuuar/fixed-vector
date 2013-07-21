@@ -91,8 +91,8 @@ module Data.Vector.Fixed.Monomorphic (
   ) where
 
 import Control.Monad (liftM)
-import Data.Vector.Fixed.Internal.Arity
 import qualified Data.Vector.Fixed as F
+import Data.Vector.Fixed.Cont (S,Z,Arity,Fun(..))
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
                       , foldl,foldr,foldl1,length,sum
                       , head,tail,mapM,mapM_,sequence,sequence_
@@ -198,7 +198,7 @@ generateM f = getMono `liftM` F.generateM f
 
 ----------------------------------------------------------------
 
-head :: (VectorMono v, VectorElm v ~ a, DimMono v ~ S n) => v -> a
+head :: (Arity n, VectorMono v, VectorElm v ~ a, DimMono v ~ S n) => v -> a
 {-# INLINE head #-}
 head = F.head . Mono
 
