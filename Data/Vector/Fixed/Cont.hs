@@ -23,7 +23,7 @@ module Data.Vector.Fixed.Cont (
   , Fun(..)
   , Arity(..)
   , apply
-  , applyMon
+  , applyM
     -- ** Combinators
   , apFun
   , apLast
@@ -197,7 +197,7 @@ class Arity n where
            -> Fn n a b                        -- ^ N-ary function
            -> (b, t Z)
 
-  applyFunMon :: Monad m
+  applyFunM :: Monad m
               => (forall k. t (S k) -> m (a, t k))
               -> t n
               -> m (ContVec n a, t Z)
@@ -219,22 +219,23 @@ apply :: Arity n
 apply step z f = fst $ applyFun step z f
 
 
-applyMon :: (Monad m, Arity n)
+applyM :: (Monad m, Arity n)
          => (forall k. t (S k) -> m (a, t k))
          -> t n
          -> m (ContVec n a)
-applyMon f t = do (v,_) <- applyFunMon f t
-                  return v
+{-# INLINE applyM #-}
+applyM f t = do (v,_) <- applyFunM f t
+                return v
 
 instance Arity Z where
   accum     _ g t = g t
   applyFun  _ t h = (h,t)
-  applyFunMon  _ t = return (empty, t)
+  applyFunM  _ t = return (empty, t)
   arity  _ = 0
   reverseF = id
   {-# INLINE accum     #-}
   {-# INLINE applyFun  #-}
-  {-# INLINE applyFunMon #-}
+  {-# INLINE applyFunM #-}
   {-# INLINE arity     #-}
   {-# INLINE reverseF  #-}
 
@@ -242,14 +243,14 @@ instance Arity Z where
 instance Arity n => Arity (S n) where
   accum     f g t = \a -> accum  f g (f t a)
   applyFun  f t h = case f t of (a,u) -> applyFun f u (h a)
-  applyFunMon  f t = do (a,t') <- f t
-                        (ContVec cont, tZ) <- applyFunMon f t'
-                        return (ContVec $ \g -> cont (apFun g a) , tZ)
+  applyFunM  f t = do (a,t') <- f t
+                      (ContVec cont, tZ) <- applyFunM f t'
+                      return (ContVec $ \g -> cont (apFun g a) , tZ)
   arity    _ = 1 + arity (undefined :: n)
   reverseF f = Fun $ \a -> unFun (reverseF $ fmap ($ a) $ hideLast f) 
   {-# INLINE accum     #-}
   {-# INLINE applyFun  #-}
-  {-# INLINE applyFunMon #-}
+  {-# INLINE applyFunM #-}
   {-# INLINE arity     #-}
   {-# INLINE reverseF  #-}
 
@@ -462,7 +463,7 @@ fromList' xs = ContVec $ \(Fun fun) ->
 fromListM :: forall n a. Arity n => [a] -> Maybe (ContVec n a)
 {-# INLINE fromListM #-}
 fromListM xs = do
-  (v,rest) <- applyFunMon step (T_flist xs :: T_flist a n)
+  (v,rest) <- applyFunM step (T_flist xs :: T_flist a n)
   case rest of
     T_flist [] -> return v
     _          -> Nothing
@@ -488,8 +489,8 @@ replicateM :: forall m n a. (Arity n, Monad m)
            => m a -> m (ContVec n a)
 {-# INLINE replicateM #-}
 replicateM act =
-  applyMon (\T_replicate -> do { a <- act; return (a, T_replicate) } )
-           (T_replicate :: T_replicate n)
+  applyM (\T_replicate -> do { a <- act; return (a, T_replicate) } )
+         (T_replicate :: T_replicate n)
 
 
 data T_replicate n = T_replicate
@@ -509,8 +510,8 @@ generateM :: forall m n a. (Monad m, Arity n)
            => (Int -> m a) -> m (ContVec n a)
 {-# INLINE generateM #-}
 generateM f =
-  applyMon (\(T_generate n) -> do { a <- f n; return (a, T_generate (n + 1)) } )
-           (T_generate 0 :: T_generate n)
+  applyM (\(T_generate n) -> do { a <- f n; return (a, T_generate (n + 1)) } )
+         (T_generate 0 :: T_generate n)
 
 
 newtype T_generate n = T_generate Int
