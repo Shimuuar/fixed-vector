@@ -57,7 +57,6 @@ module Data.Vector.Fixed.Cont (
   , mk3
   , mk4
   , mk5
-  , mkN
     -- * Transformations
   , map
   , imap
@@ -386,12 +385,18 @@ newtype ContVec n a = ContVec (forall r. Fun n a r -> r)
 type instance Dim (ContVec n) = n
 
 instance Arity n => Vector (ContVec n) a where
-  construct = mkN
+  construct = Fun $
+    accum (\(T_mkN f) a -> T_mkN (f . cons a))
+          (\(T_mkN f)   -> f empty)
+          (T_mkN id :: T_mkN n a n)
   inspect (ContVec c) f = c f
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
 
+newtype T_mkN n_tot a n = T_mkN (ContVec n a -> ContVec n_tot a)
+
 instance Arity n => VectorN ContVec n a
+
 
 instance (Arity n) => Functor (ContVec n) where
   fmap = map
@@ -562,17 +567,6 @@ mk5 :: a -> a -> a -> a -> a -> ContVec N5 a
 mk5 a1 a2 a3 a4 a5 = ContVec $ \(Fun f) -> f a1 a2 a3 a4 a5
 {-# INLINE mk5 #-}
 
-
--- | N-ary constructor for vectors. It's more generic variant of
---   'contruct' because it works with arbitrary monad type not only
---   'Id'.
-mkN :: forall n a. Arity n => Fun n a (ContVec n a)
-mkN = Fun $ accum (\(T_mkN f) a -> T_mkN (f . cons a))
-                  (\(T_mkN f)   -> f empty)
-                  (T_mkN id :: T_mkN n a n)
-{-# INLINE mkN #-}
-
-newtype T_mkN n_tot a n = T_mkN (ContVec n a -> ContVec n_tot a)
 
 
 ----------------------------------------------------------------
@@ -790,7 +784,7 @@ element :: (Arity n, Functor f)
         => Int -> (a -> f a) -> ContVec n a -> f (ContVec n a)
 {-# INLINE element #-}
 element i f v = inspect v
-              $ elementF i f mkN
+              $ elementF i f construct
 
 -- | Twan van Laarhoven's lens for element of vector with statically
 --   known index.
