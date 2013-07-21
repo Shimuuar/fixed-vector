@@ -230,7 +230,7 @@ applyM f t = do (v,_) <- applyFunM f t
 instance Arity Z where
   accum     _ g t = g t
   applyFun  _ t h = (h,t)
-  applyFunM  _ t = return (empty, t)
+  applyFunM _ t   = return (empty, t)
   arity  _ = 0
   reverseF = id
   {-# INLINE accum     #-}
@@ -243,9 +243,9 @@ instance Arity Z where
 instance Arity n => Arity (S n) where
   accum     f g t = \a -> accum  f g (f t a)
   applyFun  f t h = case f t of (a,u) -> applyFun f u (h a)
-  applyFunM  f t = do (a,t') <- f t
-                      (ContVec cont, tZ) <- applyFunM f t'
-                      return (ContVec $ \g -> cont (apFun g a) , tZ)
+  applyFunM f t   = do (a,t') <- f t
+                       (ContVec cont, tZ) <- applyFunM f t'
+                       return (ContVec $ \g -> cont (apFun g a) , tZ)
   arity    _ = 1 + arity (undefined :: n)
   reverseF f = Fun $ \a -> unFun (reverseF $ fmap ($ a) $ hideLast f) 
   {-# INLINE accum     #-}
