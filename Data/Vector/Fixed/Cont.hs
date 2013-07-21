@@ -753,6 +753,7 @@ data T_head a n = T_head (Maybe a)
 
 -- | /O(n)/ Get value at specified index.
 index :: forall n a. Arity n => Int -> ContVec n a -> a
+{-# INLINE index #-}
 index n
   | n < 0     = error "Data.Vector.Fixed.Cont.index: index out of range"
   | otherwise = runContVec $ Fun $ accum
@@ -789,6 +790,7 @@ elementTy k f v = inspect v
 -- | Helper for implementation of Twan van Laarhoven lens.
 elementF :: forall a n f r. (Arity n, Functor f)
          => Int -> (a -> f a) -> Fun n a r -> Fun n a (f r)
+{-# INLINE elementF #-}
 elementF n f (Fun fun0) = Fun $ accum step fini start
   where
     step :: forall k. T_lens f a r (S k) -> a -> T_lens f a r k
@@ -955,6 +957,8 @@ type instance Dim Complex = N2
 instance RealFloat a => Vector Complex a where
   construct = Fun (:+)
   inspect (x :+ y) (Fun f) = f x y
+  {-# INLINE construct #-}
+  {-# INLINE inspect #-}
 
 
 type instance Dim ((,) a) = N2
@@ -966,6 +970,8 @@ type instance Dim ((,) a) = N2
 instance (b~a) => Vector ((,) b) a where
   construct = Fun (,)
   inspect (a,b) (Fun f) = f a b
+  {-# INLINE construct #-}
+  {-# INLINE inspect #-}
 
 
 type instance Dim ((,,) a b) = N3
@@ -973,6 +979,8 @@ type instance Dim ((,,) a b) = N3
 instance (b~a, c~a) => Vector ((,,) b c) a where
   construct = Fun (,,)
   inspect (a,b,c) (Fun f) = f a b c
+  {-# INLINE construct #-}
+  {-# INLINE inspect #-}
 
 
 type instance Dim ((,,,) a b c) = N4
@@ -980,6 +988,8 @@ type instance Dim ((,,,) a b c) = N4
 instance (b~a, c~a, d~a) => Vector ((,,,) b c d) a where
   construct = Fun (,,,)
   inspect (a,b,c,d) (Fun f) = f a b c d
+  {-# INLINE construct #-}
+  {-# INLINE inspect #-}
 
 
 type instance Dim ((,,,,) a b c d) = N5
@@ -987,6 +997,8 @@ type instance Dim ((,,,,) a b c d) = N5
 instance (b~a, c~a, d~a, e~a) => Vector ((,,,,) b c d e) a where
   construct = Fun (,,,,)
   inspect (a,b,c,d,e) (Fun f) = f a b c d e
+  {-# INLINE construct #-}
+  {-# INLINE inspect #-}
 
 
 type instance Dim ((,,,,,) a b c d e) = N6
@@ -994,6 +1006,8 @@ type instance Dim ((,,,,,) a b c d e) = N6
 instance (b~a, c~a, d~a, e~a, f~a) => Vector ((,,,,,) b c d e f) a where
   construct = Fun (,,,,,)
   inspect (a,b,c,d,e,f) (Fun fun) = fun a b c d e f
+  {-# INLINE construct #-}
+  {-# INLINE inspect #-}
 
 
 type instance Dim ((,,,,,,) a b c d e f) = S N6
@@ -1001,3 +1015,5 @@ type instance Dim ((,,,,,,) a b c d e f) = S N6
 instance (b~a, c~a, d~a, e~a, f~a, g~a) => Vector ((,,,,,,) b c d e f g) a where
   construct = Fun (,,,,,,)
   inspect (a,b,c,d,e,f,g) (Fun fun) = fun a b c d e f g
+  {-# INLINE construct #-}
+  {-# INLINE inspect #-}
