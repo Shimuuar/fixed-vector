@@ -282,16 +282,10 @@ stepFun g f = Fun $ unFun . g . apFun f
 
 -- | Move last parameter into function result
 hideLast :: forall n a b. Arity n => Fun (S n) a b -> Fun n a (a -> b)
-hideLast (Fun f0) = Fun $ accum step fini start
-  where
-    step :: forall k. T_fun a b (S k) -> a -> T_fun a b k
-    step = \(T_fun f) a -> T_fun (f a)
-    --
-    fini :: T_fun a b Z -> (a -> b)
-    fini = \(T_fun f) -> f 
-    --
-    start :: T_fun a b n
-    start = T_fun f0
+{-# INLINE hideLast #-}
+hideLast (Fun f0) = Fun $ accum (\(T_fun f) a -> T_fun (f a))
+                                (\(T_fun f)   -> f)
+                                (T_fun f0 :: T_fun a b n)
   
 newtype T_fun a b n = T_fun (Fn (S n) a b)
 
