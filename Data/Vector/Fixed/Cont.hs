@@ -417,7 +417,7 @@ newtype T_sequenceA f a b n = T_sequenceA (f (Fn n a b))
 -- Construction
 ----------------------------------------------------------------
 
--- | Convert regular vector to continuation
+-- | Convert regular vector to continuation based one.
 cvec :: (Vector v a, Dim v ~ n) => v a -> ContVec n a
 cvec v = ContVec (inspect v)
 {-# INLINE[0] cvec #-}
@@ -834,14 +834,13 @@ ifoldM f x
 
 data T_ifoldl b n = T_ifoldl !Int b
 
--- Implementation of foldl1F is particularly ugly. It could be
--- expressed in terms of foldlF:
+-- Implementation of foldl1 is quite ugly. It could be expressed in
+-- terms of foldlF (worker function for foldl)
 --
 -- > foldl1F f = Fun $ \a -> case foldlF f a :: Fun n a a of Fun g -> g
 --
--- But it require constraint `Arity n` whereas foldl1 provide
--- Arity (S n). Latter imply former but GHC cannot infer it. So
--- 'Arity n' begin to propagate through contexts. It's not acceptable.
+-- But it require constraint `Arity n` whereas `Vector v a` gives
+-- `Arity (S n)`.  Latter imply former but GHC cannot infer it.
 
 newtype T_foldl1 a n = T_foldl1 (Maybe a)
 
