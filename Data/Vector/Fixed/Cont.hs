@@ -755,9 +755,15 @@ vector = runContVec construct
 {-# INLINE[1] vector #-}
 
 -- | Finalizer function for getting head of the vector.
-head :: forall n a. Arity n => ContVec (S n) a -> a
+head :: forall n a. Arity (S n) => ContVec (S n) a -> a
 {-# INLINE head #-}
-head = runContVec $ Fun $ \a -> unFun (pure a :: Fun n a a)
+head
+  = runContVec $ Fun
+  $ accum (\(T_head m) a -> T_head $ case m of { Nothing -> Just a; x -> x })
+          (\(T_head (Just x)) -> x)
+          (T_head Nothing :: T_head a (S n))
+
+data T_head a n = T_head (Maybe a)
 
 
 -- | /O(n)/ Get value at specified index.

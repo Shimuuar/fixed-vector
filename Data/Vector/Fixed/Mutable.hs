@@ -9,7 +9,9 @@
 -- variable length.
 module Data.Vector.Fixed.Mutable (
     -- * Mutable vectors
-    Mutable
+    Arity
+  , arity
+  , Mutable
   , DimM
   , MVector(..)
   , lengthM
@@ -29,7 +31,7 @@ module Data.Vector.Fixed.Mutable (
 
 import Control.Monad.ST
 import Control.Monad.Primitive
-import Data.Vector.Fixed.Cont (Dim,Arity,Fun(..))
+import Data.Vector.Fixed.Cont (Dim,Arity,Fun(..),S,arity,apply,accum)
 import Prelude hiding (read)
 
 

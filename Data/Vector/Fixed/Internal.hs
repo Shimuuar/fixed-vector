@@ -182,7 +182,7 @@ generateM = liftM C.vector . C.generateM
 --   >>> let x = mk3 1 2 3 :: Vec3 Int
 --   >>> head x
 --   1
-head :: (Arity n, Vector v a, Dim v ~ S n) => v a -> a
+head :: (Vector v a, Dim v ~ S n) => v a -> a
 {-# INLINE head #-}
 head = C.head . C.cvec
 

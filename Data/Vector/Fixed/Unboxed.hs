@@ -29,7 +29,7 @@ import Data.Int  (     Int8, Int16, Int32, Int64 )
 import Data.Word (Word,Word8,Word16,Word32,Word64)
 import Prelude hiding (length,replicate,zipWith,map,foldl)
 
-import Data.Vector.Fixed (Dim,Arity,Vector(..),VectorN,S,Z,toList,eq)
+import Data.Vector.Fixed (Dim,Vector(..),VectorN,S,Z,toList,eq)
 import Data.Vector.Fixed.Mutable
 import qualified Data.Vector.Fixed.Primitive as P
 

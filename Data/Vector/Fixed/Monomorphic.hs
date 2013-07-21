@@ -198,7 +198,7 @@ generateM f = getMono `liftM` F.generateM f
 
 ----------------------------------------------------------------
 
-head :: (Arity n, VectorMono v, VectorElm v ~ a, DimMono v ~ S n) => v -> a
+head :: (VectorMono v, VectorElm v ~ a, DimMono v ~ S n) => v -> a
 {-# INLINE head #-}
 head = F.head . Mono
 
