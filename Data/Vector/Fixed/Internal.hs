@@ -282,18 +282,13 @@ ifoldl f z = C.ifoldl f z
 -- | Monadic fold over vector.
 foldM :: (Vector v a, Monad m) => (b -> a -> m b) -> b -> v a -> m b
 {-# INLINE foldM #-}
-foldM f x v = foldl go (return x) v
-  where
-    go m a = do b <- m
-                f b a
+foldM f x = C.foldM f x . C.cvec
 
 -- | Left monadic fold over vector. Function is applied to each element and
 --   its index.
 ifoldM :: (Vector v a, Monad m) => (b -> Int -> a -> m b) -> b -> v a -> m b
 {-# INLINE ifoldM #-}
-ifoldM f x v = ifoldl go (return x) v
-  where
-    go m i a = do { b <- m; f b i a }
+ifoldM f x = C.ifoldM f x . C.cvec
 
 
 
