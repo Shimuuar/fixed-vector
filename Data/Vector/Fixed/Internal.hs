@@ -488,6 +488,7 @@ convert = C.vector . C.cvec
 -- | Convert vector to the list
 toList :: (Vector v a) => v a -> [a]
 toList = foldr (:) []
+{-# INLINE toList #-}
 
 -- | Create vector form list. Will throw error if list is shorter than
 --   resulting vector.

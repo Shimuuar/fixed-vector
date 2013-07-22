@@ -45,6 +45,7 @@ module Data.Vector.Fixed.Cont (
   , fromList
   , fromList'
   , fromListM
+  , toList
   , replicate
   , replicateM
   , generate
@@ -467,6 +468,11 @@ fromListM xs = do
 
 data T_flist a n = T_flist [a]
 
+
+-- | Convert vector to the list
+toList :: (Arity n) => ContVec n a -> [a]
+toList = foldr (:) []
+{-# INLINE toList #-}
 
 
 -- | Execute monadic action for every element of vector. Synonym for 'pure'.
