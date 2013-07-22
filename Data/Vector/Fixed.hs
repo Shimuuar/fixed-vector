@@ -234,6 +234,8 @@ instance (Show a, Arity n) => Show (VecList n a) where
   show = show . foldr (:) []
 instance (Eq a, Arity n) => Eq (VecList n a) where
   (==) = eq
+instance (Ord a, Arity n) => Ord (VecList n a) where
+  compare = ord
 instance Arity n => Functor (VecList n) where
   fmap = map
 instance Arity n => Applicative (VecList n) where
@@ -271,4 +273,3 @@ type Tuple2 a = (a,a)
 type Tuple3 a = (a,a,a)
 type Tuple4 a = (a,a,a,a)
 type Tuple5 a = (a,a,a,a,a)
-                
