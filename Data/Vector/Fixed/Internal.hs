@@ -414,8 +414,8 @@ imap f = C.vector
        . C.cvec
 
 -- | Apply monadic function to every element of the vector and its index.
-imapM :: (Vector v a, Vector v b, Monad m) =>
-    (Int -> a -> m b) -> v a -> m (v b)
+imapM :: (Vector v a, Vector v b, Monad m)
+      => (Int -> a -> m b) -> v a -> m (v b)
 {-# INLINE imapM #-}
 imapM f = liftM C.vector
         . C.imapM f
@@ -439,6 +439,8 @@ traverse :: (Vector v a, Vector v b, Applicative f)
           => (a -> f b) -> v a -> f (v b)
 {-# INLINE traverse #-}
 traverse f = fmap fromList . T.traverse f . toList
+
+
 
 ----------------------------------------------------------------
 
