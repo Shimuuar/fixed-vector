@@ -9,6 +9,7 @@ module Data.Vector.Fixed.Internal where
 
 import Control.Applicative (Applicative)
 import Control.Monad       (liftM)
+import Data.Monoid         (mappend)
 import qualified Data.Foldable    as T
 import qualified Data.Traversable as T
 
@@ -361,6 +362,14 @@ eq :: (Vector v a, Eq a) => v a -> v a -> Bool
 {-# INLINE eq #-}
 eq v w = C.and
        $ C.zipWith (==) (C.cvec v) (C.cvec w)
+
+
+-- | Lexicographic ordering of two vectors.
+ord :: (Vector v a, Ord a) => v a -> v a -> Ordering
+{-# INLINE ord #-}
+ord v w = C.foldl mappend EQ
+        $ C.zipWith compare (C.cvec v) (C.cvec w)
+
 
 
 ----------------------------------------------------------------

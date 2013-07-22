@@ -98,6 +98,10 @@ instance (Arity n) => VectorN Vec n a
 instance (Arity n, Eq a) => Eq (Vec n a) where
   (==) = eq
   {-# INLINE (==) #-}
+instance (Arity n, Ord a) => Ord (Vec n a) where
+  compare = ord
+  {-# INLINE compare #-}
+
 
 instance Arity n => Functor (Vec n) where
   {-# INLINE fmap #-}

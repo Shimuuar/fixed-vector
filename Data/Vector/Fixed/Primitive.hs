@@ -102,3 +102,7 @@ instance (Arity n, Prim a) => VectorN Vec n a
 instance (Arity n, Prim a, Eq a) => Eq (Vec n a) where
   (==) = eq
   {-# INLINE (==) #-}
+instance (Arity n, Prim a, Ord a) => Ord (Vec n a) where
+  compare = ord
+  {-# INLINE compare #-}
+

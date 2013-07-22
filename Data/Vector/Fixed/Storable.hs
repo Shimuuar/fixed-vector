@@ -148,6 +148,9 @@ instance (Arity n, Storable a) => VectorN Vec n a
 instance (Arity n, Storable a, Eq a) => Eq (Vec n a) where
   (==) = eq
   {-# INLINE (==) #-}
+instance (Arity n, Storable a, Ord a) => Ord (Vec n a) where
+  compare = ord
+  {-# INLINE compare #-}
 
 
 
