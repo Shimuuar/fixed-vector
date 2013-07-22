@@ -28,7 +28,6 @@ module Data.Vector.Fixed.Cont (
   , apFun
   , apLast
   , constFun
-  , stepFun
   , hideLast
   , shuffleFun
     -- * Vector type class
@@ -276,10 +275,6 @@ apLast f x = fmap ($ x) $ hideLast f
 constFun :: Fun n a b -> Fun (S n) a b
 constFun (Fun f) = Fun $ \_ -> f
 {-# INLINE constFun #-}
-
-stepFun :: (Fun n a b -> Fun m a c) -> Fun (S n) a b -> Fun (S m) a c
-stepFun g f = Fun $ unFun . g . apFun f
-{-# INLINE stepFun #-}
 
 -- | Move last parameter into function result
 hideLast :: forall n a b. Arity n => Fun (S n) a b -> Fun n a (a -> b)
