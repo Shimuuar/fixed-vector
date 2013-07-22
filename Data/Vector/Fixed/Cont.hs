@@ -7,8 +7,11 @@
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE Rank2Types            #-}
 -- |
--- Continuations-based API
+-- API for Church-encoded vectors. Implementation of function from
+-- "Data.Vector.Fixed" module uses these function internally in order
+-- to provide shortcut fusion.
 module Data.Vector.Fixed.Cont (
+    -- * Type-level numbers
     S
   , Z
     -- ** Synonyms for small numerals
@@ -40,7 +43,6 @@ module Data.Vector.Fixed.Cont (
   , ContVec(..)
     -- * Construction of ContVec
   , cvec
-  , empty
   , fromList
   , fromList'
   , fromListM
@@ -52,6 +54,10 @@ module Data.Vector.Fixed.Cont (
   , unfoldr
   , basis
     -- ** Constructors
+  , empty
+  , cons
+  , consV
+  , snoc
   , mk1
   , mk2
   , mk3
@@ -67,9 +73,6 @@ module Data.Vector.Fixed.Cont (
   , sequence
   , sequence_
   , tail
-  , cons
-  , consV
-  , snoc
   , reverse
     -- ** Zips
   , zipWith
@@ -77,7 +80,6 @@ module Data.Vector.Fixed.Cont (
   , zipWithM
   , izipWithM
     -- * Running ContVec
-    -- $running
   , runContVec
     -- ** Getters
   , head
@@ -185,7 +187,8 @@ data    T_ap   a b c n = T_ap (Fn n a b) (Fn n a c)
 
 -- | Type class for handling /n/-ary functions.
 class Arity n where
-  -- | Left fold over /n/ elements exposed as n-ary function.
+  -- | Left fold over /n/ elements exposed as n-ary function. These
+  --   elements are supplied as arguments to the function.
   accum :: (forall k. t (S k) -> a -> t k) -- ^ Fold function
         -> (t Z -> b)                      -- ^ Extract result of fold
         -> t n                             -- ^ Initial value
@@ -197,9 +200,14 @@ class Arity n where
            -> Fn n a b                        -- ^ N-ary function
            -> (b, t Z)
 
+  -- | Apply all parameters to the function using monadic
+  --   actions. Note that for identity monad it's same as
+  --   applyFun. Ignoring newtypes:
+  --
+  -- > forall b. Fn n a b -> b  ~ ContVecn n a
   applyFunM :: Monad m
-              => (forall k. t (S k) -> m (a, t k))
-              -> t n
+              => (forall k. t (S k) -> m (a, t k)) -- ^ Get value to apply to function
+              -> t n                               -- ^ Initial value
               -> m (ContVec n a, t Z)
   -- | Arity of function.
   arity :: n -> Int
@@ -218,10 +226,10 @@ apply :: Arity n
 {-# INLINE apply #-}
 apply step z f = fst $ applyFun step z f
 
-
+-- | Apply all parameters to the function using monadic actions.
 applyM :: (Monad m, Arity n)
-         => (forall k. t (S k) -> m (a, t k))
-         -> t n
+         => (forall k. t (S k) -> m (a, t k)) -- ^ Get value to apply to function
+         -> t n                               -- ^ Initial value
          -> m (ContVec n a)
 {-# INLINE applyM #-}
 applyM f t = do (v,_) <- applyFunM f t
@@ -360,7 +368,7 @@ instance Index k n => Index (S k) (S n) where
 ----------------------------------------------------------------
 
 -- | Vector represented as continuation. Alternative wording: it's
---   Church encoding of N-ary vector.
+--   Church encoded N-element vector.
 newtype ContVec n a = ContVec (forall r. Fun n a r -> r)
 
 type instance Dim (ContVec n) = n
@@ -712,13 +720,6 @@ data T_izip a c r n = T_izip Int [a] (Fn n c r)
 ----------------------------------------------------------------
 -- Running vector
 ----------------------------------------------------------------
-
--- $running
---
--- Only way to get result from continuation vector is to apply
--- finalizer function to them using 'runContVecT', 'runContVecM' or
--- 'runContVec'. Getters and folds are defined as such finalizer
--- functions.
 
 -- | Run continuation vector. It's same as 'inspect' but with
 --   arguments flipped.

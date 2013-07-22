@@ -205,7 +205,7 @@ cons :: (Vector v a, Vector w a, S (Dim v) ~ Dim w)
 {-# INLINE cons #-}
 cons a = C.vector . C.cons a . C.cvec
 
--- | Cons element to the vector
+-- | Append element to the vector
 snoc :: (Vector v a, Vector w a, S (Dim v) ~ Dim w)
      => a -> v a -> w a
 {-# INLINE snoc #-}
