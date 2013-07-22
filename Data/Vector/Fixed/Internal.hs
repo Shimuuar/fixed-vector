@@ -432,13 +432,13 @@ imapM_ f = ifoldl (\m i a -> m >> f i a >> return ()) (return ())
 sequenceA :: (Vector v a, Vector v (f a), Applicative f)
           => v (f a) -> f (v a)
 {-# INLINE sequenceA #-}
-sequenceA = fmap fromList . T.sequenceA . toList
+sequenceA = fmap C.vector . T.sequenceA . C.cvec
 
 -- | Analog of 'T.traverse' from 'T.Traversable'.
 traverse :: (Vector v a, Vector v b, Applicative f)
           => (a -> f b) -> v a -> f (v b)
 {-# INLINE traverse #-}
-traverse f = fmap fromList . T.traverse f . toList
+traverse f = fmap C.vector . T.traverse f . C.cvec
 
 
 
