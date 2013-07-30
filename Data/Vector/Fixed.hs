@@ -85,6 +85,8 @@ module Data.Vector.Fixed (
   , foldl
   , foldr
   , foldl1
+  , fold
+  , foldMap
   , ifoldl
   , ifoldr
   , foldM

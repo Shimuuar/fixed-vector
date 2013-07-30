@@ -9,7 +9,7 @@ module Data.Vector.Fixed.Internal where
 
 import Control.Applicative (Applicative)
 import Control.Monad       (liftM)
-import Data.Monoid         (mappend)
+import Data.Monoid         (Monoid(..))
 import qualified Data.Foldable    as T
 import qualified Data.Traversable as T
 
@@ -267,6 +267,20 @@ foldl1 :: (Vector v a, Dim v ~ S n) => (a -> a -> a) -> v a -> a
 foldl1 f = C.foldl1 f
          . C.cvec
 
+-- | Combine the elements of a structure using a monoid. Similar to
+--   'T.fold'
+fold :: (Vector v m, Monoid m) => v m -> m
+{-# INLINE fold #-}
+fold = T.fold
+     . C.cvec
+
+-- | Map each element of the structure to a monoid,
+--   and combine the results. Similar to 'T.foldMap'
+foldMap :: (Vector v a, Monoid m) => (a -> m) -> v a -> m
+{-# INLINE foldMap #-}
+foldMap f = T.foldMap f
+          . C.cvec
+
 -- | Left fold over vector
 ifoldr :: Vector v a => (Int -> a -> b -> b) -> b -> v a -> b
 {-# INLINE ifoldr #-}
@@ -367,7 +381,7 @@ eq v w = C.and
 -- | Lexicographic ordering of two vectors.
 ord :: (Vector v a, Ord a) => v a -> v a -> Ordering
 {-# INLINE ord #-}
-ord v w = C.foldl mappend EQ
+ord v w = C.foldl mappend mempty
         $ C.zipWith compare (C.cvec v) (C.cvec w)
 
 
