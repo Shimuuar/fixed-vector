@@ -1,1 +1,3 @@
 dist
+test/optimization/.*\.(hi|hs.hcr|o)
+test/optimization/fuse-[^.]*$
