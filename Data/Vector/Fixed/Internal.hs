@@ -14,7 +14,7 @@ import qualified Data.Foldable    as T
 import qualified Data.Traversable as T
 
 
-import Data.Vector.Fixed.Cont     (Vector(..),Dim,S,Z,Arity)
+import Data.Vector.Fixed.Cont     (Vector(..),Dim,S,Z,Arity,vector)
 import qualified Data.Vector.Fixed.Cont as C
 import           Data.Vector.Fixed.Cont   (ContVec,Index)
 import qualified Prelude as P
@@ -22,7 +22,6 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
                       , foldl,foldr,foldl1,length,sum,reverse
                       , head,tail,mapM,mapM_,sequence,sequence_
                       )
-
 
 
 ----------------------------------------------------------------
@@ -67,23 +66,23 @@ infixr 1 <|
 
 
 mk1 :: (Vector v a, Dim v ~ C.N1) => a -> v a
-mk1 a1 = C.vector $ C.mk1 a1
+mk1 a1 = vector $ C.mk1 a1
 {-# INLINE mk1 #-}
 
 mk2 :: (Vector v a, Dim v ~ C.N2) => a -> a -> v a
-mk2 a1 a2 = C.vector $ C.mk2 a1 a2
+mk2 a1 a2 = vector $ C.mk2 a1 a2
 {-# INLINE mk2 #-}
 
 mk3 :: (Vector v a, Dim v ~ C.N3) => a -> a -> a -> v a
-mk3 a1 a2 a3 = C.vector $ C.mk3 a1 a2 a3
+mk3 a1 a2 a3 = vector $ C.mk3 a1 a2 a3
 {-# INLINE mk3 #-}
 
 mk4 :: (Vector v a, Dim v ~ C.N4) => a -> a -> a -> a -> v a
-mk4 a1 a2 a3 a4 = C.vector $ C.mk4 a1 a2 a3 a4
+mk4 a1 a2 a3 a4 = vector $ C.mk4 a1 a2 a3 a4
 {-# INLINE mk4 #-}
 
 mk5 :: (Vector v a, Dim v ~ C.N5) => a -> a -> a -> a -> a -> v a
-mk5 a1 a2 a3 a4 a5 = C.vector $ C.mk5 a1 a2 a3 a4 a5
+mk5 a1 a2 a3 a4 a5 = vector $ C.mk5 a1 a2 a3 a4 a5
 {-# INLINE mk5 #-}
 
 
@@ -103,13 +102,13 @@ mk5 a1 a2 a3 a4 a5 = C.vector $ C.mk5 a1 a2 a3 a4 a5
 --   >>> replicate 2 :: (Double,Double,Double)
 --   (2.0,2.0,2.0)
 --
---   >>> import Data.Vector.Fixed.Boxed (Vec)
---   >>> replicate "foo" :: Vec N5 String
---   fromList ["foo","foo","foo","foo","foo"]
+--   >>> import Data.Vector.Fixed.Boxed (Vec4)
+--   >>> replicate "foo" :: Vec4 String
+--   fromList ["foo","foo","foo","foo"]
 replicate :: Vector v a => a -> v a
 {-# INLINE replicate #-}
 replicate
-  = C.vector . C.replicate
+  = vector . C.replicate
 
 
 -- | Execute monadic action for every element of vector.
@@ -126,7 +125,7 @@ replicate
 replicateM :: (Vector v a, Monad m) => m a -> m (v a)
 {-# INLINE replicateM #-}
 replicateM
-  = liftM C.vector . C.replicateM
+  = liftM vector . C.replicateM
 
 
 -- | Unit vector along Nth axis. If index is larger than vector
@@ -143,13 +142,13 @@ replicateM
 --   fromList [0,0,0]
 basis :: (Vector v a, Num a) => Int -> v a
 {-# INLINE basis #-}
-basis = C.vector . C.basis
+basis = vector . C.basis
 
 
 -- | Unfold vector.
 unfoldr :: (Vector v a) => (b -> (a,b)) -> b -> v a
 {-# INLINE unfoldr #-}
-unfoldr f = C.vector . C.unfoldr f
+unfoldr f = vector . C.unfoldr f
 
 
 -- | Generate vector from function which maps element's index to its
@@ -157,19 +156,19 @@ unfoldr f = C.vector . C.unfoldr f
 --
 --   Examples:
 --
---   >>> import Data.Vector.Fixed.Unboxed (Vec)
---   >>> generate (^2) :: Vec N4 Int
+--   >>> import Data.Vector.Fixed.Unboxed (Vec4)
+--   >>> generate (^2) :: Vec4 Int
 --   fromList [0,1,4,9]
 generate :: (Vector v a) => (Int -> a) -> v a
 {-# INLINE generate #-}
-generate = C.vector . C.generate
+generate = vector . C.generate
 
 
 -- | Generate vector from monadic function which maps element's index
 --   to its value.
 generateM :: (Monad m, Vector v a) => (Int -> m a) -> m (v a)
 {-# INLINE generateM #-}
-generateM = liftM C.vector . C.generateM
+generateM = liftM vector . C.generateM
 
 
 
@@ -198,23 +197,23 @@ head = C.head . C.cvec
 tail :: (Vector v a, Vector w a, Dim v ~ S (Dim w))
      => v a -> w a
 {-# INLINE tail #-}
-tail = C.vector . C.tail . C.cvec
+tail = vector . C.tail . C.cvec
 
 -- | Cons element to the vector
 cons :: (Vector v a, Vector w a, S (Dim v) ~ Dim w)
      => a -> v a -> w a
 {-# INLINE cons #-}
-cons a = C.vector . C.cons a . C.cvec
+cons a = vector . C.cons a . C.cvec
 
 -- | Append element to the vector
 snoc :: (Vector v a, Vector w a, S (Dim v) ~ Dim w)
      => a -> v a -> w a
 {-# INLINE snoc #-}
-snoc a = C.vector . C.snoc a . C.cvec
+snoc a = vector . C.snoc a . C.cvec
 
 -- | Reverse order of elements in the vector
 reverse :: Vector v a => v a -> v a
-reverse = C.vector . C.reverse . C.cvec
+reverse = vector . C.reverse . C.cvec
 {-# INLINE reverse #-}
 
 -- | Retrieve vector's element at index. Generic implementation is
@@ -237,14 +236,14 @@ index v k = C.runContVec (C.getF k)
 -- | Twan van Laarhoven's lens for element of vector
 element :: (Vector v a, Functor f) => Int -> (a -> f a) -> (v a -> f (v a))
 {-# INLINE element #-}
-element i f v = C.vector `fmap` C.element i f (C.cvec v)
+element i f v = vector `fmap` C.element i f (C.cvec v)
 
 -- | Twan van Laarhoven's lens for element of vector with statically
 --   known index.
 elementTy :: (Vector v a, Index k (Dim v), Functor f)
           => k -> (a -> f a) -> (v a -> f (v a))
 {-# INLINE elementTy #-}
-elementTy k f v = C.vector `fmap` C.elementTy k f (C.cvec v)
+elementTy k f v = vector `fmap` C.elementTy k f (C.cvec v)
 
 
 
@@ -391,7 +390,7 @@ ord v w = C.foldl mappend mempty
 -- | Map over vector
 map :: (Vector v a, Vector v b) => (a -> b) -> v a -> v b
 {-# INLINE map #-}
-map f = C.vector
+map f = vector
       . C.map f
       . C.cvec
 
@@ -409,7 +408,7 @@ sequence_ = mapM_ id
 -- | Monadic map over vector.
 mapM :: (Vector v a, Vector v b, Monad m) => (a -> m b) -> v a -> m (v b)
 {-# INLINE mapM #-}
-mapM f = liftM C.vector
+mapM f = liftM vector
        . C.mapM f
        . C.cvec
 
@@ -423,7 +422,7 @@ mapM_ f = foldl (\m a -> m >> f a >> return ()) (return ())
 imap :: (Vector v a, Vector v b) =>
     (Int -> a -> b) -> v a -> v b
 {-# INLINE imap #-}
-imap f = C.vector
+imap f = vector
        . C.imap f
        . C.cvec
 
@@ -431,7 +430,7 @@ imap f = C.vector
 imapM :: (Vector v a, Vector v b, Monad m)
       => (Int -> a -> m b) -> v a -> m (v b)
 {-# INLINE imapM #-}
-imapM f = liftM C.vector
+imapM f = liftM vector
         . C.imapM f
         . C.cvec
 
@@ -446,13 +445,13 @@ imapM_ f = ifoldl (\m i a -> m >> f i a >> return ()) (return ())
 sequenceA :: (Vector v a, Vector v (f a), Applicative f)
           => v (f a) -> f (v a)
 {-# INLINE sequenceA #-}
-sequenceA = fmap C.vector . T.sequenceA . C.cvec
+sequenceA = fmap vector . T.sequenceA . C.cvec
 
 -- | Analog of 'T.traverse' from 'T.Traversable'.
 traverse :: (Vector v a, Vector v b, Applicative f)
           => (a -> f b) -> v a -> f (v b)
 {-# INLINE traverse #-}
-traverse f = fmap C.vector . T.traverse f . C.cvec
+traverse f = fmap vector . T.traverse f . C.cvec
 
 
 
@@ -476,14 +475,14 @@ traverse f = fmap C.vector . T.traverse f . C.cvec
 zipWith :: (Vector v a, Vector v b, Vector v c)
         => (a -> b -> c) -> v a -> v b -> v c
 {-# INLINE zipWith #-}
-zipWith f v u = C.vector
+zipWith f v u = vector
               $ C.zipWith f (C.cvec v) (C.cvec u)
 
 -- | Zip two vector together using monadic function.
 zipWithM :: (Vector v a, Vector v b, Vector v c, Monad m)
          => (a -> b -> m c) -> v a -> v b -> m (v c)
 {-# INLINE zipWithM #-}
-zipWithM f v u = liftM C.vector
+zipWithM f v u = liftM vector
                $ C.zipWithM f (C.cvec v) (C.cvec u)
 
 -- | Zip two vector together using function which takes element index
@@ -491,7 +490,7 @@ zipWithM f v u = liftM C.vector
 izipWith :: (Vector v a, Vector v b, Vector v c)
          => (Int -> a -> b -> c) -> v a -> v b -> v c
 {-# INLINE izipWith #-}
-izipWith f v u = C.vector
+izipWith f v u = vector
                $ C.izipWith f (C.cvec v) (C.cvec u)
 
 -- | Zip two vector together using monadic function which takes element
@@ -499,7 +498,7 @@ izipWith f v u = C.vector
 izipWithM :: (Vector v a, Vector v b, Vector v c, Monad m)
           => (Int -> a -> b -> m c) -> v a -> v b -> m (v c)
 {-# INLINE izipWithM #-}
-izipWithM f v u = liftM C.vector
+izipWithM f v u = liftM vector
                 $ C.izipWithM f (C.cvec v) (C.cvec u)
 
 
@@ -508,7 +507,7 @@ izipWithM f v u = liftM C.vector
 -- | Convert between different vector types
 convert :: (Vector v a, Vector w a, Dim v ~ Dim w) => v a -> w a
 {-# INLINE convert #-}
-convert = C.vector . C.cvec
+convert = vector . C.cvec
 
 -- | Convert vector to the list
 toList :: (Vector v a) => v a -> [a]
@@ -519,19 +518,19 @@ toList = foldr (:) []
 --   resulting vector.
 fromList :: (Vector v a) => [a] -> v a
 {-# INLINE fromList #-}
-fromList = C.vector . C.fromList
+fromList = vector . C.fromList
 
 -- | Create vector form list. Will throw error if list has different
 --   length from resulting vector.
 fromList' :: (Vector v a) => [a] -> v a
 {-# INLINE fromList' #-}
-fromList' = C.vector . C.fromList'
+fromList' = vector . C.fromList'
 
 -- | Create vector form list. Will return @Nothing@ if list has different
 --   length from resulting vector.
 fromListM :: (Vector v a) => [a] -> Maybe (v a)
 {-# INLINE fromListM #-}
-fromListM = liftM C.vector . C.fromListM
+fromListM = liftM vector . C.fromListM
 
 -- | Create vector from 'Foldable' data type. Will return @Nothing@ if
 --   data type different number of elements that resulting vector.

@@ -18,12 +18,12 @@ module Data.Vector.Fixed (
   , Z
   , S
     -- ** Synonyms for small numerals
-  , C.N1
-  , C.N2
-  , C.N3
-  , C.N4
-  , C.N5
-  , C.N6
+  , N1
+  , N2
+  , N3
+  , N4
+  , N5
+  , N6
     -- ** Type class
   , Vector(..)
   , VectorN
@@ -127,7 +127,8 @@ import qualified Data.Foldable    as F
 import qualified Data.Traversable as T
 
 import Data.Vector.Fixed.Cont     (Vector(..),VectorN,Dim,length,ContVec,vector,
-                                   empty,S,Z,Arity,Fun(..),accum,apply)
+                                   empty,S,Z,Arity,Fun(..),accum,apply,
+                                   N1,N2,N3,N4,N5,N6,vector)
 import qualified Data.Vector.Fixed.Cont as C
 import Data.Vector.Fixed.Internal
 
@@ -145,7 +146,7 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
 -- to use functions 'mk1', 'mk2', etc.
 -- 
 -- >>> mk3 'a' 'b' 'c' :: (Char,Char,Char)
--- > ('a','b','c')
+-- ('a','b','c')
 --
 -- Another option is to create tuple and 'convert' it to desired
 -- vector type. For example:
@@ -169,7 +170,8 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
 -- Probably most generic way is to cons values to the @ContVec@ and
 -- convert it vector of desired type using 'vector':
 --
--- >>> vector $ 'a' <| 'b' <| 'c' <| empty
+-- >>> vector $ 'a' <| 'b' <| 'c' <| empty :: (Char,Char,Char)
+-- ('a','b','c')
 
 
 
