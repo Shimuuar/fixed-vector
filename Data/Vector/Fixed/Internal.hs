@@ -64,6 +64,9 @@ instance Make Z a r => Make Z a (Go r) where
 infixr 1 <|
 
 
+mk0 :: (Vector v a, Dim v ~ C.N0) => v a
+mk0 = vector $ C.empty
+{-# INLINE mk0 #-}
 
 mk1 :: (Vector v a, Dim v ~ C.N1) => a -> v a
 mk1 a1 = vector $ C.mk1 a1
