@@ -45,6 +45,21 @@ Description:
   [@Data.Vector.Fixed.Monomorphic@]
   Wrappers for monomorphic vectors
   .
+  Changes in 0.5.0.0
+  .
+  * @ContVec@ now behaves like normal vector. @Arity@ type class is
+    reworked. @Id@ is removed.
+  .
+  * @reverse@, @snoc@, @consV@, @fold and @foldMap@ are added.
+  .
+  * Type changing maps and zips are added.
+  .
+  * Vector indexing with type level numbers is added.
+  .
+  * Twan van Laarhoven's lens added. (@element@ and @elementTy@)
+  .
+  * @Ord@ instances added to vector data types defined in the library.
+  .
   Changes in 0.4.4.0
   .
   * Functor and Applicative instances are added to Id.
