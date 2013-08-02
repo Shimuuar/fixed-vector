@@ -50,6 +50,8 @@ Description:
   * ContVec now behaves like normal vector. Arity type class is
     reworked. Id is removed.
   .
+  * Construction of vector reworked.
+  .
   * reverse, snoc, consV, fold and foldMap are added.
   .
   * Type changing maps and zips are added.

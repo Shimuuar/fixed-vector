@@ -4,7 +4,7 @@
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
 -- |
--- Boxed vector.
+-- Vector which could hold any value.
 module Data.Vector.Fixed.Boxed (
     -- * Immutable
     Vec

@@ -39,7 +39,7 @@ mkN = unGo $ make id
 {-# INLINE mkN #-}
 
 
--- | Type class variadic vector construction.
+-- | Type class for variadic vector constructors.
 class Make n a r where
   make :: (ContVec Z a -> ContVec n a) -> r
 

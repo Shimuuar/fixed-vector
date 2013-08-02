@@ -2,7 +2,7 @@
 -- |
 -- More generic version of function from "Data.Vector.Fixed"
 -- module. They do not require that all vector have same type, only
--- same length. All such functions have prefix /G/.
+-- same length. All such functions have suffix /G/.
 module Data.Vector.Fixed.Generic (
     -- * Mapping
     mapG

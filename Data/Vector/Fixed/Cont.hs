@@ -959,9 +959,9 @@ instance RealFloat a => Vector Complex a where
 type instance Dim ((,) a) = N2
 
 -- | Note this instance (and other instances for tuples) is
---   essentially monomorphic in element type. Vector type of tuple
---   @(Int,Int)@ is @(,) Int@ so it will only work elements of type
---   @Int@.
+--   essentially monomorphic in element type. Vector type /v/ of 2
+--   element tuple @(Int,Int)@ is @(,) Int@ so it will only work
+--   with elements of type @Int@.
 instance (b~a) => Vector ((,) b) a where
   construct = Fun (,)
   inspect (a,b) (Fun f) = f a b
