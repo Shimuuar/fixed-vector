@@ -34,6 +34,7 @@ module Data.Vector.Fixed (
     -- $construction
     -- ** Small dimensions
     -- $smallDim
+  , mk0
   , mk1
   , mk2
   , mk3
@@ -114,6 +115,7 @@ module Data.Vector.Fixed (
     -- * Data types
   , VecList(..)
   , Only(..)
+  , Empty(..)
     -- ** Tuple synonyms
   , Tuple2
   , Tuple3
