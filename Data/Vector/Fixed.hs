@@ -272,6 +272,24 @@ instance Vector Only a where
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
 
+-- | Empty tuple.
+data Empty a = Empty deriving (Typeable, Data)
+
+instance Functor Empty where
+  fmap _ Empty = Empty
+instance F.Foldable Empty where
+  foldr = foldr
+instance T.Traversable Empty where
+  sequenceA Empty = pure Empty
+  traverse _ Empty = pure Empty
+
+type instance Dim Empty = Z
+
+instance Vector Empty a where
+  construct = Fun Empty
+  inspect _ (Fun b) = b
+  {-# INLINE construct #-}
+  {-# INLINE inspect   #-}
 
 type Tuple2 a = (a,a)
 type Tuple3 a = (a,a,a)
