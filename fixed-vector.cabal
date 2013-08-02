@@ -19,46 +19,46 @@ Description:
   .
   Library is structured as follows:
   .
-  [@Data.Vector.Fixed@]
-  Generic API. It's suitable for both ADT-based vector like @Complex@
+  [Data.Vector.Fixed]
+  Generic API. It's suitable for both ADT-based vector like Complex
   and array-based ones.
   .
-  [@Data.Vector.Fixed.Cont@]
+  [Data.Vector.Fixed.Cont]
   Continuation based vectors. Internally all functions use them.
   .
-  [@Data.Vector.Fixed.Mutable@]
+  [Data.Vector.Fixed.Mutable]
   Type classes for array-based implementation and API for working with
   mutable state.
   .
-  [@Data.Vector.Fixed.Unboxed@]
+  [Data.Vector.Fixed.Unboxed]
   Unboxed vectors.
   .
-  [@Data.Vector.Fixed.Boxed@]
+  [Data.Vector.Fixed.Boxed]
   Boxed vector which can hold elements of any type.
   .
-  [@Data.Vector.Fixed.Storable@]
-  Unboxed vectors of @Storable@  types.
+  [Data.Vector.Fixed.Storable]
+  Unboxed vectors of Storable  types.
   .
-  [@Data.Vector.Fixed.Primitive@]
+  [Data.Vector.Fixed.Primitive]
   Unboxed vectors based on pritimive package.
   .
-  [@Data.Vector.Fixed.Monomorphic@]
+  [Data.Vector.Fixed.Monomorphic]
   Wrappers for monomorphic vectors
   .
   Changes in 0.5.0.0
   .
-  * @ContVec@ now behaves like normal vector. @Arity@ type class is
-    reworked. @Id@ is removed.
+  * ContVec now behaves like normal vector. Arity type class is
+    reworked. Id is removed.
   .
-  * @reverse@, @snoc@, @consV@, @fold and @foldMap@ are added.
+  * reverse, snoc, consV, fold and foldMap are added.
   .
   * Type changing maps and zips are added.
   .
   * Vector indexing with type level numbers is added.
   .
-  * Twan van Laarhoven's lens added. (@element@ and @elementTy@)
+  * Twan van Laarhoven's lens added. (element and elementTy)
   .
-  * @Ord@ instances added to vector data types defined in the library.
+  * Ord instances added to vector data types defined in the library.
   .
   Changes in 0.4.4.0
   .
@@ -66,33 +66,33 @@ Description:
   .
   Changes in 0.4.3.0
   .
-  * Typeable instance for @S@ and @Z@ added.
+  * Typeable instance for S and Z added.
   .
   Changes in 0.4.2.0
   .
-  * 1-tuple @Only@ added.
+  * 1-tuple Only added.
   .
-  * @fromList'@ and @fromListM@ added.
+  * fromList' and fromListM added.
   .
-  * @apply@ functions from @Arity@ type class generalized.
+  * apply functions from Arity type class generalized.
   .
   Changes in 0.4.1.0
   .
-  * @cons@ function added.
+  * cons function added.
   .
-  * Getter to @Fun@ data type added.
+  * Getter to Fun data type added.
   .
   Changes in 0.4.0.0
   .
   * Wrapper for monomorphics vectors is added.
   .
-  * @VecList@ is reimplemented as GADT and constructors are exported.
+  * VecList is reimplemented as GADT and constructors are exported.
   .
   * Constructor of ContVecT is exported
   .
-  * Empty @ContVecT@ is implemented as @empty@.
+  * Empty ContVecT is implemented as empty.
   .
-  * @Typeable@, @Foldable@ and @Traversable@ instances are added where
+  * Typeable, Foldable and Traversable instances are added where
     appropriate
   .
   Changes in 0.3.0.0
@@ -101,11 +101,11 @@ Description:
   .
   Changes in 0.3.0.0
   .
-  * @Vector@ type class definition is moved to the @D.V.F.Cont@ module.
+  * Vector type class definition is moved to the D.V.F.Cont module.
   .
   * Indexing function restored.
   .
-  * @unfoldr@ added.
+  * unfoldr added.
   .
   Changes in 0.2.0.0
   .
@@ -113,22 +113,22 @@ Description:
   .
   * Right fold added.
   .
-  * @tailWith@, @convertContinuation@, and @!@ from
-    @Data.Vector.Fixed@ removed.
+  * tailWith, convertContinuation, and ! from
+    Data.Vector.Fixed removed.
   .
-  * @Vector@ instance for tuples added.
+  * Vector instance for tuples added.
   .
   Changes in 0.1.2
   .
-  * @imap@, @imapM@, @ifoldl@, @ifoldM@, @zipWithM@, @izipWithM@
+  * imap, imapM, ifoldl, ifoldM, zipWithM, izipWithM
     functions are added.
   .
-  * @VectorN@ type class added.
+  * VectorN type class added.
   .
   Changes in 0.1.1
   .
-  * @foldM@ and @tailWith@ added. Type synonyms for numbers up to 6 are
-    added. @Fun@ is reexported from @Data.Vector.Fixed@.
+  * foldM and tailWith added. Type synonyms for numbers up to 6 are
+    added. Fun is reexported from Data.Vector.Fixed.
 
 
 Cabal-Version:  >= 1.8
