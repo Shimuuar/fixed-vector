@@ -32,8 +32,7 @@ import GHC.Ptr               ( Ptr(..) )
 
 import Prelude hiding (length,replicate,zipWith,map,foldl)
 
-import Data.Vector.Fixed
-import Data.Vector.Fixed.Internal.Arity
+import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable
 
 
@@ -149,6 +148,9 @@ instance (Arity n, Storable a) => VectorN Vec n a
 instance (Arity n, Storable a, Eq a) => Eq (Vec n a) where
   (==) = eq
   {-# INLINE (==) #-}
+instance (Arity n, Storable a, Ord a) => Ord (Vec n a) where
+  compare = ord
+  {-# INLINE compare #-}
 
 
 

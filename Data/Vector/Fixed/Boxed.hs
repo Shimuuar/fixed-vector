@@ -4,7 +4,7 @@
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
 -- |
--- Boxed vector.
+-- Vector which could hold any value.
 module Data.Vector.Fixed.Boxed (
     -- * Immutable
     Vec
@@ -23,8 +23,7 @@ import qualified Data.Foldable    as F
 import qualified Data.Traversable as T
 import Prelude hiding (length,replicate,zipWith,map,foldl,foldr)
 
-import Data.Vector.Fixed
-import Data.Vector.Fixed.Internal.Arity
+import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable
 
 
@@ -99,6 +98,10 @@ instance (Arity n) => VectorN Vec n a
 instance (Arity n, Eq a) => Eq (Vec n a) where
   (==) = eq
   {-# INLINE (==) #-}
+instance (Arity n, Ord a) => Ord (Vec n a) where
+  compare = ord
+  {-# INLINE compare #-}
+
 
 instance Arity n => Functor (Vec n) where
   {-# INLINE fmap #-}

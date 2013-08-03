@@ -1,92 +1,94 @@
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE Rank2Types            #-}
-{-# LANGUAGE FlexibleContexts      #-}
 -- |
 -- Implementation of fixed-vectors
 module Data.Vector.Fixed.Internal where
 
 import Control.Applicative (Applicative)
+import Control.Monad       (liftM)
+import Data.Monoid         (Monoid(..))
 import qualified Data.Foldable    as T
 import qualified Data.Traversable as T
 
-import Data.Vector.Fixed.Internal.Arity
-import Data.Vector.Fixed.Cont     (Vector(..),Dim)
+
+import Data.Vector.Fixed.Cont     (Vector(..),Dim,S,Z,Arity,vector)
 import qualified Data.Vector.Fixed.Cont as C
+import           Data.Vector.Fixed.Cont   (ContVec,Index)
 import qualified Prelude as P
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
-                      , foldl,foldr,foldl1,length,sum
+                      , foldl,foldr,foldl1,length,sum,reverse
                       , head,tail,mapM,mapM_,sequence,sequence_
                       )
+
+
+----------------------------------------------------------------
+-- Constructors
+----------------------------------------------------------------
+
+-- | Variadic vector constructor. Resulting vector should be converted
+--   from 'ContVec' using 'vector' function.  For example:
+--
+-- >>> vector $ mkN 'a' 'b' 'c' :: (Char,Char,Char)
+-- ('a','b','c')
+mkN :: Make (S Z) a r => a -> r
+mkN = unGo $ make id
+{-# INLINE mkN #-}
+
+
+-- | Type class for variadic vector constructors.
+class Make n a r where
+  make :: (ContVec Z a -> ContVec n a) -> r
+
+instance (a'~a, Make (S n) a r) => Make n a' (a -> r) where
+  make f a = make (C.cons a . f)
+  {-# INLINE make #-}
+
+instance Arity n =>  Make n a (ContVec n a) where
+  make f = C.reverse $ f C.empty
+  {-# INLINE make #-}
+
+newtype Go r = Go { unGo :: r }
+
+instance Make Z a r => Make Z a (Go r) where
+  make f = Go $ make f
+  {-# INLINE make #-}
+
+-- | Cons value to continuation based vector.
+(<|) :: a -> ContVec n a -> ContVec (S n) a
+(<|) = C.cons
+{-# INLINE (<|) #-}
+
+infixr 1 <|
+
+
+
+mk1 :: (Vector v a, Dim v ~ C.N1) => a -> v a
+mk1 a1 = vector $ C.mk1 a1
+{-# INLINE mk1 #-}
+
+mk2 :: (Vector v a, Dim v ~ C.N2) => a -> a -> v a
+mk2 a1 a2 = vector $ C.mk2 a1 a2
+{-# INLINE mk2 #-}
+
+mk3 :: (Vector v a, Dim v ~ C.N3) => a -> a -> a -> v a
+mk3 a1 a2 a3 = vector $ C.mk3 a1 a2 a3
+{-# INLINE mk3 #-}
+
+mk4 :: (Vector v a, Dim v ~ C.N4) => a -> a -> a -> a -> v a
+mk4 a1 a2 a3 a4 = vector $ C.mk4 a1 a2 a3 a4
+{-# INLINE mk4 #-}
+
+mk5 :: (Vector v a, Dim v ~ C.N5) => a -> a -> a -> a -> a -> v a
+mk5 a1 a2 a3 a4 a5 = vector $ C.mk5 a1 a2 a3 a4 a5
+{-# INLINE mk5 #-}
 
 
 
 ----------------------------------------------------------------
 -- Generic functions
-----------------------------------------------------------------
-
--- TODO: does not fuse!
-
--- | Generic function for construction of arbitrary vectors. It
---   represents partially constructed vector where /n/ is number of
---   uninitialized elements, /v/ is type of vector and /a/ element type.
---
---   Uninitialized vector could be obtained from 'con' and vector
---   elements could be added from left to right using '|>' operator.
---   Finally it could be converted to vector using 'vec' function.
---
---   Construction of complex number which could be seen as 2-element vector:
---
---   >>> import Data.Complex
---   >>> vec $ con |> 1 |> 3 :: Complex Double
---   1.0 :+ 3.0
-newtype New n v a = New (Fn n a (v a))
-
--- | Convert fully applied constructor to vector
-vec :: New Z v a -> v a
-{-# INLINE vec #-}
-vec (New v) = v
-
--- | Seed constructor
-con :: Vector v a => New (Dim v) v a
-{-# INLINE con #-}
-con = f2n construct
-
--- | Apply another element to vector
-(|>) :: New (S n) v a -> a -> New n v a
-{-# INLINE  (|>) #-}
-New f |> a = New (f a)
-infixl 1 |>
-
-f2n :: Fun n a (v a) -> New n v a
-{-# INLINE f2n #-}
-f2n (Fun f) = New f
-
-
-
-----------------------------------------------------------------
-
-mk1 :: (Vector v a, Dim v ~ C.N1) => a -> v a
-mk1 a1 = C.vector $ C.mk1 a1
-{-# INLINE mk1 #-}
-
-mk2 :: (Vector v a, Dim v ~ C.N2) => a -> a -> v a
-mk2 a1 a2 = C.vector $ C.mk2 a1 a2
-{-# INLINE mk2 #-}
-
-mk3 :: (Vector v a, Dim v ~ C.N3) => a -> a -> a -> v a
-mk3 a1 a2 a3 = C.vector $ C.mk3 a1 a2 a3
-{-# INLINE mk3 #-}
-
-mk4 :: (Vector v a, Dim v ~ C.N4) => a -> a -> a -> a -> v a
-mk4 a1 a2 a3 a4 = C.vector $ C.mk4 a1 a2 a3 a4
-{-# INLINE mk4 #-}
-
-mk5 :: (Vector v a, Dim v ~ C.N5) => a -> a -> a -> a -> a -> v a
-mk5 a1 a2 a3 a4 a5 = C.vector $ C.mk5 a1 a2 a3 a4 a5
-{-# INLINE mk5 #-}
-
-
-
 ----------------------------------------------------------------
 
 -- | Replicate value /n/ times.
@@ -100,13 +102,13 @@ mk5 a1 a2 a3 a4 a5 = C.vector $ C.mk5 a1 a2 a3 a4 a5
 --   >>> replicate 2 :: (Double,Double,Double)
 --   (2.0,2.0,2.0)
 --
---   >>> import Data.Vector.Fixed.Boxed (Vec)
---   >>> replicate "foo" :: Vec N5 String
---   fromList ["foo","foo","foo","foo","foo"]
+--   >>> import Data.Vector.Fixed.Boxed (Vec4)
+--   >>> replicate "foo" :: Vec4 String
+--   fromList ["foo","foo","foo","foo"]
 replicate :: Vector v a => a -> v a
 {-# INLINE replicate #-}
 replicate
-  = C.vector . C.replicate
+  = vector . C.replicate
 
 
 -- | Execute monadic action for every element of vector.
@@ -123,7 +125,7 @@ replicate
 replicateM :: (Vector v a, Monad m) => m a -> m (v a)
 {-# INLINE replicateM #-}
 replicateM
-  = C.vectorM . C.replicateM
+  = liftM vector . C.replicateM
 
 
 -- | Unit vector along Nth axis. If index is larger than vector
@@ -140,13 +142,13 @@ replicateM
 --   fromList [0,0,0]
 basis :: (Vector v a, Num a) => Int -> v a
 {-# INLINE basis #-}
-basis = C.vector . C.basis
+basis = vector . C.basis
 
 
 -- | Unfold vector.
 unfoldr :: (Vector v a) => (b -> (a,b)) -> b -> v a
 {-# INLINE unfoldr #-}
-unfoldr f = C.vector . C.unfoldr f
+unfoldr f = vector . C.unfoldr f
 
 
 -- | Generate vector from function which maps element's index to its
@@ -154,19 +156,19 @@ unfoldr f = C.vector . C.unfoldr f
 --
 --   Examples:
 --
---   >>> import Data.Vector.Fixed.Unboxed (Vec)
---   >>> generate (^2) :: Vec N4 Int
+--   >>> import Data.Vector.Fixed.Unboxed (Vec4)
+--   >>> generate (^2) :: Vec4 Int
 --   fromList [0,1,4,9]
 generate :: (Vector v a) => (Int -> a) -> v a
 {-# INLINE generate #-}
-generate = C.vector . C.generate
+generate = vector . C.generate
 
 
 -- | Generate vector from monadic function which maps element's index
 --   to its value.
 generateM :: (Monad m, Vector v a) => (Int -> m a) -> m (v a)
 {-# INLINE generateM #-}
-generateM = C.vectorM . C.generateM
+generateM = liftM vector . C.generateM
 
 
 
@@ -182,7 +184,7 @@ generateM = C.vectorM . C.generateM
 --   1
 head :: (Vector v a, Dim v ~ S n) => v a -> a
 {-# INLINE head #-}
-head = C.runContVec C.head . C.cvec
+head = C.head . C.cvec
 
 
 -- | Tail of vector.
@@ -195,13 +197,24 @@ head = C.runContVec C.head . C.cvec
 tail :: (Vector v a, Vector w a, Dim v ~ S (Dim w))
      => v a -> w a
 {-# INLINE tail #-}
-tail = C.vector . C.tail . C.cvec
+tail = vector . C.tail . C.cvec
 
 -- | Cons element to the vector
 cons :: (Vector v a, Vector w a, S (Dim v) ~ Dim w)
      => a -> v a -> w a
 {-# INLINE cons #-}
-cons a = C.vector . C.cons a . C.cvec
+cons a = vector . C.cons a . C.cvec
+
+-- | Append element to the vector
+snoc :: (Vector v a, Vector w a, S (Dim v) ~ Dim w)
+     => a -> v a -> w a
+{-# INLINE snoc #-}
+snoc a = vector . C.snoc a . C.cvec
+
+-- | Reverse order of elements in the vector
+reverse :: Vector v a => v a -> v a
+reverse = vector . C.reverse . C.cvec
+{-# INLINE reverse #-}
 
 -- | Retrieve vector's element at index. Generic implementation is
 --   /O(n)/ but more efficient one is used when possible.
@@ -211,56 +224,85 @@ v ! n = runIndex n (C.cvec v)
 
 -- Used in rewriting of index function.
 runIndex :: Arity n => Int -> C.ContVec n r -> r
-runIndex n = C.runContVec (C.index n)
+runIndex = C.index
 {-# INLINE[0] runIndex #-}
+
+-- | Get element from vector at statically known index
+index :: (Vector v a, C.Index k (Dim v)) => v a -> k -> a
+{-# INLINE index #-}
+index v k = C.runContVec (C.getF k)
+          $ C.cvec v  
+
+-- | Twan van Laarhoven's lens for element of vector
+element :: (Vector v a, Functor f) => Int -> (a -> f a) -> (v a -> f (v a))
+{-# INLINE element #-}
+element i f v = vector `fmap` C.element i f (C.cvec v)
+
+-- | Twan van Laarhoven's lens for element of vector with statically
+--   known index.
+elementTy :: (Vector v a, Index k (Dim v), Functor f)
+          => k -> (a -> f a) -> (v a -> f (v a))
+{-# INLINE elementTy #-}
+elementTy k f v = vector `fmap` C.elementTy k f (C.cvec v)
+
+
 
 -- | Left fold over vector
 foldl :: Vector v a => (b -> a -> b) -> b -> v a -> b
 {-# INLINE foldl #-}
-foldl f x = C.runContVec (C.foldl f x)
+foldl f x = C.foldl f x
           . C.cvec
 
 -- | Right fold over vector
 foldr :: Vector v a => (a -> b -> b) -> b -> v a -> b
 {-# INLINE foldr #-}
-foldr f x = C.runContVec (C.foldr f x)
+foldr f x = C.foldr f x
           . C.cvec
 
 
 -- | Left fold over vector
 foldl1 :: (Vector v a, Dim v ~ S n) => (a -> a -> a) -> v a -> a
 {-# INLINE foldl1 #-}
-foldl1 f = C.runContVec (C.foldl1 f)
+foldl1 f = C.foldl1 f
          . C.cvec
+
+-- | Combine the elements of a structure using a monoid. Similar to
+--   'T.fold'
+fold :: (Vector v m, Monoid m) => v m -> m
+{-# INLINE fold #-}
+fold = T.fold
+     . C.cvec
+
+-- | Map each element of the structure to a monoid,
+--   and combine the results. Similar to 'T.foldMap'
+foldMap :: (Vector v a, Monoid m) => (a -> m) -> v a -> m
+{-# INLINE foldMap #-}
+foldMap f = T.foldMap f
+          . C.cvec
 
 -- | Left fold over vector
 ifoldr :: Vector v a => (Int -> a -> b -> b) -> b -> v a -> b
 {-# INLINE ifoldr #-}
-ifoldr f x = C.runContVec (C.ifoldr f x)
+ifoldr f x = C.ifoldr f x
            . C.cvec
 
 -- | Left fold over vector. Function is applied to each element and
 --   its index.
 ifoldl :: Vector v a => (b -> Int -> a -> b) -> b -> v a -> b
 {-# INLINE ifoldl #-}
-ifoldl f z = C.runContVec (C.ifoldl f z)
+ifoldl f z = C.ifoldl f z
            . C.cvec
 
 -- | Monadic fold over vector.
 foldM :: (Vector v a, Monad m) => (b -> a -> m b) -> b -> v a -> m b
 {-# INLINE foldM #-}
-foldM f x v = foldl go (return x) v
-  where
-    go m a = do b <- m
-                f b a
+foldM f x = C.foldM f x . C.cvec
 
 -- | Left monadic fold over vector. Function is applied to each element and
 --   its index.
 ifoldM :: (Vector v a, Monad m) => (b -> Int -> a -> m b) -> b -> v a -> m b
 {-# INLINE ifoldM #-}
-ifoldM f x v = ifoldl go (return x) v
-  where
-    go m i a = do { b <- m; f b i a }
+ifoldM f x = C.ifoldM f x . C.cvec
 
 
 
@@ -268,7 +310,7 @@ ifoldM f x v = ifoldl go (return x) v
 
 -- | Sum all elements in the vector.
 sum :: (Vector v a, Num a) => v a -> a
-sum = C.runContVec C.sum . C.cvec
+sum = C.sum . C.cvec
 {-# INLINE sum #-}
 
 -- | Maximal element of vector.
@@ -280,7 +322,7 @@ sum = C.runContVec C.sum . C.cvec
 --   >>> maximum x
 --   3
 maximum :: (Vector v a, Dim v ~ S n, Ord a) => v a -> a
-maximum = C.runContVec C.maximum . C.cvec
+maximum = C.maximum . C.cvec
 {-# INLINE maximum #-}
 
 -- | Minimal element of vector.
@@ -292,27 +334,27 @@ maximum = C.runContVec C.maximum . C.cvec
 --   >>> minimum x
 --   1
 minimum :: (Vector v a, Dim v ~ S n, Ord a) => v a -> a
-minimum = C.runContVec C.minimum . C.cvec
+minimum = C.minimum . C.cvec
 {-# INLINE minimum #-}
 
 -- | Conjunction of all elements of a vector.
 and :: (Vector v Bool) => v Bool -> Bool
-and = C.runContVec C.and . C.cvec
+and = C.and . C.cvec
 {-# INLINE and #-}
 
 -- | Disjunction of all elements of a vector.
 or :: (Vector v Bool) => v Bool -> Bool
-or = C.runContVec C.or . C.cvec
+or = C.or . C.cvec
 {-# INLINE or #-}
 
 -- | Determines whether all elements of vector satisfy predicate.
 all :: (Vector v a) => (a -> Bool) -> v a -> Bool
-all f = C.runContVec (C.all f) . C.cvec
+all f = (C.all f) . C.cvec
 {-# INLINE all #-}
 
 -- | Determines whether any of element of vector satisfy predicate.
 any :: (Vector v a) => (a -> Bool) -> v a -> Bool
-any f = C.runContVec (C.any f) . C.cvec
+any f = (C.any f) . C.cvec
 {-# INLINE any #-}
 
 
@@ -331,8 +373,16 @@ any f = C.runContVec (C.any f) . C.cvec
 --   False
 eq :: (Vector v a, Eq a) => v a -> v a -> Bool
 {-# INLINE eq #-}
-eq v w = C.runContVec C.and
+eq v w = C.and
        $ C.zipWith (==) (C.cvec v) (C.cvec w)
+
+
+-- | Lexicographic ordering of two vectors.
+ord :: (Vector v a, Ord a) => v a -> v a -> Ordering
+{-# INLINE ord #-}
+ord v w = C.foldl mappend mempty
+        $ C.zipWith compare (C.cvec v) (C.cvec w)
+
 
 
 ----------------------------------------------------------------
@@ -340,7 +390,7 @@ eq v w = C.runContVec C.and
 -- | Map over vector
 map :: (Vector v a, Vector v b) => (a -> b) -> v a -> v b
 {-# INLINE map #-}
-map f = C.vector
+map f = vector
       . C.map f
       . C.cvec
 
@@ -358,7 +408,7 @@ sequence_ = mapM_ id
 -- | Monadic map over vector.
 mapM :: (Vector v a, Vector v b, Monad m) => (a -> m b) -> v a -> m (v b)
 {-# INLINE mapM #-}
-mapM f = C.vectorM
+mapM f = liftM vector
        . C.mapM f
        . C.cvec
 
@@ -372,15 +422,15 @@ mapM_ f = foldl (\m a -> m >> f a >> return ()) (return ())
 imap :: (Vector v a, Vector v b) =>
     (Int -> a -> b) -> v a -> v b
 {-# INLINE imap #-}
-imap f = C.vector
+imap f = vector
        . C.imap f
        . C.cvec
 
 -- | Apply monadic function to every element of the vector and its index.
-imapM :: (Vector v a, Vector v b, Monad m) =>
-    (Int -> a -> m b) -> v a -> m (v b)
+imapM :: (Vector v a, Vector v b, Monad m)
+      => (Int -> a -> m b) -> v a -> m (v b)
 {-# INLINE imapM #-}
-imapM f = C.vectorM
+imapM f = liftM vector
         . C.imapM f
         . C.cvec
 
@@ -395,13 +445,15 @@ imapM_ f = ifoldl (\m i a -> m >> f i a >> return ()) (return ())
 sequenceA :: (Vector v a, Vector v (f a), Applicative f)
           => v (f a) -> f (v a)
 {-# INLINE sequenceA #-}
-sequenceA = fmap fromList . T.sequenceA . toList
+sequenceA = fmap vector . T.sequenceA . C.cvec
 
 -- | Analog of 'T.traverse' from 'T.Traversable'.
 traverse :: (Vector v a, Vector v b, Applicative f)
           => (a -> f b) -> v a -> f (v b)
 {-# INLINE traverse #-}
-traverse f = fmap fromList . T.traverse f . toList
+traverse f = fmap vector . T.traverse f . C.cvec
+
+
 
 ----------------------------------------------------------------
 
@@ -423,14 +475,14 @@ traverse f = fmap fromList . T.traverse f . toList
 zipWith :: (Vector v a, Vector v b, Vector v c)
         => (a -> b -> c) -> v a -> v b -> v c
 {-# INLINE zipWith #-}
-zipWith f v u = C.vector
+zipWith f v u = vector
               $ C.zipWith f (C.cvec v) (C.cvec u)
 
 -- | Zip two vector together using monadic function.
 zipWithM :: (Vector v a, Vector v b, Vector v c, Monad m)
          => (a -> b -> m c) -> v a -> v b -> m (v c)
 {-# INLINE zipWithM #-}
-zipWithM f v u = C.vectorM
+zipWithM f v u = liftM vector
                $ C.zipWithM f (C.cvec v) (C.cvec u)
 
 -- | Zip two vector together using function which takes element index
@@ -438,7 +490,7 @@ zipWithM f v u = C.vectorM
 izipWith :: (Vector v a, Vector v b, Vector v c)
          => (Int -> a -> b -> c) -> v a -> v b -> v c
 {-# INLINE izipWith #-}
-izipWith f v u = C.vector
+izipWith f v u = vector
                $ C.izipWith f (C.cvec v) (C.cvec u)
 
 -- | Zip two vector together using monadic function which takes element
@@ -446,7 +498,7 @@ izipWith f v u = C.vector
 izipWithM :: (Vector v a, Vector v b, Vector v c, Monad m)
           => (Int -> a -> b -> m c) -> v a -> v b -> m (v c)
 {-# INLINE izipWithM #-}
-izipWithM f v u = C.vectorM
+izipWithM f v u = liftM vector
                 $ C.izipWithM f (C.cvec v) (C.cvec u)
 
 
@@ -455,29 +507,30 @@ izipWithM f v u = C.vectorM
 -- | Convert between different vector types
 convert :: (Vector v a, Vector w a, Dim v ~ Dim w) => v a -> w a
 {-# INLINE convert #-}
-convert = C.vector . C.cvec
+convert = vector . C.cvec
 
 -- | Convert vector to the list
 toList :: (Vector v a) => v a -> [a]
 toList = foldr (:) []
+{-# INLINE toList #-}
 
 -- | Create vector form list. Will throw error if list is shorter than
 --   resulting vector.
 fromList :: (Vector v a) => [a] -> v a
 {-# INLINE fromList #-}
-fromList = C.vector . C.fromList
+fromList = vector . C.fromList
 
 -- | Create vector form list. Will throw error if list has different
 --   length from resulting vector.
 fromList' :: (Vector v a) => [a] -> v a
 {-# INLINE fromList' #-}
-fromList' = C.vector . C.fromList'
+fromList' = vector . C.fromList'
 
 -- | Create vector form list. Will return @Nothing@ if list has different
 --   length from resulting vector.
 fromListM :: (Vector v a) => [a] -> Maybe (v a)
 {-# INLINE fromListM #-}
-fromListM = C.vectorM . C.fromListM
+fromListM = liftM vector . C.fromListM
 
 -- | Create vector from 'Foldable' data type. Will return @Nothing@ if
 --   data type different number of elements that resulting vector.

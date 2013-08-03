@@ -1,10 +1,10 @@
 import qualified Data.Vector.Fixed         as F
 import qualified Data.Vector.Fixed.Cont    as C
-import           Data.Vector.Fixed.Unboxed (Vec)
+import           Data.Vector.Fixed.Unboxed (Vec,Vec3)
 import Data.Vector.Fixed (S,Z)
 
 fini :: C.ContVec (S (S (S Z))) Double -> Double
-fini = C.runContVec C.sum
+fini = C.sum
 {-# NOINLINE fini #-}
 
 gen :: C.ContVec (S (S (S Z))) Double

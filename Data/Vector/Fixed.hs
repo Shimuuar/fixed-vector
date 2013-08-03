@@ -18,12 +18,12 @@ module Data.Vector.Fixed (
   , Z
   , S
     -- ** Synonyms for small numerals
-  , C.N1
-  , C.N2
-  , C.N3
-  , C.N4
-  , C.N5
-  , C.N6
+  , N1
+  , N2
+  , N3
+  , N4
+  , N5
+  , N6
     -- ** Type class
   , Vector(..)
   , VectorN
@@ -39,11 +39,14 @@ module Data.Vector.Fixed (
   , mk3
   , mk4
   , mk5
-    -- ** Generic constructor
-  , New
-  , vec
-  , con
-  , (|>)
+    -- ** Consing
+  , ContVec
+  , empty
+  , vector
+  , (<|)
+    -- ** Variadic function
+  , Make
+  , mkN
     -- ** Functions
   , replicate
   , replicateM
@@ -56,9 +59,17 @@ module Data.Vector.Fixed (
   , head
   , tail
   , cons
+  , snoc
+  , reverse
+    -- ** Indexing & lenses
+  , C.Index
   , (!)
+  , index
+  , element
+  , elementTy
     -- ** Comparison
   , eq
+  , ord
     -- ** Maps
   , map
   , mapM
@@ -74,6 +85,8 @@ module Data.Vector.Fixed (
   , foldl
   , foldr
   , foldl1
+  , fold
+  , foldMap
   , ifoldl
   , ifoldr
   , foldM
@@ -101,6 +114,11 @@ module Data.Vector.Fixed (
     -- * Data types
   , VecList(..)
   , Only(..)
+    -- ** Tuple synonyms
+  , Tuple2
+  , Tuple3
+  , Tuple4
+  , Tuple5
   ) where
 
 import Control.Applicative (Applicative(..),(<$>))
@@ -108,24 +126,32 @@ import Data.Data           (Typeable,Data)
 import qualified Data.Foldable    as F
 import qualified Data.Traversable as T
 
-import Data.Vector.Fixed.Internal.Arity
-import Data.Vector.Fixed.Cont     (Vector(..),VectorN,Dim,length)
+import Data.Vector.Fixed.Cont     (Vector(..),VectorN,Dim,length,ContVec,vector,
+                                   empty,S,Z,Arity,Fun(..),accum,apply,
+                                   N1,N2,N3,N4,N5,N6,vector)
 import qualified Data.Vector.Fixed.Cont as C
 import Data.Vector.Fixed.Internal
 
 import qualified Prelude as P
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
-                      , foldl,foldr,foldl1,length,sum
+                      , foldl,foldr,foldl1,length,sum,reverse
                       , head,tail,mapM,mapM_,sequence,sequence_
                       )
 
 
 -- $construction
 --
--- In addition to functions list above it's possible to use tuples in
--- conjunction with 'convert' function to create vectors. For example:
+-- There are several ways to construct fixed vectors except using
+-- their constructor if it's available. For small ones it's possible
+-- to use functions 'mk1', 'mk2', etc.
+-- 
+-- >>> mk3 'a' 'b' 'c' :: (Char,Char,Char)
+-- ('a','b','c')
 --
--- v = convert (x,y,z)
+-- Another option is to create tuple and 'convert' it to desired
+-- vector type. For example:
+--
+-- > v = convert (x,y,z)
 --
 -- It will work on if type of @v@ is know from elsewhere. Same trick
 -- could be used to pattern match on the vector with opaque
@@ -133,6 +159,21 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
 --
 -- > function :: Vec N3 Double -> ...
 -- > function (convert -> (x,y,z)) = ...
+--
+-- Third way is to use variadic function 'mkN'. It works similarly to
+-- 'Text.Printf.printf' except it produces result of type 'ContVec'
+-- which should be converted to vector of desired type by 'vector':
+--
+-- >>> vector $ mkN 'a' 'b' 'c' :: (Char,Char,Char)
+-- ('a','b','c')
+--
+-- Probably most generic way is to cons values to the @ContVec@ and
+-- convert it vector of desired type using 'vector':
+--
+-- >>> vector $ 'a' <| 'b' <| 'c' <| empty :: (Char,Char,Char)
+-- ('a','b','c')
+
+
 
 -- $smallDim
 --
@@ -197,6 +238,8 @@ instance (Show a, Arity n) => Show (VecList n a) where
   show = show . foldr (:) []
 instance (Eq a, Arity n) => Eq (VecList n a) where
   (==) = eq
+instance (Ord a, Arity n) => Ord (VecList n a) where
+  compare = ord
 instance Arity n => Functor (VecList n) where
   fmap = map
 instance Arity n => Applicative (VecList n) where
@@ -228,3 +271,9 @@ instance Vector Only a where
   inspect (Only a) (Fun f) = f a
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
+
+
+type Tuple2 a = (a,a)
+type Tuple3 a = (a,a,a)
+type Tuple4 a = (a,a,a,a)
+type Tuple5 a = (a,a,a,a,a)

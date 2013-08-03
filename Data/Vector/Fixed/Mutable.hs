@@ -4,12 +4,14 @@
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE Rank2Types            #-}
 -- |
--- Type classes for array based vector. They are quite similar to ones
--- from @vector@ package but those only suitable for vectors with
--- variable length.
+-- Type classes for vectors which are implemented on top of the arrays
+-- and support in-place mutation. API is similar to one used in the
+-- @vector@ package.
 module Data.Vector.Fixed.Mutable (
     -- * Mutable vectors
-    Mutable
+    Arity
+  , arity
+  , Mutable
   , DimM
   , MVector(..)
   , lengthM
@@ -29,8 +31,7 @@ module Data.Vector.Fixed.Mutable (
 
 import Control.Monad.ST
 import Control.Monad.Primitive
-import Data.Vector.Fixed.Internal.Arity
-import Data.Vector.Fixed.Cont (Dim)
+import Data.Vector.Fixed.Cont (Dim,Arity,Fun(..),S,arity,apply,accum)
 import Prelude hiding (read)
 
 
@@ -38,13 +39,13 @@ import Prelude hiding (read)
 -- Type classes
 ----------------------------------------------------------------
 
--- | Mutable counterpart of fixed-length vector
+-- | Mutable counterpart of fixed-length vector.
 type family Mutable (v :: * -> *) :: * -> * -> *
 
--- | Dimension for mutable vector
+-- | Dimension for mutable vector.
 type family DimM (v :: * -> * -> *) :: *
 
--- | Type class for mutable vectors
+-- | Type class for mutable vectors.
 class (Arity (DimM v)) => MVector v a where
   -- | Checks whether vectors' buffers overlaps
   overlaps  :: v s a -> v s a -> Bool
@@ -68,11 +69,11 @@ class (Arity (DimM v)) => MVector v a where
   unsafeWrite :: PrimMonad m => v (PrimState m) a -> Int -> a -> m ()
 
 
--- | Length of mutable vector
+-- | Length of mutable vector. Function doesn't evaluate its argument.
 lengthM :: forall v s a. (Arity (DimM v)) => v s a -> Int
 lengthM _ = arity (undefined :: DimM v)
 
--- | Clone vector
+-- | Create copy of vector.
 clone :: (PrimMonad m, MVector v a) => v (PrimState m) a -> m (v (PrimState m) a)
 {-# INLINE clone #-}
 clone v = do
@@ -103,10 +104,10 @@ class (Dim v ~ DimM (Mutable v), MVector (Mutable v) a) => IVector v a where
   -- | Convert immutable vector to mutable. Immutable vector must not
   --   be used afterwards.
   unsafeThaw   :: PrimMonad m => v a -> m (Mutable v (PrimState m) a)
-  -- | Get element at specified index
+  -- | Get element at specified index without bounds check.
   unsafeIndex :: v a -> Int -> a
 
--- | Length of immutable vector
+-- | Length of immutable vector. Function doesn't evaluate its argument.
 lengthI :: IVector v a => v a -> Int
 lengthI = lengthM . cast
   where
@@ -135,7 +136,7 @@ thaw v = clone =<< unsafeThaw v
 -- Vector API
 ----------------------------------------------------------------
 
--- | Generic inspect
+-- | Generic inspect implementation for array-based vectors.
 inspectVec :: forall v a b. (Arity (Dim v), IVector v a) => v a -> Fun (Dim v) a b -> b
 {-# INLINE inspectVec #-}
 inspectVec v (Fun f)
@@ -146,7 +147,7 @@ inspectVec v (Fun f)
 newtype T_idx n = T_idx Int
 
 
--- | Generic construct
+-- | Generic construct implementation for array-based vectors.
 constructVec :: forall v a. (Arity (Dim v), IVector v a) => Fun (Dim v) a (v a)
 {-# INLINE constructVec #-}
 constructVec = Fun $

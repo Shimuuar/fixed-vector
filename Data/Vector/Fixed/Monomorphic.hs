@@ -53,6 +53,7 @@ module Data.Vector.Fixed.Monomorphic (
     -- ** Transformations
   , head
   , tail
+  , reverse
   , (!)
     -- ** Comparison
   , eq
@@ -69,6 +70,8 @@ module Data.Vector.Fixed.Monomorphic (
   , foldl1
   , ifoldl
   , ifoldr
+  , fold
+  , foldMap
   , foldM
   , ifoldM
     -- ** Special folds
@@ -91,10 +94,11 @@ module Data.Vector.Fixed.Monomorphic (
   ) where
 
 import Control.Monad (liftM)
-import Data.Vector.Fixed.Internal.Arity
+import Data.Monoid   (Monoid)
 import qualified Data.Vector.Fixed as F
+import Data.Vector.Fixed.Cont (S,Z,Arity,Fun(..))
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
-                      , foldl,foldr,foldl1,length,sum
+                      , foldl,foldr,foldl1,length,sum,reverse
                       , head,tail,mapM,mapM_,sequence,sequence_
                       )
 
@@ -209,6 +213,9 @@ tail :: ( VectorMono v, VectorElm v ~ a
 {-# INLINE tail #-}
 tail v = getMono $ F.tail $ Mono v
 
+reverse :: (VectorMono v) => v -> v
+reverse = getMono . F.reverse . Mono
+{-# INLINE reverse #-}
 
 (!) :: (VectorMono v, VectorElm v ~ a) => v -> Int -> a
 {-# INLINE (!) #-}
@@ -240,7 +247,14 @@ ifoldl :: (VectorMono v, VectorElm v ~ a)
 {-# INLINE ifoldl #-}
 ifoldl f z = F.ifoldl f z . Mono
 
--- | Monadic fold over vector.
+fold :: (VectorMono v, Monoid (VectorElm v)) => v -> VectorElm v
+fold = F.fold . Mono
+{-# INLINE fold #-}
+
+foldMap :: (VectorMono v, Monoid m) => (VectorElm v -> m) -> v -> m
+foldMap f = F.foldMap f . Mono
+{-# INLINE foldMap #-}
+
 foldM :: (VectorMono v, VectorElm v ~ a, Monad m)
       => (b -> a -> m b) -> b -> v -> m b
 {-# INLINE foldM #-}

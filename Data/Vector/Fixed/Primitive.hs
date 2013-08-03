@@ -26,8 +26,7 @@ import Data.Primitive.ByteArray
 import Data.Primitive
 import Prelude hiding (length,replicate,zipWith,map,foldl)
 
-import Data.Vector.Fixed
-import Data.Vector.Fixed.Internal.Arity
+import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable
 
 
@@ -103,3 +102,7 @@ instance (Arity n, Prim a) => VectorN Vec n a
 instance (Arity n, Prim a, Eq a) => Eq (Vec n a) where
   (==) = eq
   {-# INLINE (==) #-}
+instance (Arity n, Prim a, Ord a) => Ord (Vec n a) where
+  compare = ord
+  {-# INLINE compare #-}
+
