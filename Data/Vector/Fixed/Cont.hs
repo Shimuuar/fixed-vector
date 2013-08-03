@@ -15,7 +15,6 @@ module Data.Vector.Fixed.Cont (
     S
   , Z
     -- ** Synonyms for small numerals
-  , N0    
   , N1
   , N2
   , N3
@@ -59,7 +58,6 @@ module Data.Vector.Fixed.Cont (
   , cons
   , consV
   , snoc
-  , mk0
   , mk1
   , mk2
   , mk3
@@ -128,7 +126,6 @@ data Z   deriving Typeable
 -- | Successor of n
 data S n deriving Typeable
 
-type N0 = Z
 type N1 = S Z
 type N2 = S N1
 type N3 = S N2
@@ -543,9 +540,6 @@ basis n0 = ContVec $ \(Fun fun) ->
 
 newtype T_basis n = T_basis Int
 
-mk0 :: ContVec N0 a
-mk0 = ContVec $ \(Fun a) -> a
-{-# INLINE mk0 #-}
 
 mk1 :: a -> ContVec N1 a
 mk1 a1 = ContVec $ \(Fun f) -> f a1
