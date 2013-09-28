@@ -19,30 +19,30 @@ Description:
   .
   Library is structured as follows:
   .
-  [Data.Vector.Fixed]
+  [@Data.Vector.Fixed@]
   Generic API. It's suitable for both ADT-based vector like Complex
   and array-based ones.
   .
-  [Data.Vector.Fixed.Cont]
+  [@Data.Vector.Fixed.Cont@]
   Continuation based vectors. Internally all functions use them.
   .
-  [Data.Vector.Fixed.Mutable]
+  [@Data.Vector.Fixed.Mutable@]
   Type classes for array-based implementation and API for working with
   mutable state.
   .
-  [Data.Vector.Fixed.Unboxed]
+  [@Data.Vector.Fixed.Unboxed@]
   Unboxed vectors.
   .
-  [Data.Vector.Fixed.Boxed]
+  [@Data.Vector.Fixed.Boxed@]
   Boxed vector which can hold elements of any type.
   .
-  [Data.Vector.Fixed.Storable]
+  [@Data.Vector.Fixed.Storable@]
   Unboxed vectors of Storable  types.
   .
-  [Data.Vector.Fixed.Primitive]
+  [@Data.Vector.Fixed.Primitive@]
   Unboxed vectors based on pritimive package.
   .
-  [Data.Vector.Fixed.Monomorphic]
+  [@Data.Vector.Fixed.Monomorphic@]
   Wrappers for monomorphic vectors
 
 Cabal-Version:  >= 1.8
@@ -53,6 +53,8 @@ Maintainer:     Aleksey Khudyakov <alexey.skladnoy@gmail.com>
 Bug-reports:    https://github.com/Shimuuar/fixed-vector/issues
 Category:       Data
 Build-Type:     Simple
+extra-source-files:
+  ChangeLog
 
 source-repository head
   type:     hg
