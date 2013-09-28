@@ -1,17 +1,22 @@
+Changes in 0.5.1.0
+
+  * Zero-element vector `Empty' is added.
+
+
 Changes in 0.5.0.0
 
-  * ContVec now behaves like normal vector. Arity type class is
-    reworked. Id is removed.
+  * `ContVec' now behaves like normal vector. `Arity' type class is
+    reworked. `Id' data type is removed.
 
   * Construction of vector reworked.
 
-  * reverse, snoc, consV, fold and foldMap are added.
+  * `reverse', `snoc', `consV', `fold' and `foldMap' are added.
 
   * Type changing maps and zips are added.
 
   * Vector indexing with type level numbers is added.
 
-  * Twan van Laarhoven's lens added. (element and elementTy)
+  * Twan van Laarhoven's lens added. (`element' and `elementTy')
 
   * Ord instances added to vector data types defined in the library.
 
@@ -20,14 +25,15 @@ Changes in 0.4.4.0
 
   * Functor and Applicative instances are added to Id.
 
-  Changes in 0.4.3.0
+
+Changes in 0.4.3.0
 
   * Typeable instance for S and Z added.
 
 
 Changes in 0.4.2.0
 
-  * 1-tuple Only added.
+  * 1-tuple `Only' added.
 
   * fromList' and fromListM added.
 
@@ -36,20 +42,20 @@ Changes in 0.4.2.0
 
 Changes in 0.4.1.0
 
-  * cons function added.
+  * `cons' function added.
 
-  * Getter to Fun data type added.
+  * Getter for `Fun' data type added.
 
 
 Changes in 0.4.0.0
 
   * Wrapper for monomorphics vectors is added.
 
-  * VecList is reimplemented as GADT and constructors are exported.
+  * `VecList' is reimplemented as GADT and constructors are exported.
 
-  * Constructor of ContVecT is exported
+  * Constructor of `ContVecT' is exported
 
-  * Empty ContVecT is implemented as empty.
+  * Empty `ContVecT' is implemented as `empty'.
 
   * Typeable, Foldable and Traversable instances are added where
     appropriate
@@ -61,7 +67,7 @@ Changes in 0.3.0.0
 
   * Indexing function restored.
 
-  * unfoldr added.
+  * `unfoldr' added.
 
 
 Changes in 0.2.0.0
