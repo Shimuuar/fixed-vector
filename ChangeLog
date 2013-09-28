@@ -1,0 +1,90 @@
+Changes in 0.5.0.0
+
+  * ContVec now behaves like normal vector. Arity type class is
+    reworked. Id is removed.
+
+  * Construction of vector reworked.
+
+  * reverse, snoc, consV, fold and foldMap are added.
+
+  * Type changing maps and zips are added.
+
+  * Vector indexing with type level numbers is added.
+
+  * Twan van Laarhoven's lens added. (element and elementTy)
+
+  * Ord instances added to vector data types defined in the library.
+
+
+Changes in 0.4.4.0
+
+  * Functor and Applicative instances are added to Id.
+
+  Changes in 0.4.3.0
+
+  * Typeable instance for S and Z added.
+
+
+Changes in 0.4.2.0
+
+  * 1-tuple Only added.
+
+  * fromList' and fromListM added.
+
+  * apply functions from Arity type class generalized.
+
+
+Changes in 0.4.1.0
+
+  * cons function added.
+
+  * Getter to Fun data type added.
+
+
+Changes in 0.4.0.0
+
+  * Wrapper for monomorphics vectors is added.
+
+  * VecList is reimplemented as GADT and constructors are exported.
+
+  * Constructor of ContVecT is exported
+
+  * Empty ContVecT is implemented as empty.
+
+  * Typeable, Foldable and Traversable instances are added where
+    appropriate
+
+
+Changes in 0.3.0.0
+
+  * Vector type class definition is moved to the D.V.F.Cont module.
+
+  * Indexing function restored.
+
+  * unfoldr added.
+
+
+Changes in 0.2.0.0
+
+  * Continuation-based vector added.
+
+  * Right fold added.
+
+  * tailWith, convertContinuation, and ! from
+    Data.Vector.Fixed removed.
+
+  * Vector instance for tuples added.
+
+
+Changes in 0.1.2
+
+  * imap, imapM, ifoldl, ifoldM, zipWithM, izipWithM
+    functions are added.
+
+  * VectorN type class added.
+
+
+Changes in 0.1.1
+
+  * foldM and tailWith added. Type synonyms for numbers up to 6 are
+    added. Fun is reexported from Data.Vector.Fixed.
