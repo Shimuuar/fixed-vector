@@ -11,6 +11,27 @@
 -- For encoding of vector size library uses Peano naturals defined in
 -- the library. At come point in the future it would make sense to
 -- switch to new GHC type level numerals.
+--
+-- [@Common pitfalls@]
+--
+-- Library provide instances for tuples. But there's a catch. Tuples
+-- are monomorphic in element type. Let consider 2-tuple @(Int,Int)@.
+-- Vector type @v@ is @(,) Int@ and only allowed element type is
+-- @Int@.  Because of that we cannot change element type and following
+-- code will fail:
+--
+-- > >>> map (== 1) ((1,2) :: (Int,Int))
+-- >
+-- > <interactive>:3:1:
+-- >     Couldn't match type `Int' with `Bool'
+-- >     In the expression: F.map (== 1) ((1, 2) :: (Int, Int))
+-- >     In an equation for `it': it = map (== 1) ((1, 2) :: (Int, Int))
+--
+-- To make it work we need to change vector type as well. Functions
+-- from module "Data.Vector.Fixed.Generic" provide this functionality.
+--
+-- > >>> map (== 1) ((1,2) :: (Int,Int)) :: (Bool,Bool)
+-- > (True,False)
 module Data.Vector.Fixed (
     -- * Vector type class
     -- ** Vector size
