@@ -251,9 +251,9 @@ instance Arity Z where
 instance Arity n => Arity (S n) where
   accum     f g t = \a -> accum  f g (f t a)
   applyFun  f t h = case f t of (a,u) -> applyFun f u (h a)
-  applyFunM f t   = do (a,t') <- f t
-                       (ContVec cont, tZ) <- applyFunM f t'
-                       return (ContVec $ \g -> cont (apFun g a) , tZ)
+  applyFunM f t   = do (a,t')   <- f t
+                       (vec,tZ) <- applyFunM f t'
+                       return (cons a vec , tZ)
   arity    _ = 1 + arity (undefined :: n)
   reverseF f = Fun $ \a -> unFun (reverseF $ fmap ($ a) $ hideLast f) 
   {-# INLINE accum     #-}
