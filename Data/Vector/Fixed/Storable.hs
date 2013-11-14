@@ -24,6 +24,7 @@ module Data.Vector.Fixed.Storable (
 
 import Control.Monad.Primitive
 import Data.Typeable         (Typeable)
+import Foreign.Ptr           (castPtr)
 import Foreign.Storable
 import Foreign.ForeignPtr
 import Foreign.Marshal.Array ( advancePtr, copyArray, moveArray )
@@ -151,6 +152,18 @@ instance (Arity n, Storable a, Eq a) => Eq (Vec n a) where
 instance (Arity n, Storable a, Ord a) => Ord (Vec n a) where
   compare = ord
   {-# INLINE compare #-}
+
+instance (Arity n, Storable a) => Storable (Vec n a) where
+  sizeOf    _ = arity (undefined :: n) * sizeOf (undefined :: a)
+  alignment _ = alignment (undefined :: a)
+  peek ptr = do
+    arr@(MVec fp) <- new
+    withForeignPtr fp $ \p ->
+      moveArray p (castPtr ptr) (arity (undefined :: n))
+    unsafeFreeze arr
+  poke ptr (Vec fp)
+    = withForeignPtr fp $ \p ->
+      moveArray (castPtr ptr) p (arity (undefined :: n))
 
 
 
