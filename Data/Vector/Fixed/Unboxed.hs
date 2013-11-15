@@ -24,12 +24,13 @@ module Data.Vector.Fixed.Unboxed(
 
 import Control.Monad
 import Data.Complex
-import Data.Typeable (Typeable2,Typeable3)
-import Data.Int  (     Int8, Int16, Int32, Int64 )
-import Data.Word (Word,Word8,Word16,Word32,Word64)
+import Data.Monoid     (Monoid(..))
+import Data.Typeable   (Typeable2,Typeable3)
+import Data.Int        (Int8, Int16, Int32, Int64 )
+import Data.Word       (Word,Word8,Word16,Word32,Word64)
 import Prelude hiding (length,replicate,zipWith,map,foldl)
 
-import Data.Vector.Fixed (Dim,Vector(..),VectorN,S,Z,toList,eq,ord)
+import Data.Vector.Fixed (Dim,Vector(..),VectorN,S,Z,toList,eq,ord,replicate,zipWith)
 import Data.Vector.Fixed.Mutable
 import qualified Data.Vector.Fixed.Primitive as P
 
@@ -81,6 +82,12 @@ instance (Unbox n a, Eq a) => Eq (Vec n a) where
 instance (Unbox n a, Ord a) => Ord (Vec n a) where
   compare = ord
   {-# INLINE compare #-}
+
+instance (Unbox n a, Monoid a) => Monoid (Vec n a) where
+  mempty  = replicate mempty
+  mappend = zipWith mappend
+  {-# INLINE mempty  #-}
+  {-# INLINE mappend #-}
 
 
 

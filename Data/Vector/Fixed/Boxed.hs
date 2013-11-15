@@ -18,6 +18,7 @@ module Data.Vector.Fixed.Boxed (
 
 import Control.Applicative  (Applicative(..))
 import Data.Primitive.Array
+import Data.Monoid          (Monoid(..))
 import Data.Typeable        (Typeable)
 import qualified Data.Foldable    as F
 import qualified Data.Traversable as T
@@ -102,6 +103,11 @@ instance (Arity n, Ord a) => Ord (Vec n a) where
   compare = ord
   {-# INLINE compare #-}
 
+instance (Arity n, Monoid a) => Monoid (Vec n a) where
+  mempty  = replicate mempty
+  mappend = zipWith mappend
+  {-# INLINE mempty  #-}
+  {-# INLINE mappend #-}
 
 instance Arity n => Functor (Vec n) where
   {-# INLINE fmap #-}

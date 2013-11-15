@@ -146,6 +146,7 @@ module Data.Vector.Fixed (
 
 import Control.Applicative (Applicative(..),(<$>))
 import Data.Data           (Typeable,Data)
+import Data.Monoid         (Monoid(..))
 import qualified Data.Foldable    as F
 import qualified Data.Traversable as T
 
@@ -273,6 +274,11 @@ instance Arity n => F.Foldable (VecList n) where
 instance Arity n => T.Traversable (VecList n) where
   sequenceA = sequenceA
   traverse  = traverse
+instance (Arity n, Monoid a) => Monoid (VecList n a) where
+  mempty  = replicate mempty
+  mappend = zipWith mappend
+  {-# INLINE mempty  #-}
+  {-# INLINE mappend #-}
 
 
 -- | Single-element tuple.
@@ -286,6 +292,9 @@ instance F.Foldable Only where
 instance T.Traversable Only where
   sequenceA  (Only f) = Only <$> f
   traverse f (Only a) = Only <$> f a
+instance Monoid a => Monoid (Only a) where
+  mempty = Only mempty
+  Only a `mappend` Only b = Only $ mappend a b
 
 type instance Dim Only = S Z
 

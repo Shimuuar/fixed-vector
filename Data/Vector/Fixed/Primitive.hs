@@ -22,6 +22,7 @@ module Data.Vector.Fixed.Primitive (
 
 import Control.Monad
 import Data.Typeable            (Typeable)
+import Data.Monoid              (Monoid(..))
 import Data.Primitive.ByteArray
 import Data.Primitive
 import Prelude hiding (length,replicate,zipWith,map,foldl)
@@ -105,4 +106,10 @@ instance (Arity n, Prim a, Eq a) => Eq (Vec n a) where
 instance (Arity n, Prim a, Ord a) => Ord (Vec n a) where
   compare = ord
   {-# INLINE compare #-}
+
+instance (Arity n, Prim a, Monoid a) => Monoid (Vec n a) where
+  mempty  = replicate mempty
+  mappend = zipWith mappend
+  {-# INLINE mempty  #-}
+  {-# INLINE mappend #-}
 

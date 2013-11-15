@@ -23,6 +23,7 @@ module Data.Vector.Fixed.Storable (
   ) where
 
 import Control.Monad.Primitive
+import Data.Monoid           (Monoid(..))
 import Data.Typeable         (Typeable)
 import Foreign.Ptr           (castPtr)
 import Foreign.Storable
@@ -152,6 +153,12 @@ instance (Arity n, Storable a, Eq a) => Eq (Vec n a) where
 instance (Arity n, Storable a, Ord a) => Ord (Vec n a) where
   compare = ord
   {-# INLINE compare #-}
+
+instance (Arity n, Storable a, Monoid a) => Monoid (Vec n a) where
+  mempty  = replicate mempty
+  mappend = zipWith mappend
+  {-# INLINE mempty  #-}
+  {-# INLINE mappend #-}
 
 instance (Arity n, Storable a) => Storable (Vec n a) where
   sizeOf    _ = arity (undefined :: n) * sizeOf (undefined :: a)
