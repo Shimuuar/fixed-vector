@@ -1,3 +1,4 @@
+{-# LANGUAGE StandaloneDeriving    #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -19,7 +20,7 @@ module Data.Vector.Fixed.Boxed (
 import Control.Applicative  (Applicative(..))
 import Data.Primitive.Array
 import Data.Monoid          (Monoid(..))
-import Data.Typeable        (Typeable)
+import Data.Typeable        (Typeable2,Typeable3)
 import qualified Data.Foldable    as F
 import qualified Data.Traversable as T
 import Prelude hiding (length,replicate,zipWith,map,foldl,foldr)
@@ -35,11 +36,12 @@ import Data.Vector.Fixed.Mutable
 
 -- | Vector with fixed length which can hold any value.
 newtype Vec n a = Vec (Array a)
-                  deriving (Typeable)
 
 -- | Mutable unboxed vector with fixed length
 newtype MVec n s a = MVec (MutableArray s a)
-                     deriving (Typeable)
+
+deriving instance Typeable2 Vec
+deriving instance Typeable3 MVec
 
 type Vec2 = Vec (S (S Z))
 type Vec3 = Vec (S (S (S Z)))

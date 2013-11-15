@@ -1,3 +1,4 @@
+{-# LANGUAGE StandaloneDeriving    #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -24,7 +25,7 @@ module Data.Vector.Fixed.Storable (
 
 import Control.Monad.Primitive
 import Data.Monoid           (Monoid(..))
-import Data.Typeable         (Typeable)
+import Data.Typeable         (Typeable2,Typeable3)
 import Foreign.Ptr           (castPtr)
 import Foreign.Storable
 import Foreign.ForeignPtr
@@ -45,11 +46,12 @@ import Data.Vector.Fixed.Mutable
 
 -- | Storable-based vector with fixed length
 newtype Vec n a = Vec (ForeignPtr a)
-                  deriving (Typeable)
 
 -- | Storable-based mutable vector with fixed length
 newtype MVec n s a = MVec (ForeignPtr a)
-                     deriving (Typeable)
+
+deriving instance Typeable2 Vec
+deriving instance Typeable3 MVec
 
 type Vec2 = Vec (S (S Z))
 type Vec3 = Vec (S (S (S Z)))

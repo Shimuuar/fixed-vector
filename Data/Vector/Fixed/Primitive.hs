@@ -1,3 +1,4 @@
+{-# LANGUAGE StandaloneDeriving    #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -21,7 +22,7 @@ module Data.Vector.Fixed.Primitive (
   ) where
 
 import Control.Monad
-import Data.Typeable            (Typeable)
+import Data.Typeable            (Typeable2,Typeable3)
 import Data.Monoid              (Monoid(..))
 import Data.Primitive.ByteArray
 import Data.Primitive
@@ -38,11 +39,12 @@ import Data.Vector.Fixed.Mutable
 
 -- | Unboxed vector with fixed length
 newtype Vec n a = Vec ByteArray
-                  deriving (Typeable)
 
 -- | Mutable unboxed vector with fixed length
 newtype MVec n s a = MVec (MutableByteArray s)
-                     deriving (Typeable)
+
+deriving instance Typeable2 Vec
+deriving instance Typeable3 MVec
 
 type Vec2 = Vec (S (S Z))
 type Vec3 = Vec (S (S (S Z)))
