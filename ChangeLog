@@ -1,3 +1,12 @@
+Changes in 0.6.0.0
+
+  * Data instance for all array-based vectors added.
+
+  * Storable instance added for `Storable.Vec'.
+
+  * Monoid instances added for all vectors.
+
+
 Changes in 0.5.1.0
 
   * Zero-element vector `Empty' is added.
