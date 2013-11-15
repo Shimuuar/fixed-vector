@@ -22,7 +22,7 @@ module Data.Vector.Fixed.Primitive (
   ) where
 
 import Control.Monad
-import Data.Typeable            (Typeable2,Typeable3)
+import Data.Data
 import Data.Monoid              (Monoid(..))
 import Data.Primitive.ByteArray
 import Data.Primitive
@@ -30,6 +30,7 @@ import Prelude hiding (length,replicate,zipWith,map,foldl)
 
 import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable
+import qualified Data.Vector.Fixed.Cont as C
 
 
 
@@ -114,4 +115,16 @@ instance (Arity n, Prim a, Monoid a) => Monoid (Vec n a) where
   mappend = zipWith mappend
   {-# INLINE mempty  #-}
   {-# INLINE mappend #-}
+
+instance (Typeable n, Arity n, Prim a, Data a) => Data (Vec n a) where
+  gfoldl       = C.gfoldl
+  gunfold      = C.gunfold
+  toConstr   _ = con_Vec
+  dataTypeOf _ = ty_Vec
+
+ty_Vec :: DataType
+ty_Vec  = mkDataType "Data.Vector.Fixed.Primitive.Vec" [con_Vec]
+
+con_Vec :: Constr
+con_Vec = mkConstr ty_Vec "Vec" [] Prefix
 

@@ -104,11 +104,14 @@ module Data.Vector.Fixed.Cont (
   , or
   , all
   , any
+    -- ** Data.Data.Data
+  , gfoldl
+  , gunfold
   ) where
 
 import Control.Applicative (Applicative(..),(<$>))
 import Data.Complex        (Complex(..))
-import Data.Typeable       (Typeable(..))
+import Data.Data           (Typeable(..),Data)
 import qualified Data.Foldable    as F
 import qualified Data.Traversable as F
 
@@ -116,6 +119,7 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,any,all
                       , foldl,foldr,foldl1,length,sum,reverse
                       , head,tail,mapM,mapM_,sequence,sequence_
                       )
+
 
 ----------------------------------------------------------------
 -- Naturals
@@ -214,7 +218,12 @@ class Arity n where
 
   -- | Reverse order of parameters.
   reverseF :: Fun n a b -> Fun n a b
+  -- | Worker function for 'gunfold'
+  gunfoldF :: (Arity n, Data a)
+           => (forall b x. Data b => c (b -> x) -> c x)
+           -> T_gunfold c r a n -> c r
 
+newtype T_gunfold c r a n = T_gunfold (c (Fn n a r))
 
 
 -- | Apply all parameters to the function.
@@ -240,13 +249,14 @@ instance Arity Z where
   applyFun  _ t h = (h,t)
   applyFunM _ t   = return (empty, t)
   arity  _ = 0
-  reverseF = id
   {-# INLINE accum     #-}
   {-# INLINE applyFun  #-}
   {-# INLINE applyFunM #-}
   {-# INLINE arity     #-}
-  {-# INLINE reverseF  #-}
-
+  reverseF = id
+  gunfoldF _ (T_gunfold c) = c
+  {-# INLINE reverseF #-}
+  {-# INLINE gunfoldF #-}
 
 instance Arity n => Arity (S n) where
   accum     f g t = \a -> accum  f g (f t a)
@@ -255,12 +265,21 @@ instance Arity n => Arity (S n) where
                        (vec,tZ) <- applyFunM f t'
                        return (cons a vec , tZ)
   arity    _ = 1 + arity (undefined :: n)
-  reverseF f = Fun $ \a -> unFun (reverseF $ fmap ($ a) $ hideLast f) 
   {-# INLINE accum     #-}
   {-# INLINE applyFun  #-}
   {-# INLINE applyFunM #-}
   {-# INLINE arity     #-}
-  {-# INLINE reverseF  #-}
+  reverseF f   = Fun $ \a -> unFun (reverseF $ fmap ($ a) $ hideLast f)
+  gunfoldF f c = gunfoldF f (apGunfold f c)
+  {-# INLINE reverseF #-}
+  {-# INLINE gunfoldF #-}
+
+apGunfold :: Data a
+          => (forall b x. Data b => c (b -> x) -> c x)
+          -> T_gunfold c r a (S n)
+          -> T_gunfold c r a n
+apGunfold f (T_gunfold c) = T_gunfold $ f c
+{-# INLINE apGunfold #-}
 
 
 
@@ -290,7 +309,7 @@ hideLast :: forall n a b. Arity n => Fun (S n) a b -> Fun n a (a -> b)
 hideLast (Fun f0) = Fun $ accum (\(T_fun f) a -> T_fun (f a))
                                 (\(T_fun f)   -> f)
                                 (T_fun f0 :: T_fun a b n)
-  
+
 newtype T_fun a b n = T_fun (Fn (S n) a b)
 
 
@@ -589,7 +608,7 @@ imapM :: (Arity n, Monad m) => (Int -> a -> m b) -> ContVec n a -> m (ContVec n 
 {-# INLINE imapM #-}
 imapM f v
   = inspect v
-  $ imapMF f construct  
+  $ imapMF f construct
 
 -- | Apply monadic action to each element of vector and ignore result.
 mapM_ :: (Arity n, Monad m) => (a -> m b) -> ContVec n a -> m ()
@@ -615,7 +634,7 @@ imapMF f (Fun funB) = Fun $
         (T_mapM 0 (return funB) :: T_mapM b m r n)
 
 data T_mapM a m r n = T_mapM Int (m (Fn n a r))
-    
+
 imapF :: forall n a b r. Arity n
       => (Int -> a -> b) -> Fun n b r -> Fun n a r
 {-# INLINE imapF #-}
@@ -796,7 +815,7 @@ elementF n f (Fun fun0) = Fun $ accum step fini start
     --
     fini :: T_lens f a r Z -> f r
     fini (T_lens (Left  _)) = error "Data.Vector.Fixed.lensF: Index out of range"
-    fini (T_lens (Right r)) = r 
+    fini (T_lens (Right r)) = r
     --
     start :: T_lens f a r n
     start = T_lens $ Left (n,fun0)
@@ -909,8 +928,41 @@ any :: Arity n => (a -> Bool) -> ContVec n a -> Bool
 any f = foldr (\x b -> f x && b) True
 {-# INLINE any #-}
 
+-- | Generic 'Data.Data.gfoldl' which could work with any vector.
+gfoldl :: forall c v a. (Vector v a, Data a)
+       => (forall x y. Data x => c (x -> y) -> x -> c y)
+       -> (forall x  . x -> c x)
+       -> v a -> c (v a)
+gfoldl f inj v
+  = inspect v
+  $ gfoldlF f (inj $ unFun (construct :: Fun (Dim v) a (v a)))
 
-                                           
+-- | Generic 'Data.Data.gunfoldl' which could work with any
+--   vector. Since vector can only have one constructor argument for
+--   constructor is ignored.
+gunfold :: forall con c v a. (Vector v a, Data a)
+        => (forall b r. Data b => c (b -> r) -> c r)
+        -> (forall r. r -> c r)
+        -> con -> c (v a)
+gunfold f inj _
+  = gunfoldF f gun
+  where
+    con = construct                   :: Fun (Dim v) a (v a)
+    gun = T_gunfold (inj $ unFun con) :: T_gunfold c (v a) a (Dim v)
+
+
+gfoldlF :: forall c r a n. (Arity n, Data a)
+         => (forall x y. Data x => c (x -> y) -> x -> c y)
+         -> c (Fn n a r) -> Fun n a (c r)
+gfoldlF f c0 = Fun $ accum
+  (\(T_gfoldl c) x -> T_gfoldl (f c x))
+  (\(T_gfoldl c)   -> c)
+  (T_gfoldl c0 :: T_gfoldl c r a n)
+
+newtype T_gfoldl c r a n = T_gfoldl (c (Fn n a r))
+
+
+
 ----------------------------------------------------------------
 -- Deforestation
 ----------------------------------------------------------------
@@ -942,7 +994,7 @@ any f = foldr (\x b -> f x && b) True
   cvec (vector v) = v
   #-}
 
- 
+
 ----------------------------------------------------------------
 -- Instances
 ----------------------------------------------------------------

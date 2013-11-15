@@ -20,13 +20,14 @@ module Data.Vector.Fixed.Boxed (
 import Control.Applicative  (Applicative(..))
 import Data.Primitive.Array
 import Data.Monoid          (Monoid(..))
-import Data.Typeable        (Typeable2,Typeable3)
+import Data.Data
 import qualified Data.Foldable    as F
 import qualified Data.Traversable as T
 import Prelude hiding (length,replicate,zipWith,map,foldl,foldr)
 
 import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable
+import qualified Data.Vector.Fixed.Cont as C
 
 
 
@@ -47,6 +48,21 @@ type Vec2 = Vec (S (S Z))
 type Vec3 = Vec (S (S (S Z)))
 type Vec4 = Vec (S (S (S (S Z))))
 type Vec5 = Vec (S (S (S (S (S Z)))))
+
+
+instance (Typeable n, Arity n, Data a) => Data (Vec n a) where
+  gfoldl       = C.gfoldl
+  gunfold      = C.gunfold
+  toConstr   _ = con_Vec
+  dataTypeOf _ = ty_Vec
+
+
+ty_Vec :: DataType
+ty_Vec  = mkDataType "Data.Vector.Fixed.Boxed.Vec" [con_Vec]
+
+con_Vec :: Constr
+con_Vec = mkConstr ty_Vec "Vec" [] Prefix
+
 
 
 

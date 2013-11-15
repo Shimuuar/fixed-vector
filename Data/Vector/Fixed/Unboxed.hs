@@ -25,14 +25,16 @@ module Data.Vector.Fixed.Unboxed(
 import Control.Monad
 import Data.Complex
 import Data.Monoid     (Monoid(..))
-import Data.Typeable   (Typeable2,Typeable3)
+import Data.Data
 import Data.Int        (Int8, Int16, Int32, Int64 )
 import Data.Word       (Word,Word8,Word16,Word32,Word64)
 import Prelude hiding (length,replicate,zipWith,map,foldl)
 
 import Data.Vector.Fixed (Dim,Vector(..),VectorN,S,Z,toList,eq,ord,replicate,zipWith)
 import Data.Vector.Fixed.Mutable
+import qualified Data.Vector.Fixed.Cont      as C
 import qualified Data.Vector.Fixed.Primitive as P
+
 
 
 ----------------------------------------------------------------
@@ -88,6 +90,18 @@ instance (Unbox n a, Monoid a) => Monoid (Vec n a) where
   mappend = zipWith mappend
   {-# INLINE mempty  #-}
   {-# INLINE mappend #-}
+
+instance (Typeable n, Unbox n a, Data a) => Data (Vec n a) where
+  gfoldl       = C.gfoldl
+  gunfold      = C.gunfold
+  toConstr   _ = con_Vec
+  dataTypeOf _ = ty_Vec
+
+ty_Vec :: DataType
+ty_Vec  = mkDataType "Data.Vector.Fixed.Unboxed.Vec" [con_Vec]
+
+con_Vec :: Constr
+con_Vec = mkConstr ty_Vec "Vec" [] Prefix
 
 
 

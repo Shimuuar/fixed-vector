@@ -25,7 +25,7 @@ module Data.Vector.Fixed.Storable (
 
 import Control.Monad.Primitive
 import Data.Monoid           (Monoid(..))
-import Data.Typeable         (Typeable2,Typeable3)
+import Data.Data
 import Foreign.Ptr           (castPtr)
 import Foreign.Storable
 import Foreign.ForeignPtr
@@ -37,6 +37,7 @@ import Prelude hiding (length,replicate,zipWith,map,foldl)
 
 import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable
+import qualified Data.Vector.Fixed.Cont as C
 
 
 
@@ -173,6 +174,19 @@ instance (Arity n, Storable a) => Storable (Vec n a) where
   poke ptr (Vec fp)
     = withForeignPtr fp $ \p ->
       moveArray (castPtr ptr) p (arity (undefined :: n))
+
+instance (Typeable n, Arity n, Storable a, Data a) => Data (Vec n a) where
+  gfoldl       = C.gfoldl
+  gunfold      = C.gunfold
+  toConstr   _ = con_Vec
+  dataTypeOf _ = ty_Vec
+
+ty_Vec :: DataType
+ty_Vec  = mkDataType "Data.Vector.Fixed.Primitive.Vec" [con_Vec]
+
+con_Vec :: Constr
+con_Vec = mkConstr ty_Vec "Vec" [] Prefix
+
 
 
 
