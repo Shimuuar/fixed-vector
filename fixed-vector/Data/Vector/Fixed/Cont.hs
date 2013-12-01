@@ -237,9 +237,9 @@ apply step z f = fst $ applyFun step z f
 
 -- | Apply all parameters to the function using monadic actions.
 applyM :: (Monad m, Arity n)
-         => (forall k. t (S k) -> m (a, t k)) -- ^ Get value to apply to function
-         -> t n                               -- ^ Initial value
-         -> m (ContVec n a)
+       => (forall k. t (S k) -> m (a, t k)) -- ^ Get value to apply to function
+       -> t n                               -- ^ Initial value
+       -> m (ContVec n a)
 {-# INLINE applyM #-}
 applyM f t = do (v,_) <- applyFunM f t
                 return v
