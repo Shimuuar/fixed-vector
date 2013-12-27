@@ -2,10 +2,6 @@
 # test only against the last release in a major GHC version. Feel free to omit
 # lines listings versions you don't need/want testing for.
 env:
- - GHCVER=7.0.1
- - GHCVER=7.0.2
- - GHCVER=7.0.3
- - GHCVER=7.0.4
  - GHCVER=7.2.1
  - GHCVER=7.2.2
  - GHCVER=7.4.1
@@ -39,8 +35,8 @@ install:
 script:
  # fixed-vector itself
  - cd fixed-vector
+ - cabal-1.18 install --enable-tests --only-dependencies
  - cabal-1.18 configure --enable-tests -v2  # -v2 provides useful information for debugging
- - cabal-1.18 install --only-dependencies
  - cabal-1.18 build
  - cabal-1.18 test
  - cabal-1.18 sdist
@@ -55,8 +51,8 @@ script:
  - cd ..
  # fixed-vector-cereal itself
  - cd fixed-vector-cereal
+ - cabal-1.18 install --enable-tests --only-dependencies
  - cabal-1.18 configure --enable-tests -v2  # -v2 provides useful information for debugging
- - cabal-1.18 install --only-dependencies
  - cabal-1.18 build
  - cabal-1.18 test
  - cabal-1.18 sdist
@@ -71,8 +67,8 @@ script:
  - cd ..
  # fixed-vector-binary itself
  - cd fixed-vector-binary
+ - cabal-1.18 install --enable-tests --only-dependencies
  - cabal-1.18 configure --enable-tests -v2  # -v2 provides useful information for debugging
- - cabal-1.18 install --only-dependencies
  - cabal-1.18 build
  - cabal-1.18 test
  - cabal-1.18 sdist
