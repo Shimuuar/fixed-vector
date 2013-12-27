@@ -1,4 +1,5 @@
-# Fixed-vector
+
+# Fixed-vector [![Build Status](https://travis-ci.org/Shimuuar/fixed-vector.png?branch=master)](https://travis-ci.org/Shimuuar/fixed-vector)
 
 Generic library for vectors with statically known size. Same functions could be
 used to work with both ADT based vector like 
