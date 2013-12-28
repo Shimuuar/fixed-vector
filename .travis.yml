@@ -30,54 +30,6 @@ install:
 #
 # There's 3 packages in the repository so we need to build them all.
 script:
- # fixed-vector itself
- - cd fixed-vector
- - cabal-1.18 install --enable-tests --only-dependencies
- - cabal-1.18 configure --enable-tests -v2  # -v2 provides useful information for debugging
- - cabal-1.18 build
- - cabal-1.18 test
- - cabal-1.18 sdist
- - export SRC_TGZ=$(cabal-1.18 info . | awk '{print $2 ".tar.gz";exit}') ;
-   cd dist/;
-   if [ -f "$SRC_TGZ" ]; then
-      cabal-1.18 install "$SRC_TGZ";
-   else
-      echo "expected '$SRC_TGZ' not found";
-      exit 1;
-   fi;
-   cd ..
- - cd ..
- # fixed-vector-cereal itself
- - cd fixed-vector-cereal
- - cabal-1.18 install --enable-tests --only-dependencies
- - cabal-1.18 configure --enable-tests -v2  # -v2 provides useful information for debugging
- - cabal-1.18 build
- - cabal-1.18 test
- - cabal-1.18 sdist
- - export SRC_TGZ=$(cabal-1.18 info . | awk '{print $2 ".tar.gz";exit}') ;
-   cd dist/;
-   if [ -f "$SRC_TGZ" ]; then
-      cabal-1.18 install "$SRC_TGZ";
-   else
-      echo "expected '$SRC_TGZ' not found";
-      exit 1;
-   fi;
-   cd ..
- - cd ..
- # fixed-vector-binary itself
- - cd fixed-vector-binary
- - cabal-1.18 install --enable-tests --only-dependencies
- - cabal-1.18 configure --enable-tests -v2  # -v2 provides useful information for debugging
- - cabal-1.18 build
- - cabal-1.18 test
- - cabal-1.18 sdist
- - export SRC_TGZ=$(cabal-1.18 info . | awk '{print $2 ".tar.gz";exit}') ;
-   cd dist/;
-   if [ -f "$SRC_TGZ" ]; then
-      cabal-1.18 install "$SRC_TGZ";
-   else
-      echo "expected '$SRC_TGZ' not found";
-      exit 1;
-   fi;
-   cd ..
- - cd ..
+ - sh test-package.sh fixed-vector
+ - sh test-package.sh fixed-vector-cereal
+ - sh test-package.sh fixed-vector-binary
