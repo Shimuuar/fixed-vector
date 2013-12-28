@@ -2,8 +2,6 @@
 # test only against the last release in a major GHC version. Feel free to omit
 # lines listings versions you don't need/want testing for.
 env:
- - GHCVER=7.2.1
- - GHCVER=7.2.2
  - GHCVER=7.4.1
  - GHCVER=7.4.2
  - GHCVER=7.6.1
@@ -30,11 +28,9 @@ install:
 # Here starts the actual work to be performed for the package under test; any
 # command which exits with a non-zero exit code causes the build to fail.
 #
-# There's 3 packages in the repository so we need to build them
-# all. Both packages for cereal and binary instances will use fixed-vector from hackage
+# There's 3 packages in the repository so we need to build them all.
 script:
  # fixed-vector itself
- - pwd && ls
  - cd fixed-vector
  - cabal-1.18 install --enable-tests --only-dependencies
  - cabal-1.18 configure --enable-tests -v2  # -v2 provides useful information for debugging
@@ -52,7 +48,6 @@ script:
    cd ..
  - cd ..
  # fixed-vector-cereal itself
- - pwd && ls
  - cd fixed-vector-cereal
  - cabal-1.18 install --enable-tests --only-dependencies
  - cabal-1.18 configure --enable-tests -v2  # -v2 provides useful information for debugging
@@ -70,7 +65,6 @@ script:
    cd ..
  - cd ..
  # fixed-vector-binary itself
- - pwd && ls
  - cd fixed-vector-binary
  - cabal-1.18 install --enable-tests --only-dependencies
  - cabal-1.18 configure --enable-tests -v2  # -v2 provides useful information for debugging
