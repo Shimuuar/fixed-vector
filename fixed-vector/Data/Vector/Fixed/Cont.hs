@@ -755,7 +755,10 @@ vector = runContVec construct
 {-# INLINE[1] vector #-}
 
 -- | Finalizer function for getting head of the vector.
-head :: forall n a. Arity n => ContVec (S n) a -> a
+head :: forall n a. Arity (S n) => ContVec (S n) a -> a
+-- NOTE: we need constraint `Arity (S n)' instead of `Arity n' because
+--       `Vector v' entails `Arity (Dim v)' and GHC cannot figure out
+--       that `Arity (S n)' ⇒ `Arity n'
 {-# INLINE head #-}
 head
   = runContVec $ Fun
