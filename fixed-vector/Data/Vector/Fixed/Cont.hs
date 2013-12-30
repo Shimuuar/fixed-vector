@@ -755,7 +755,7 @@ vector = runContVec construct
 {-# INLINE[1] vector #-}
 
 -- | Finalizer function for getting head of the vector.
-head :: forall n a. Arity (S n) => ContVec (S n) a -> a
+head :: forall n a. Arity n => ContVec (S n) a -> a
 {-# INLINE head #-}
 head
   = runContVec $ Fun
