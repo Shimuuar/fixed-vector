@@ -456,6 +456,26 @@ traverse :: (Vector v a, Vector v b, Applicative f)
 {-# INLINE traverse #-}
 traverse f = fmap vector . T.traverse f . C.cvec
 
+distribute :: (Vector v a, Vector v (f a), Functor f)
+           => f (v a) -> v (f a)
+{-# INLINE distribute #-}
+distribute = vector . C.distribute . fmap C.cvec
+
+collect :: (Vector v a, Vector v b, Vector v (f b), Functor f)
+        => (a -> v b) -> f a -> v (f b)
+{-# INLINE collect #-}
+collect f = vector . C.collect (C.cvec . f)
+
+distributeM :: (Vector v a, Vector v (m a), Monad m)
+           => m (v a) -> v (m a)
+{-# INLINE distributeM #-}
+distributeM = vector . C.distributeM . liftM C.cvec
+
+collectM :: (Vector v a, Vector v b, Vector v (m b), Monad m)
+         => (a -> v b) -> m a -> v (m b)
+{-# INLINE collectM #-}
+collectM f = vector . C.collectM (C.cvec . f)
+
 
 
 ----------------------------------------------------------------

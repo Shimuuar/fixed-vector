@@ -103,6 +103,10 @@ module Data.Vector.Fixed (
   , sequence_
   , sequenceA
   , traverse
+  , distribute
+  , collect
+  , distributeM
+  , collectM
     -- * Folding
   , foldl
   , foldr

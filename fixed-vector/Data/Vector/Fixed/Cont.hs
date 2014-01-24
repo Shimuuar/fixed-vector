@@ -73,6 +73,9 @@ module Data.Vector.Fixed.Cont (
   , sequence
   , sequence_
   , distribute
+  , collect
+  , distributeM
+  , collectM
   , tail
   , reverse
     -- ** Zips
@@ -111,6 +114,7 @@ module Data.Vector.Fixed.Cont (
   ) where
 
 import Control.Applicative (Applicative(..),(<$>))
+import Control.Monad       (liftM)
 import Data.Complex        (Complex(..))
 import Data.Data           (Typeable(..),Data)
 import qualified Data.Foldable    as F
@@ -656,6 +660,7 @@ sequence_ :: (Arity n, Monad m) => ContVec n (m a) -> m ()
 sequence_ = mapM_ id
 {-# INLINE sequence_ #-}
 
+-- | The dual of sequenceA
 distribute :: forall f n a. (Functor f, Arity n)
            => f (ContVec n a) -> ContVec n (f a)
 {-# INLINE distribute #-}
@@ -669,6 +674,27 @@ distribute f0
                             , T_distribute $ fmap (\(_:x) -> x) f)
     start :: T_distribute a f n
     start = T_distribute (fmap toList f0)
+
+collect :: (Functor f, Arity n) => (a -> ContVec n b) -> f a -> ContVec n (f b)
+collect f = distribute . fmap f
+{-# INLINE collect #-}
+
+-- | The dual of sequence
+distributeM :: forall m n a. (Monad m, Arity n)
+            => m (ContVec n a) -> ContVec n (m a)
+{-# INLINE distributeM #-}
+distributeM f0
+  =  ContVec $ \(Fun fun) -> apply step start fun
+  where
+    step :: forall k. T_distribute a m (S k) -> (m a, T_distribute a m k)
+    step (T_distribute f) = ( liftM (\(x:_) -> x) f
+                            , T_distribute $ liftM (\(_:x) -> x) f)
+    start :: T_distribute a m n
+    start = T_distribute (liftM toList f0)
+
+collectM :: (Monad m, Arity n) => (a -> ContVec n b) -> m a -> ContVec n (m b)
+collectM f = distributeM . liftM f
+{-# INLINE collectM #-}
 
 newtype T_distribute a f n = T_distribute (f [a])
 
