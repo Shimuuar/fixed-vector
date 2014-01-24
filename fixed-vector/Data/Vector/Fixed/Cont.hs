@@ -72,6 +72,7 @@ module Data.Vector.Fixed.Cont (
   , imapM_
   , sequence
   , sequence_
+  , distribute
   , tail
   , reverse
     -- ** Zips
@@ -654,6 +655,23 @@ sequence = mapM id
 sequence_ :: (Arity n, Monad m) => ContVec n (m a) -> m ()
 sequence_ = mapM_ id
 {-# INLINE sequence_ #-}
+
+distribute :: forall f n a. (Functor f, Arity n)
+           => f (ContVec n a) -> ContVec n (f a)
+{-# INLINE distribute #-}
+distribute f0
+  =  ContVec $ \(Fun fun) -> apply step start fun
+  where
+    -- It's not possible to use ContVec as accumulator type since `head'
+    -- require Arity constraint on `k'. So we use plain lists
+    step :: forall k. T_distribute a f (S k) -> (f a, T_distribute a f k)
+    step (T_distribute f) = ( fmap (\(x:_) -> x) f
+                            , T_distribute $ fmap (\(_:x) -> x) f)
+    start :: T_distribute a f n
+    start = T_distribute (fmap toList f0)
+
+newtype T_distribute a f n = T_distribute (f [a])
+
 
 -- | /O(1)/ Tail of vector.
 tail :: ContVec (S n) a -> ContVec n a
