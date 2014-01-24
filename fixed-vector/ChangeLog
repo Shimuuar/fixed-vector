@@ -1,3 +1,8 @@
+Changes in 0.6.1.0
+
+  * `distribute', `collect' and their monadic variants added.
+
+
 Changes in 0.6.0.0
 
   * Data instance for all array-based vectors added.
