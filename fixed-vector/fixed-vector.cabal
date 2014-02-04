@@ -1,5 +1,5 @@
 Name:           fixed-vector
-Version:        0.6.1.0
+Version:        0.6.1.1
 Synopsis:       Generic vectors with statically known size.
 Description:
   Generic library for vectors with statically known
