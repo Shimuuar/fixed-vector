@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP                   #-}
 {-# LANGUAGE StandaloneDeriving    #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE FlexibleInstances     #-}
@@ -41,8 +42,13 @@ newtype Vec n a = Vec (Array a)
 -- | Mutable unboxed vector with fixed length
 newtype MVec n s a = MVec (MutableArray s a)
 
+#if __GLASGOW_HASKELL__ >= 708
+deriving instance Typeable Vec
+deriving instance Typeable MVec
+#else
 deriving instance Typeable2 Vec
 deriving instance Typeable3 MVec
+#endif
 
 type Vec2 = Vec (S (S Z))
 type Vec3 = Vec (S (S (S Z)))

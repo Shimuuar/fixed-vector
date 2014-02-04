@@ -44,8 +44,13 @@ import qualified Data.Vector.Fixed.Primitive as P
 data family Vec  n a
 data family MVec n s a
 
+#if __GLASGOW_HASKELL__ >= 708
+deriving instance Typeable Vec
+deriving instance Typeable MVec
+#else
 deriving instance Typeable2 Vec
 deriving instance Typeable3 MVec
+#endif
 
 type Vec2 = Vec (S (S Z))
 type Vec3 = Vec (S (S (S Z)))
