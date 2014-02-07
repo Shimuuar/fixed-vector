@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP                   #-}
 {-# LANGUAGE EmptyDataDecls        #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -116,7 +117,10 @@ module Data.Vector.Fixed.Cont (
 import Control.Applicative (Applicative(..),(<$>))
 import Control.Monad       (liftM)
 import Data.Complex        (Complex(..))
-import Data.Data           (Typeable(..),Data)
+import Data.Data           (Typeable,Data)
+#if __GLASGOW_HASKELL__ >= 708
+import Data.Typeable       (Proxy(..))
+#endif
 import qualified Data.Foldable    as F
 import qualified Data.Traversable as F
 
@@ -1111,3 +1115,11 @@ instance (b~a, c~a, d~a, e~a, f~a, g~a) => Vector ((,,,,,,) b c d e f g) a where
   inspect (a,b,c,d,e,f,g) (Fun fun) = fun a b c d e f g
   {-# INLINE construct #-}
   {-# INLINE inspect #-}
+
+#if __GLASGOW_HASKELL__ >= 708
+type instance Dim Proxy = Z
+
+instance Vector Proxy a where
+  construct = Fun Proxy
+  inspect _ = unFun
+#endif
