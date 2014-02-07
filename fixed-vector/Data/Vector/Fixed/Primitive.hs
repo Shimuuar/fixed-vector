@@ -12,6 +12,7 @@
 module Data.Vector.Fixed.Primitive (
     -- * Immutable
     Vec
+  , Vec1
   , Vec2
   , Vec3
   , Vec4
@@ -53,6 +54,7 @@ deriving instance Typeable2 Vec
 deriving instance Typeable3 MVec
 #endif
 
+type Vec1 = Vec (S Z)
 type Vec2 = Vec (S (S Z))
 type Vec3 = Vec (S (S (S Z)))
 type Vec4 = Vec (S (S (S (S Z))))
