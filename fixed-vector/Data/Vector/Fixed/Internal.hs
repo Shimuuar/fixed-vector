@@ -18,7 +18,7 @@ import Data.Vector.Fixed.Cont     (Vector(..),Dim,S,Z,Arity,vector)
 import qualified Data.Vector.Fixed.Cont as C
 import           Data.Vector.Fixed.Cont   (ContVec,Index)
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
-                      , foldl,foldr,foldl1,length,sum,reverse
+                      , foldl,foldr,foldl1,length,sum,reverse,scanl,scanl1
                       , head,tail,mapM,mapM_,sequence,sequence_
                       )
 
@@ -442,6 +442,17 @@ imapM_ :: (Vector v a, Monad m) => (Int -> a -> m b) -> v a -> m ()
 {-# INLINE imapM_ #-}
 imapM_ f = ifoldl (\m i a -> m >> f i a >> return ()) (return ())
 
+-- | Left scan over vector
+scanl :: (Vector v a, Vector w b, Dim w ~ S (Dim v))
+      => (b -> a -> b) -> b -> v a -> w b
+{-# INLINE scanl #-}
+scanl f x0 = vector . C.scanl f x0 . C.cvec
+
+-- | Left scan over vector
+scanl1 :: (Vector v a)
+      => (a -> a -> a) -> v a -> v a
+{-# INLINE scanl1 #-}
+scanl1 f = vector . C.scanl1 f . C.cvec
 
 -- | Analog of 'T.sequenceA' from 'T.Traversable'.
 sequenceA :: (Vector v a, Vector v (f a), Applicative f)

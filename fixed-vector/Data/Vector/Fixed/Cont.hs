@@ -71,6 +71,8 @@ module Data.Vector.Fixed.Cont (
   , imapM
   , mapM_
   , imapM_
+  , scanl
+  , scanl1
   , sequence
   , sequence_
   , distribute
@@ -125,7 +127,7 @@ import qualified Data.Foldable    as F
 import qualified Data.Traversable as F
 
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,any,all
-                      , foldl,foldr,foldl1,length,sum,reverse
+                      , foldl,foldr,foldl1,length,sum,reverse,scanl,scanl1
                       , head,tail,mapM,mapM_,sequence,sequence_
                       )
 
@@ -653,6 +655,40 @@ imapF f (Fun funB) = Fun $
         (  T_map 0 funB :: T_map b r n)
 
 data T_map a r n = T_map Int (Fn n a r)
+
+-- | Left scan over vector
+scanl :: (Arity n) => (b -> a -> b) -> b -> ContVec n a -> ContVec (S n) b
+{-# INLINE scanl #-}
+scanl f b0 (ContVec cont) = ContVec $
+  cont . scanlF f b0
+
+-- | Left scan over vector
+scanl1 :: (Arity n) => (a -> a -> a) -> ContVec n a -> ContVec n a
+{-# INLINE scanl1 #-}
+scanl1 f (ContVec cont) = ContVec $
+  cont . scanl1F f
+
+scanlF :: forall n a b r. (Arity n) => (b -> a -> b) -> b -> Fun (S n) b r -> Fun n a r
+scanlF f b0 (Fun fun0) = Fun
+  $ accum step fini start
+  where
+    step  :: forall k. T_scanl r b (S k) -> a -> T_scanl r b k
+    step (T_scanl b fn) a = let b' = f b a in T_scanl b' (fn b')
+    fini (T_scanl _ r) = r
+    start = T_scanl b0 (fun0 b0)  :: T_scanl r b n
+
+scanl1F :: forall n a r. (Arity n) => (a -> a -> a) -> Fun n a r -> Fun n a r
+scanl1F f (Fun fun0) = Fun $ accum step fini start
+  where
+    step  :: forall k. T_scanl1 r a (S k) -> a -> T_scanl1 r a k
+    step (T_scanl1 Nothing  fn) a = T_scanl1 (Just a) (fn a)
+    step (T_scanl1 (Just x) fn) a = let a' = f x a in T_scanl1 (Just a') (fn a')
+    fini (T_scanl1 _ r) = r
+    start = T_scanl1 Nothing fun0 :: T_scanl1 r a n
+
+data T_scanl  r a n = T_scanl a (Fn n a r)
+data T_scanl1 r a n = T_scanl1 (Maybe a) (Fn n a r)
+
 
 -- | Evaluate every action in the vector from left to right.
 sequence :: (Arity n, Monad m) => ContVec n (m a) -> m (ContVec n a)
