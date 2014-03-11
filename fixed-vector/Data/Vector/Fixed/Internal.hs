@@ -282,7 +282,7 @@ foldMap :: (Vector v a, Monoid m) => (a -> m) -> v a -> m
 foldMap f = T.foldMap f
           . C.cvec
 
--- | Left fold over vector
+-- | Right fold over vector
 ifoldr :: Vector v a => (Int -> a -> b -> b) -> b -> v a -> b
 {-# INLINE ifoldr #-}
 ifoldr f x = C.ifoldr f x
