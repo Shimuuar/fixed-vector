@@ -7,6 +7,10 @@
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE Rank2Types            #-}
+-- Needed for NatIso
+#if __GLASGOW_HASKELL__ >= 708
+{-# LANGUAGE DataKinds, TypeOperators, UndecidableInstances #-}
+#endif
 -- |
 -- API for Church-encoded vectors. Implementation of function from
 -- "Data.Vector.Fixed" module uses these function internally in order
@@ -15,6 +19,13 @@ module Data.Vector.Fixed.Cont (
     -- * Type-level numbers
     S
   , Z
+    -- ** Isomorphism between Peano number and Nats
+    -- $natiso
+#if __GLASGOW_HASKELL__ >= 708
+  , NatIso
+  , ToPeano
+  , ToNat
+#endif
     -- ** Synonyms for small numerals
   , N1
   , N2
@@ -122,6 +133,7 @@ import Data.Complex        (Complex(..))
 import Data.Data           (Typeable,Data)
 #if __GLASGOW_HASKELL__ >= 708
 import Data.Typeable       (Proxy(..))
+import GHC.TypeLits
 #endif
 import qualified Data.Foldable    as F
 import qualified Data.Traversable as F
@@ -148,6 +160,35 @@ type N4 = S N3
 type N5 = S N4
 type N6 = S N5
 
+
+-- $natiso
+--
+-- It's only become possible to define isomorphism between Peano
+-- number and built-in @Nat@ number in GHC 7.8. It's however
+-- impossible to define their properties inductively. So Peano number
+-- are used everywhere.
+
+#if __GLASGOW_HASKELL__ >= 708
+-- | Isomorphism between two representations of natural numbers
+class (ToNat a ~ b, ToPeano b ~ a) => NatIso (a :: *) (b :: Nat) where
+
+-- | Convert Peano number to Nat
+type family ToNat   (a :: *  ) :: Nat where
+  ToNat  Z    = 0
+  ToNat (S k) = 1 + ToNat k
+
+-- | Convert Nat number to Peano represenation
+type family ToPeano (b :: Nat) :: * where
+  ToPeano 0 = Z
+  ToPeano n = S (ToPeano (n-1))
+
+instance NatIso  Z 0 where
+instance ( NatIso k (n - 1)
+         , ToPeano (n-1) ~ k
+         , ToPeano  n    ~ S k
+         , n ~ (1 + (n - 1))    -- n is positive
+         ) => NatIso (S k) n where
+#endif
 
 
 ----------------------------------------------------------------
