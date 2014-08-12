@@ -1,3 +1,12 @@
+Changes in 0.7.0.0
+
+  * Type level addition for unary numbers added
+
+  * `concat` function added
+
+  * More consistent naming for functions for working with `Fun`
+
+
 Changes in 0.6.4.0
 
   * Isomorphism between Peano numbers and Nat added. (GHC >= 7.8)
