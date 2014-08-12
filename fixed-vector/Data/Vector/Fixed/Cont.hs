@@ -8,7 +8,6 @@
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE Rank2Types            #-}
-{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE GADTs #-}
 -- Needed for NatIso
 #if __GLASGOW_HASKELL__ >= 708
@@ -350,11 +349,13 @@ instance Arity n => Arity (S n) where
   gunfoldF f c = gunfoldF f (apGunfold f c)
   {-# INLINE reverseF #-}
   {-# INLINE gunfoldF #-}
-  witSum :: forall k a b. WitSum (S n) k a b
-  witSum = case witSum :: WitSum n k a b of
-             WitSum -> WitSum
+  witSum = witSumWorker
   {-# INLINE witSum #-}
 
+witSumWorker :: forall n k a b. Arity n => WitSum (S n) k a b
+{-# INLINE witSumWorker #-}
+witSumWorker = case witSum :: WitSum n k a b of
+                 WitSum -> WitSum
 
 apGunfold :: Data a
           => (forall b x. Data b => c (b -> x) -> c x)
