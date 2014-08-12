@@ -21,7 +21,7 @@ module Data.Vector.Fixed.Cont (
     -- * Type-level numbers
     S
   , Z
-  , (+)()
+  , Add
     -- ** Isomorphism between Peano number and Nats
     -- $natiso
 #if __GLASGOW_HASKELL__ >= 708
@@ -142,7 +142,7 @@ import Data.Complex        (Complex(..))
 import Data.Data           (Typeable,Data)
 #if __GLASGOW_HASKELL__ >= 708
 import Data.Typeable       (Proxy(..))
-import qualified GHC.TypeLits as Ty
+import GHC.TypeLits
 #endif
 import qualified Data.Foldable    as F
 import qualified Data.Traversable as F
@@ -163,10 +163,10 @@ data Z   deriving Typeable
 data S n deriving Typeable
 
 -- | Type family for sum of unary natural numbers.
-type family n + m :: *
+type family Add n m :: *
 
-type instance Z + n = n
-type instance S n + k = S (n + k)
+type instance Add  Z    n = n
+type instance Add (S n) k = S (Add n k)
 
 type N1 = S Z
 type N2 = S N1
@@ -185,23 +185,23 @@ type N6 = S N5
 
 #if __GLASGOW_HASKELL__ >= 708
 -- | Isomorphism between two representations of natural numbers
-class (ToNat a ~ b, ToPeano b ~ a) => NatIso (a :: *) (b :: Ty.Nat) where
+class (ToNat a ~ b, ToPeano b ~ a) => NatIso (a :: *) (b :: Nat) where
 
 -- | Convert Peano number to Nat
-type family ToNat   (a :: *  ) :: Ty.Nat where
+type family ToNat   (a :: *  ) :: Nat where
   ToNat  Z    = 0
-  ToNat (S k) = 1 Ty.+ ToNat k
+  ToNat (S k) = 1 + ToNat k
 
 -- | Convert Nat number to Peano represenation
-type family ToPeano (b :: Ty.Nat) :: * where
+type family ToPeano (b :: Nat) :: * where
   ToPeano 0 = Z
-  ToPeano n = S (ToPeano (n Ty.- 1))
+  ToPeano n = S (ToPeano (n - 1))
 
 instance NatIso  Z 0 where
-instance ( NatIso k (n Ty.- 1)
-         , ToPeano (n Ty.- 1) ~ k
+instance ( NatIso k (n - 1)
+         , ToPeano (n - 1) ~ k
          , ToPeano  n    ~ S k
-         , n ~ (1 Ty.+ (n Ty.- 1))    -- n is positive
+         , n ~ (1 + (n - 1))    -- n is positive
          ) => NatIso (S k) n where
 #endif
 
@@ -295,9 +295,9 @@ class Arity n where
 
 newtype T_gunfold c r a n = T_gunfold (c (Fn n a r))
 
--- | Value that carry proof that `Fn (n+k) a b ~ Fn n a (Fn k a b)`
+-- | Value that carry proof that `Fn (Add n k) a b ~ Fn n a (Fn k a b)`
 data WitSum n k a b where
-  WitSum :: (Fn (n+k) a b ~ Fn n a (Fn k a b)) => WitSum n k a b
+  WitSum :: (Fn (Add n k) a b ~ Fn n a (Fn k a b)) => WitSum n k a b
 
 
 -- | Apply all parameters to the function.
@@ -396,18 +396,18 @@ newtype T_fun a b n = T_fun (Fn (S n) a b)
 
 -- | Curry /n/ first parameters of n-ary function
 curryMany :: forall n k a b. Arity n
-          => Fun (n + k) a b -> Fun n a (Fun k a b)
+          => Fun (Add n k) a b -> Fun n a (Fun k a b)
 {-# INLINE curryMany #-}
 curryMany (Fun f0) = Fun $ accum
   (\(T_curry f) a -> T_curry (f a))
   (\(T_curry f) -> Fun f :: Fun k a b)
   ( T_curry f0 :: T_curry a b k n)
 
-newtype T_curry a b k n = T_curry (Fn (n + k) a b)
+newtype T_curry a b k n = T_curry (Fn (Add n k) a b)
 
 -- | Uncurry /n/ first parameters of n-ary function
 uncurryMany :: forall n k a b. Arity n
-            => Fun n a (Fun k a b) -> Fun (n + k) a b
+            => Fun n a (Fun k a b) -> Fun (Add n k) a b
 {-# INLINE uncurryMany #-}
 uncurryMany f =
   case witSum :: WitSum n k a b of
@@ -870,7 +870,8 @@ snoc a (ContVec cont) = ContVec $ \f -> cont $ apLast f a
 {-# INLINE snoc #-}
 
 -- | Concatenate vector
-concat :: (Arity n, Arity k, Arity (n+k)) => ContVec n a -> ContVec k a -> ContVec (n + k) a
+concat :: (Arity n, Arity k, Arity (Add n k))
+       => ContVec n a -> ContVec k a -> ContVec (Add n k) a
 {-# INLINE concat #-}
 concat v u = inspect u
            $ inspect v

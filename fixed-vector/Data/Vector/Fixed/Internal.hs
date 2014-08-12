@@ -15,7 +15,7 @@ import qualified Data.Foldable    as T
 import qualified Data.Traversable as T
 
 
-import Data.Vector.Fixed.Cont     (Vector(..),Dim,S,Z,Arity,vector,(+)())
+import Data.Vector.Fixed.Cont     (Vector(..),Dim,S,Z,Arity,vector,Add)
 import qualified Data.Vector.Fixed.Cont as C
 import           Data.Vector.Fixed.Cont   (ContVec,Index)
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
@@ -214,7 +214,7 @@ snoc :: (Vector v a, Vector w a, S (Dim v) ~ Dim w)
 {-# INLINE snoc #-}
 snoc a = vector . C.snoc a . C.cvec
 
-concat :: (Vector v a, Vector u a, Vector w a, (Dim v + Dim u) ~ Dim w)
+concat :: (Vector v a, Vector u a, Vector w a, (Add (Dim v) (Dim u)) ~ Dim w)
        => v a -> u a -> w a
 {-# INLINE concat #-}
 concat v u = vector $ C.concat (C.cvec v) (C.cvec u)
