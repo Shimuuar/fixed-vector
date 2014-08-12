@@ -143,7 +143,7 @@ import Data.Complex        (Complex(..))
 import Data.Data           (Typeable,Data)
 #if __GLASGOW_HASKELL__ >= 708
 import Data.Typeable       (Proxy(..))
-import GHC.TypeLits
+import qualified GHC.TypeLits as Ty
 #endif
 import qualified Data.Foldable    as F
 import qualified Data.Traversable as F
@@ -186,23 +186,23 @@ type N6 = S N5
 
 #if __GLASGOW_HASKELL__ >= 708
 -- | Isomorphism between two representations of natural numbers
-class (ToNat a ~ b, ToPeano b ~ a) => NatIso (a :: *) (b :: Nat) where
+class (ToNat a ~ b, ToPeano b ~ a) => NatIso (a :: *) (b :: Ty.Nat) where
 
 -- | Convert Peano number to Nat
-type family ToNat   (a :: *  ) :: Nat where
+type family ToNat   (a :: *  ) :: Ty.Nat where
   ToNat  Z    = 0
-  ToNat (S k) = 1 + ToNat k
+  ToNat (S k) = 1 Ty.+ ToNat k
 
 -- | Convert Nat number to Peano represenation
-type family ToPeano (b :: Nat) :: * where
+type family ToPeano (b :: Ty.Nat) :: * where
   ToPeano 0 = Z
-  ToPeano n = S (ToPeano (n-1))
+  ToPeano n = S (ToPeano (n Ty.- 1))
 
 instance NatIso  Z 0 where
-instance ( NatIso k (n - 1)
-         , ToPeano (n-1) ~ k
+instance ( NatIso k (n Ty.- 1)
+         , ToPeano (n Ty.- 1) ~ k
          , ToPeano  n    ~ S k
-         , n ~ (1 + (n - 1))    -- n is positive
+         , n ~ (1 Ty.+ (n Ty.- 1))    -- n is positive
          ) => NatIso (S k) n where
 #endif
 
