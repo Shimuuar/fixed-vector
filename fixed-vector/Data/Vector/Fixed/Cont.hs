@@ -41,10 +41,11 @@ module Data.Vector.Fixed.Cont (
   , apply
   , applyM
     -- ** Combinators
-  , apFun
-  , apLast
   , constFun
-  , hideLast
+  , curryFirst
+  , uncurryFirst
+  , curryLast
+  , apLast
   , shuffleFun
   , withFun
     -- * Vector type class
@@ -323,7 +324,7 @@ instance Arity n => Arity (S n) where
   {-# INLINE applyFun  #-}
   {-# INLINE applyFunM #-}
   {-# INLINE arity     #-}
-  reverseF f   = Fun $ \a -> unFun (reverseF $ fmap ($ a) $ hideLast f)
+  reverseF f   = Fun $ \a -> unFun (reverseF $ apLast f a)
   gunfoldF f c = gunfoldF f (apGunfold f c)
   {-# INLINE reverseF #-}
   {-# INLINE gunfoldF #-}
@@ -341,36 +342,40 @@ apGunfold f (T_gunfold c) = T_gunfold $ f c
 -- Combinators
 ----------------------------------------------------------------
 
--- | Apply single parameter to function
-apFun :: Fun (S n) a b -> a -> Fun n a b
-apFun (Fun f) x = Fun (f x)
-{-# INLINE apFun #-}
-
--- | Apply last parameter to function. Unlike 'apFun' we need to
---   traverse all parameters but last hence 'Arity' constraint.
-apLast :: Arity n => Fun (S n) a b -> a -> Fun n a b
-apLast f x = fmap ($ x) $ hideLast f
-{-# INLINE apLast #-}
-
--- | Add one parameter to function which is ignored.
+-- | Prepend ignored parameter to function
 constFun :: Fun n a b -> Fun (S n) a b
 constFun (Fun f) = Fun $ \_ -> f
 {-# INLINE constFun #-}
 
--- | Recursive step for the function
-withFun :: (Fun n a b -> Fun n a b) -> Fun (S n) a b -> Fun (S n) a b
-withFun f fun = Fun $ \a -> unFun $ f $ apFun fun a
-{-# INLINE withFun #-}
+-- | Curry first parameter of n-ary function
+curryFirst :: Fun (S n) a b -> a -> Fun n a b
+curryFirst (Fun f) x = Fun (f x)
+{-# INLINE curryFirst #-}
 
+-- | Uncurry first parameter of n-ary function
+uncurryFirst :: (a -> Fun n a b) -> Fun (S n) a b
+uncurryFirst f = Fun $ fmap unFun f
+{-# INLINE uncurryFirst #-}
 
--- | Move last parameter into function result
-hideLast :: forall n a b. Arity n => Fun (S n) a b -> Fun n a (a -> b)
-{-# INLINE hideLast #-}
-hideLast (Fun f0) = Fun $ accum (\(T_fun f) a -> T_fun (f a))
-                                (\(T_fun f)   -> f)
-                                (T_fun f0 :: T_fun a b n)
+-- | Curry last parameter of n-ary function
+curryLast :: forall n a b. Arity n => Fun (S n) a b -> Fun n a (a -> b)
+{-# INLINE curryLast #-}
+curryLast (Fun f0) = Fun $ accum (\(T_fun f) a -> T_fun (f a))
+                                 (\(T_fun f)   -> f)
+                                 (T_fun f0 :: T_fun a b n)
 
 newtype T_fun a b n = T_fun (Fn (S n) a b)
+
+-- | Apply last parameter to function. Unlike 'apFun' we need to
+--   traverse all parameters but last hence 'Arity' constraint.
+apLast :: Arity n => Fun (S n) a b -> a -> Fun n a b
+apLast f x = fmap ($ x) $ curryLast f
+{-# INLINE apLast #-}
+
+-- | Recursive step for the function
+withFun :: (Fun n a b -> Fun n a b) -> Fun (S n) a b -> Fun (S n) a b
+withFun f fun = Fun $ \a -> unFun $ f $ curryFirst fun a
+{-# INLINE withFun #-}
 
 
 -- | Move function parameter to the result of N-ary function.
@@ -432,7 +437,7 @@ instance Arity n => Index Z (S n) where
   getF  _       = Fun $ \(a :: a) -> unFun (pure a :: Fun n a a)
   putF  _ a (Fun f) = Fun $ \_ -> f a
   lensF _ f fun = Fun $ \(a :: a) -> unFun $
-    (\g -> g <$> f a) <$> shuffleFun (apFun fun)
+    (\g -> g <$> f a) <$> shuffleFun (curryFirst fun)
   {-# INLINE getF  #-}
   {-# INLINE putF  #-}
   {-# INLINE lensF #-}
@@ -441,7 +446,7 @@ instance Index k n => Index (S k) (S n) where
   getF  _       = Fun $ \(_::a) -> unFun (getF  (undefined :: k) :: Fun n a a)
   putF _ a (f :: Fun (S n) a b)
     = withFun (putF (undefined :: k) a) f
-  lensF _ f fun = Fun $ \a      -> unFun (lensF (undefined :: k) f (apFun fun a))
+  lensF _ f fun = Fun $ \a -> unFun (lensF (undefined :: k) f (curryFirst fun a))
   {-# INLINE getF  #-}
   {-# INLINE putF  #-}
   {-# INLINE lensF #-}
@@ -800,14 +805,14 @@ tail (ContVec cont) = ContVec $ \f -> cont $ constFun f
 
 -- | /O(1)/ Prepend element to vector
 cons :: a -> ContVec n a -> ContVec (S n) a
-cons a (ContVec cont) = ContVec $ \f -> cont $ apFun f a
+cons a (ContVec cont) = ContVec $ \f -> cont $ curryFirst f a
 {-# INLINE cons #-}
 
 -- | Prepend single element to vector.
 consV :: forall n a. ContVec (S Z) a -> ContVec n a -> ContVec (S n) a
 {-# INLINE consV #-}
 consV (ContVec cont1) (ContVec cont)
-  = ContVec $ \f -> cont $ apFun f $ cont1 $ Fun id
+  = ContVec $ \f -> cont $ curryFirst f $ cont1 $ Fun id
 
 
 -- | /O(1)/ Append element to vector
