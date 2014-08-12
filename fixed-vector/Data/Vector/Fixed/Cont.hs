@@ -7,6 +7,7 @@
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE Rank2Types            #-}
+{-# LANGUAGE InstanceSigs #-}
 -- Needed for NatIso
 #if __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE DataKinds, TypeOperators, UndecidableInstances #-}
@@ -45,6 +46,7 @@ module Data.Vector.Fixed.Cont (
   , constFun
   , hideLast
   , shuffleFun
+  , withFun
     -- * Vector type class
   , Dim
   , Vector(..)
@@ -355,6 +357,12 @@ constFun :: Fun n a b -> Fun (S n) a b
 constFun (Fun f) = Fun $ \_ -> f
 {-# INLINE constFun #-}
 
+-- | Recursive step for the function
+withFun :: (Fun n a b -> Fun n a b) -> Fun (S n) a b -> Fun (S n) a b
+withFun f fun = Fun $ \a -> unFun $ f $ apFun fun a
+{-# INLINE withFun #-}
+
+
 -- | Move last parameter into function result
 hideLast :: forall n a b. Arity n => Fun (S n) a b -> Fun n a (a -> b)
 {-# INLINE hideLast #-}
@@ -417,10 +425,12 @@ length _ = arity (undefined :: Dim v)
 --   compile time.
 class Index k n where
   getF  :: k -> Fun n a a
+  putF  :: k -> a -> Fun n a r -> Fun n a r
   lensF :: Functor f => k -> (a -> f a) -> Fun n a r -> Fun n a (f r)
 
 instance Arity n => Index Z (S n) where
   getF  _       = Fun $ \(a :: a) -> unFun (pure a :: Fun n a a)
+  putF  _ a (Fun f) = Fun $ \_ -> f a
   lensF _ f fun = Fun $ \(a :: a) -> unFun $
     (\g -> g <$> f a) <$> shuffleFun (apFun fun)
   {-# INLINE getF  #-}
@@ -428,10 +438,11 @@ instance Arity n => Index Z (S n) where
 
 instance Index k n => Index (S k) (S n) where
   getF  _       = Fun $ \(_::a) -> unFun (getF  (undefined :: k) :: Fun n a a)
+  putF _ a (f :: Fun (S n) a b)
+    = withFun (putF (undefined :: k) a) f
   lensF _ f fun = Fun $ \a      -> unFun (lensF (undefined :: k) f (apFun fun a))
   {-# INLINE getF  #-}
   {-# INLINE lensF #-}
-
 
 
 ----------------------------------------------------------------
