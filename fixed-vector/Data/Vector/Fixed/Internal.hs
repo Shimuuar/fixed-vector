@@ -235,6 +235,12 @@ index :: (Vector v a, C.Index k (Dim v)) => v a -> k -> a
 index v k = C.runContVec (C.getF k)
           $ C.cvec v  
 
+-- | Set n'th element in the vector
+set :: (Vector v a, C.Index k (Dim v)) => k -> a -> v a -> v a
+{-# INLINE set #-}
+set k a v = inspect v
+          $ C.putF k a construct 
+
 -- | Twan van Laarhoven's lens for element of vector
 element :: (Vector v a, Functor f) => Int -> (a -> f a) -> (v a -> f (v a))
 {-# INLINE element #-}

@@ -87,6 +87,7 @@ module Data.Vector.Fixed (
   , C.Index
   , (!)
   , index
+  , set
   , element
   , elementTy
     -- ** Comparison

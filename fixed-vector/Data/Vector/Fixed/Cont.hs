@@ -434,6 +434,7 @@ instance Arity n => Index Z (S n) where
   lensF _ f fun = Fun $ \(a :: a) -> unFun $
     (\g -> g <$> f a) <$> shuffleFun (apFun fun)
   {-# INLINE getF  #-}
+  {-# INLINE putF  #-}
   {-# INLINE lensF #-}
 
 instance Index k n => Index (S k) (S n) where
@@ -442,6 +443,7 @@ instance Index k n => Index (S k) (S n) where
     = withFun (putF (undefined :: k) a) f
   lensF _ f fun = Fun $ \a      -> unFun (lensF (undefined :: k) f (apFun fun a))
   {-# INLINE getF  #-}
+  {-# INLINE putF  #-}
   {-# INLINE lensF #-}
 
 
