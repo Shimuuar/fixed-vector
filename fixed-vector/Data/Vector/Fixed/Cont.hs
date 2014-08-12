@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE CPP                   #-}
 {-# LANGUAGE EmptyDataDecls        #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
@@ -8,6 +9,7 @@
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE Rank2Types            #-}
 {-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE GADTs #-}
 -- Needed for NatIso
 #if __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE DataKinds, TypeOperators, UndecidableInstances #-}
@@ -40,11 +42,14 @@ module Data.Vector.Fixed.Cont (
   , Arity(..)
   , apply
   , applyM
+  , WitSum(..)
     -- ** Combinators
   , constFun
   , curryFirst
   , uncurryFirst
   , curryLast
+  , curryMany
+  , uncurryMany
   , apLast
   , shuffleFun
   , withFun
@@ -155,6 +160,12 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,any,all
 data Z   deriving Typeable
 -- | Successor of n
 data S n deriving Typeable
+
+-- | Type family for sum of unary natural numbers.
+type family n + m :: *
+
+type instance Z + n = n
+type instance S n + k = S (n + k)
 
 type N1 = S Z
 type N2 = S N1
@@ -277,8 +288,15 @@ class Arity n where
   gunfoldF :: (Arity n, Data a)
            => (forall b x. Data b => c (b -> x) -> c x)
            -> T_gunfold c r a n -> c r
+  -- | Proof that `Fn (n+k) a b ~ Fn n a (Fn k a b)`
+  witSum :: WitSum n k a b
+
 
 newtype T_gunfold c r a n = T_gunfold (c (Fn n a r))
+
+-- | Value that carry proof that `Fn (n+k) a b ~ Fn n a (Fn k a b)`
+data WitSum n k a b where
+  WitSum :: (Fn (n+k) a b ~ Fn n a (Fn k a b)) => WitSum n k a b
 
 
 -- | Apply all parameters to the function.
@@ -312,6 +330,8 @@ instance Arity Z where
   gunfoldF _ (T_gunfold c) = c
   {-# INLINE reverseF #-}
   {-# INLINE gunfoldF #-}
+  witSum = WitSum
+  {-# INLINE witSum #-}
 
 instance Arity n => Arity (S n) where
   accum     f g t = \a -> accum  f g (f t a)
@@ -328,6 +348,11 @@ instance Arity n => Arity (S n) where
   gunfoldF f c = gunfoldF f (apGunfold f c)
   {-# INLINE reverseF #-}
   {-# INLINE gunfoldF #-}
+  witSum :: forall k a b. WitSum (S n) k a b
+  witSum = case witSum :: WitSum n k a b of
+             WitSum -> WitSum
+  {-# INLINE witSum #-}
+
 
 apGunfold :: Data a
           => (forall b x. Data b => c (b -> x) -> c x)
@@ -365,6 +390,28 @@ curryLast (Fun f0) = Fun $ accum (\(T_fun f) a -> T_fun (f a))
                                  (T_fun f0 :: T_fun a b n)
 
 newtype T_fun a b n = T_fun (Fn (S n) a b)
+
+-- | Curry /n/ first parameters of n-ary function
+curryMany :: forall n k a b. Arity n
+          => Fun (n + k) a b -> Fun n a (Fun k a b)
+{-# INLINE curryMany #-}
+curryMany (Fun f0) = Fun $ accum
+  (\(T_curry f) a -> T_curry (f a))
+  (\(T_curry f) -> Fun f :: Fun k a b)
+  ( T_curry f0 :: T_curry a b k n)
+
+newtype T_curry a b k n = T_curry (Fn (n + k) a b)
+
+-- | Uncurry /n/ first parameters of n-ary function
+uncurryMany :: forall n k a b. Arity n
+            => Fun n a (Fun k a b) -> Fun (n + k) a b
+{-# INLINE uncurryMany #-}
+uncurryMany f =
+  case witSum :: WitSum n k a b of
+    WitSum ->
+      case fmap unFun f :: Fun n a (Fn k a b) of
+        Fun g -> Fun g
+
 
 -- | Apply last parameter to function. Unlike 'apFun' we need to
 --   traverse all parameters but last hence 'Arity' constraint.
