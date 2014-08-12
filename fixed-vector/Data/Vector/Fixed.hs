@@ -82,6 +82,7 @@ module Data.Vector.Fixed (
   , tail
   , cons
   , snoc
+  , concat
   , reverse
     -- ** Indexing & lenses
   , C.Index
@@ -165,7 +166,7 @@ import Data.Vector.Fixed.Internal
 
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
                       , foldl,foldr,foldl1,length,sum,reverse,scanl,scanl1
-                      , head,tail,mapM,mapM_,sequence,sequence_
+                      , head,tail,mapM,mapM_,sequence,sequence_,concat
                       )
 
 

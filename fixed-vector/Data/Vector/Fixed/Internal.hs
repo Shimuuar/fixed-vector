@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -14,12 +15,12 @@ import qualified Data.Foldable    as T
 import qualified Data.Traversable as T
 
 
-import Data.Vector.Fixed.Cont     (Vector(..),Dim,S,Z,Arity,vector)
+import Data.Vector.Fixed.Cont     (Vector(..),Dim,S,Z,Arity,vector,(+)())
 import qualified Data.Vector.Fixed.Cont as C
 import           Data.Vector.Fixed.Cont   (ContVec,Index)
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
                       , foldl,foldr,foldl1,length,sum,reverse,scanl,scanl1
-                      , head,tail,mapM,mapM_,sequence,sequence_
+                      , head,tail,mapM,mapM_,sequence,sequence_,concat
                       )
 
 
@@ -212,6 +213,11 @@ snoc :: (Vector v a, Vector w a, S (Dim v) ~ Dim w)
      => a -> v a -> w a
 {-# INLINE snoc #-}
 snoc a = vector . C.snoc a . C.cvec
+
+concat :: (Vector v a, Vector u a, Vector w a, (Dim v + Dim u) ~ Dim w)
+       => v a -> u a -> w a
+{-# INLINE concat #-}
+concat v u = vector $ C.concat (C.cvec v) (C.cvec u)
 
 -- | Reverse order of elements in the vector
 reverse :: Vector v a => v a -> v a

@@ -22,6 +22,7 @@ module Data.Vector.Fixed.Cont (
     -- * Type-level numbers
     S
   , Z
+  , (+)()
     -- ** Isomorphism between Peano number and Nats
     -- $natiso
 #if __GLASGOW_HASKELL__ >= 708
@@ -78,6 +79,7 @@ module Data.Vector.Fixed.Cont (
   , cons
   , consV
   , snoc
+  , concat
   , mk1
   , mk2
   , mk3
@@ -148,7 +150,7 @@ import qualified Data.Traversable as F
 
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,any,all
                       , foldl,foldr,foldl1,length,sum,reverse,scanl,scanl1
-                      , head,tail,mapM,mapM_,sequence,sequence_
+                      , head,tail,mapM,mapM_,sequence,sequence_,concat
                       )
 
 
@@ -855,17 +857,23 @@ cons :: a -> ContVec n a -> ContVec (S n) a
 cons a (ContVec cont) = ContVec $ \f -> cont $ curryFirst f a
 {-# INLINE cons #-}
 
--- | Prepend single element to vector.
+-- | Prepend single element vector to another vector.
 consV :: forall n a. ContVec (S Z) a -> ContVec n a -> ContVec (S n) a
 {-# INLINE consV #-}
 consV (ContVec cont1) (ContVec cont)
   = ContVec $ \f -> cont $ curryFirst f $ cont1 $ Fun id
 
-
 -- | /O(1)/ Append element to vector
 snoc :: Arity n => a -> ContVec n a -> ContVec (S n) a
 snoc a (ContVec cont) = ContVec $ \f -> cont $ apLast f a
 {-# INLINE snoc #-}
+
+-- | Concatenate vector
+concat :: (Arity n, Arity k, Arity (n+k)) => ContVec n a -> ContVec k a -> ContVec (n + k) a
+{-# INLINE concat #-}
+concat v u = inspect u
+           $ inspect v
+           $ curryMany construct
 
 -- | Reverse order of elements in the vector
 reverse :: Arity n => ContVec n a -> ContVec n a
