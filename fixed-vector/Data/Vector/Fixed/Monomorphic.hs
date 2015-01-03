@@ -97,10 +97,8 @@ import Control.Monad (liftM)
 import Data.Monoid   (Monoid)
 import qualified Data.Vector.Fixed as F
 import Data.Vector.Fixed.Cont (S,Z,Arity,Fun(..))
-import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
-                      , foldl,foldr,foldl1,length,sum,reverse
-                      , head,tail,mapM,mapM_,sequence,sequence_
-                      )
+import Prelude (Num,Eq,Ord,Functor(..),Monad(..),Int,Bool,(.),($))
+
 
 
 ----------------------------------------------------------------
