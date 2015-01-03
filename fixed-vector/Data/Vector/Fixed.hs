@@ -164,10 +164,7 @@ import Data.Vector.Fixed.Cont     (Vector(..),VectorN,Dim,length,ContVec,vector,
 import qualified Data.Vector.Fixed.Cont as C
 import Data.Vector.Fixed.Internal
 
-import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
-                      , foldl,foldr,foldl1,length,sum,reverse,scanl,scanl1
-                      , head,tail,mapM,mapM_,sequence,sequence_,concat,sequenceA
-                      )
+import Prelude (Show(..),Eq(..),Ord(..),Functor(..),id,(.),($))
 
 
 -- $construction
