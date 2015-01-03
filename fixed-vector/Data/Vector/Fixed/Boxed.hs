@@ -25,7 +25,8 @@ import Data.Monoid          (Monoid(..))
 import Data.Data
 import qualified Data.Foldable    as F
 import qualified Data.Traversable as T
-import Prelude hiding (length,replicate,zipWith,map,foldl,foldr)
+import Prelude (Show(..),Eq(..),Ord(..),Functor(..),Monad(..))
+import Prelude ((++),($),($!),undefined,error)
 
 import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable

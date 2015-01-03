@@ -28,7 +28,9 @@ import Data.Data
 import Data.Monoid              (Monoid(..))
 import Data.Primitive.ByteArray
 import Data.Primitive
-import Prelude hiding (length,replicate,zipWith,map,foldl)
+import Prelude (Show(..),Eq(..),Ord(..),Num(..))
+import Prelude ((++),($),($!),undefined)
+
 
 import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable

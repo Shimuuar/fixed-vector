@@ -34,8 +34,8 @@ import Foreign.ForeignPtr
 import Foreign.Marshal.Array ( advancePtr, copyArray, moveArray )
 import GHC.ForeignPtr        ( ForeignPtr(..), mallocPlainForeignPtrBytes )
 import GHC.Ptr               ( Ptr(..) )
-
-import Prelude hiding (length,replicate,zipWith,map,foldl)
+import Prelude (Show(..),Eq(..),Ord(..),Num(..),Monad(..),IO,Int)
+import Prelude ((++),(&&),(||),($),undefined)
 
 import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable

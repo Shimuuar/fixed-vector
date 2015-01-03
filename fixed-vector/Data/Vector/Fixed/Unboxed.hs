@@ -29,7 +29,8 @@ import Data.Monoid     (Monoid(..))
 import Data.Data
 import Data.Int        (Int8, Int16, Int32, Int64 )
 import Data.Word       (Word,Word8,Word16,Word32,Word64)
-import Prelude hiding (length,replicate,zipWith,map,foldl)
+import Prelude (Show(..),Eq(..),Ord(..),Int,Double,Float,Char,Bool(..))
+import Prelude ((++),(||),($),(.))
 
 import Data.Vector.Fixed (Dim,Vector(..),VectorN,S,Z,toList,eq,ord,replicate,zipWith)
 import Data.Vector.Fixed.Mutable
