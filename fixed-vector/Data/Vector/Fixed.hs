@@ -166,7 +166,7 @@ import Data.Vector.Fixed.Internal
 
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
                       , foldl,foldr,foldl1,length,sum,reverse,scanl,scanl1
-                      , head,tail,mapM,mapM_,sequence,sequence_,concat
+                      , head,tail,mapM,mapM_,sequence,sequence_,concat,sequenceA
                       )
 
 
