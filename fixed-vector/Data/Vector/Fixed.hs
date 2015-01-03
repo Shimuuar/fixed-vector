@@ -165,6 +165,8 @@ import qualified Data.Vector.Fixed.Cont as C
 import Data.Vector.Fixed.Internal
 
 import Prelude (Show(..),Eq(..),Ord(..),Functor(..),id,(.),($))
+-- Needed for doctest
+import Prelude (Char)
 
 
 -- $construction
