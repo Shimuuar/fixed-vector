@@ -24,15 +24,16 @@ module Data.Vector.Fixed.Unboxed(
   ) where
 
 import Control.Monad
+import Control.DeepSeq (NFData(..))
 import Data.Complex
 import Data.Monoid     (Monoid(..))
 import Data.Data
 import Data.Int        (Int8, Int16, Int32, Int64 )
 import Data.Word       (Word,Word8,Word16,Word32,Word64)
 import Prelude (Show(..),Eq(..),Ord(..),Int,Double,Float,Char,Bool(..))
-import Prelude ((++),(||),($),(.))
+import Prelude ((++),(||),($),(.),seq)
 
-import Data.Vector.Fixed (Dim,Vector(..),VectorN,S,Z,toList,eq,ord,replicate,zipWith)
+import Data.Vector.Fixed (Dim,Vector(..),VectorN,S,Z,toList,eq,ord,replicate,zipWith,foldl)
 import Data.Vector.Fixed.Mutable
 import qualified Data.Vector.Fixed.Cont      as C
 import qualified Data.Vector.Fixed.Primitive as P
@@ -69,6 +70,10 @@ class (IVector (Vec n) a, MVector (MVec n) a) => Unbox n a
 
 instance (Arity n, Show a, Unbox n a) => Show (Vec n a) where
   show v = "fromList " ++ show (toList v)
+
+instance (Arity n, Unbox n a, NFData a) => NFData (Vec n a) where
+  rnf = foldl (\r a -> r `seq` rnf a) ()
+  {-# INLINE rnf #-}
 
 type instance Mutable (Vec n) = MVec n
 

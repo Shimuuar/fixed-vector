@@ -20,13 +20,14 @@ module Data.Vector.Fixed.Boxed (
   ) where
 
 import Control.Applicative  (Applicative(..))
+import Control.DeepSeq      (NFData(..))
 import Data.Primitive.Array
 import Data.Monoid          (Monoid(..))
 import Data.Data
 import qualified Data.Foldable    as F
 import qualified Data.Traversable as T
 import Prelude (Show(..),Eq(..),Ord(..),Functor(..),Monad(..))
-import Prelude ((++),($),($!),undefined,error)
+import Prelude ((++),($),($!),undefined,error,seq)
 
 import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable
@@ -82,6 +83,9 @@ con_Vec = mkConstr ty_Vec "Vec" [] Prefix
 instance (Arity n, Show a) => Show (Vec n a) where
   show v = "fromList " ++ show (toList v)
 
+instance (Arity n, NFData a) => NFData (Vec n a) where
+  rnf = foldl (\r a -> r `seq` rnf a) ()
+  {-# INLINE rnf #-}
 
 type instance Mutable (Vec n) = MVec n
 

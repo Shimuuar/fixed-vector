@@ -67,6 +67,7 @@ Library
   Ghc-options:          -Wall
   Build-Depends:
     base >=3 && <5,
+    deepseq,
     primitive
   Exposed-modules:
     -- API

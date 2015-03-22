@@ -153,6 +153,7 @@ module Data.Vector.Fixed (
   ) where
 
 import Control.Applicative (Applicative(..),(<$>))
+import Control.DeepSeq     (NFData(..))
 import Data.Data           (Typeable,Data)
 import Data.Monoid         (Monoid(..))
 import qualified Data.Foldable    as F
@@ -164,7 +165,7 @@ import Data.Vector.Fixed.Cont     (Vector(..),VectorN,Dim,length,ContVec,vector,
 import qualified Data.Vector.Fixed.Cont as C
 import Data.Vector.Fixed.Internal
 
-import Prelude (Show(..),Eq(..),Ord(..),Functor(..),id,(.),($))
+import Prelude (Show(..),Eq(..),Ord(..),Functor(..),id,(.),($),seq)
 -- Needed for doctest
 import Prelude (Char)
 
@@ -242,6 +243,10 @@ data VecList n a where
   Cons :: a -> VecList n a -> VecList (S n) a
   deriving (Typeable)
 
+instance (Arity n, NFData a) => NFData (VecList n a) where
+  rnf = foldl (\r a -> r `seq` rnf a) ()
+  {-# INLINE rnf #-}
+
 -- Vector instance
 type instance Dim (VecList n) = n
 
@@ -302,6 +307,9 @@ instance Monoid a => Monoid (Only a) where
   mempty = Only mempty
   Only a `mappend` Only b = Only $ mappend a b
 
+instance NFData a => NFData (Only a) where
+  rnf (Only a) = rnf a
+
 type instance Dim Only = S Z
 
 instance Vector Only a where
@@ -320,6 +328,9 @@ instance F.Foldable Empty where
 instance T.Traversable Empty where
   sequenceA Empty = pure Empty
   traverse _ Empty = pure Empty
+
+instance NFData (Empty a) where
+  rnf Empty = ()
 
 type instance Dim Empty = Z
 

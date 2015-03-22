@@ -26,6 +26,7 @@ module Data.Vector.Fixed.Storable (
   ) where
 
 import Control.Monad.Primitive
+import Control.DeepSeq (NFData(..))
 import Data.Monoid           (Monoid(..))
 import Data.Data
 import Foreign.Ptr           (castPtr)
@@ -35,7 +36,7 @@ import Foreign.Marshal.Array ( advancePtr, copyArray, moveArray )
 import GHC.ForeignPtr        ( ForeignPtr(..), mallocPlainForeignPtrBytes )
 import GHC.Ptr               ( Ptr(..) )
 import Prelude (Show(..),Eq(..),Ord(..),Num(..),Monad(..),IO,Int)
-import Prelude ((++),(&&),(||),($),undefined)
+import Prelude ((++),(&&),(||),($),undefined,seq)
 
 import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable
@@ -96,7 +97,9 @@ unsafeWith f (Vec fp) = f (getPtr fp)
 instance (Arity n, Storable a, Show a) => Show (Vec n a) where
   show v = "fromList " ++ show (toList v)
 
-
+instance (Arity n, Storable a, NFData a) => NFData (Vec n a) where
+  rnf = foldl (\r a -> r `seq` rnf a) ()
+  {-# INLINE rnf #-}
 
 type instance Mutable (Vec n) = MVec n
 

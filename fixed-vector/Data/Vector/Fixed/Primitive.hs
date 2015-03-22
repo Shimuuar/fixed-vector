@@ -24,12 +24,13 @@ module Data.Vector.Fixed.Primitive (
   ) where
 
 import Control.Monad
+import Control.DeepSeq (NFData(..))
 import Data.Data
 import Data.Monoid              (Monoid(..))
 import Data.Primitive.ByteArray
 import Data.Primitive
 import Prelude (Show(..),Eq(..),Ord(..),Num(..))
-import Prelude ((++),($),($!),undefined)
+import Prelude ((++),($),($!),undefined,seq)
 
 
 import Data.Vector.Fixed hiding (index)
@@ -71,7 +72,9 @@ type Vec5 = Vec (S (S (S (S (S Z)))))
 instance (Arity n, Prim a, Show a) => Show (Vec n a) where
   show v = "fromList " ++ show (toList v)
 
-
+instance (Arity n, Prim a, NFData a) => NFData (Vec n a) where
+  rnf = foldl (\r a -> r `seq` rnf a) ()
+  {-# INLINE rnf #-}
 
 type instance Mutable (Vec n) = MVec n
 
