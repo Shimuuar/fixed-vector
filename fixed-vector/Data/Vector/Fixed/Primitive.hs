@@ -29,6 +29,7 @@ import Data.Data
 import Data.Monoid              (Monoid(..))
 import Data.Primitive.ByteArray
 import Data.Primitive
+import qualified Foreign.Storable as Foreign (Storable(..))
 import Prelude (Show(..),Eq(..),Ord(..),Num(..))
 import Prelude ((++),($),($!),undefined,seq)
 
@@ -141,3 +142,12 @@ ty_Vec  = mkDataType "Data.Vector.Fixed.Primitive.Vec" [con_Vec]
 con_Vec :: Constr
 con_Vec = mkConstr ty_Vec "Vec" [] Prefix
 
+instance (Foreign.Storable a, Prim a, Arity n) => Foreign.Storable (Vec n a) where
+  alignment = defaultAlignemnt
+  sizeOf    = defaultSizeOf
+  peek      = defaultPeek
+  poke      = defaultPoke
+  {-# INLINE alignment #-}
+  {-# INLINE sizeOf    #-}
+  {-# INLINE peek      #-}
+  {-# INLINE poke      #-}

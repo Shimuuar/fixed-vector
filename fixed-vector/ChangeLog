@@ -1,8 +1,11 @@
 Changes in 0.8.0.0
 
-  * NFData instances for all data type
+  * NFData instances for all data type.
 
-  * {i,}zipWith3 and {i,}zipWithM_ added
+  * Storable instances for all data types and default implementation of
+    Storable's methods added.
+
+  * {i,}zipWith3 and {i,}zipWithM_ added.
 
 
 Changes in 0.7.0.3

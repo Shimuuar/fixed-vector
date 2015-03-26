@@ -138,6 +138,12 @@ module Data.Vector.Fixed (
   , izipWith3
   , izipWithM
   , izipWithM_
+    -- * Storable methods
+    -- $storable
+  , defaultAlignemnt
+  , defaultSizeOf
+  , defaultPeek
+  , defaultPoke
     -- * Conversion
   , convert
   , toList
@@ -162,6 +168,8 @@ import Data.Data           (Typeable,Data)
 import Data.Monoid         (Monoid(..))
 import qualified Data.Foldable    as F
 import qualified Data.Traversable as T
+import Foreign.Storable (Storable(..))
+import Foreign.Ptr      (Ptr,castPtr)
 
 import Data.Vector.Fixed.Cont     (Vector(..),VectorN,Dim,length,ContVec,vector,
                                    empty,S,Z,Arity,Fun(..),accum,apply,
@@ -169,7 +177,7 @@ import Data.Vector.Fixed.Cont     (Vector(..),VectorN,Dim,length,ContVec,vector,
 import qualified Data.Vector.Fixed.Cont as C
 import Data.Vector.Fixed.Internal
 
-import Prelude (Show(..),Eq(..),Ord(..),Functor(..),id,(.),($),seq)
+import Prelude (Show(..),Eq(..),Ord(..),Functor(..),id,(.),($),seq,undefined)
 -- Needed for doctest
 import Prelude (Char)
 
@@ -213,6 +221,12 @@ import Prelude (Char)
 -- $smallDim
 --
 -- Constructors for vectors with small dimensions.
+
+
+-- $storable
+--
+-- Default implementation of methods for Storable type class assumes
+-- that individual elements of vector are stored as N-element array.
 
 
 
@@ -295,6 +309,17 @@ instance (Arity n, Monoid a) => Monoid (VecList n a) where
   {-# INLINE mempty  #-}
   {-# INLINE mappend #-}
 
+instance (Storable a, Arity n) => Storable (VecList n a) where
+  alignment = defaultAlignemnt
+  sizeOf    = defaultSizeOf
+  peek      = defaultPeek
+  poke      = defaultPoke
+  {-# INLINE alignment #-}
+  {-# INLINE sizeOf    #-}
+  {-# INLINE peek      #-}
+  {-# INLINE poke      #-}
+
+
 
 -- | Single-element tuple.
 newtype Only a = Only a
@@ -321,6 +346,17 @@ instance Vector Only a where
   inspect (Only a) (Fun f) = f a
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
+
+instance (Storable a) => Storable (Only a) where
+  alignment _ = alignment (undefined :: a)
+  sizeOf    _ = sizeOf    (undefined :: a)
+  peek p          = Only <$> peek (castPtr p)
+  poke p (Only a) = poke (castPtr p) a
+  {-# INLINE alignment #-}
+  {-# INLINE sizeOf    #-}
+  {-# INLINE peek      #-}
+  {-# INLINE poke      #-}
+
 
 -- | Empty tuple.
 data Empty a = Empty deriving (Typeable, Data)

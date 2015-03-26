@@ -26,6 +26,7 @@ import Data.Monoid          (Monoid(..))
 import Data.Data
 import qualified Data.Foldable    as F
 import qualified Data.Traversable as T
+import Foreign.Storable (Storable(..))
 import Prelude (Show(..),Eq(..),Ord(..),Functor(..),Monad(..))
 import Prelude ((++),($),($!),undefined,error,seq)
 
@@ -66,12 +67,21 @@ instance (Typeable n, Arity n, Data a) => Data (Vec n a) where
   toConstr   _ = con_Vec
   dataTypeOf _ = ty_Vec
 
-
 ty_Vec :: DataType
 ty_Vec  = mkDataType "Data.Vector.Fixed.Boxed.Vec" [con_Vec]
 
 con_Vec :: Constr
 con_Vec = mkConstr ty_Vec "Vec" [] Prefix
+
+instance (Storable a, Arity n) => Storable (Vec n a) where
+  alignment = defaultAlignemnt
+  sizeOf    = defaultSizeOf
+  peek      = defaultPeek
+  poke      = defaultPoke
+  {-# INLINE alignment #-}
+  {-# INLINE sizeOf    #-}
+  {-# INLINE peek      #-}
+  {-# INLINE poke      #-}
 
 
 

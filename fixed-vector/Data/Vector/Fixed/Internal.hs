@@ -1,9 +1,10 @@
-{-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE Rank2Types            #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeOperators         #-}
 -- |
 -- Implementation of fixed-vectors
 module Data.Vector.Fixed.Internal where
@@ -13,7 +14,8 @@ import Control.Monad       (liftM)
 import Data.Monoid         (Monoid(..))
 import qualified Data.Foldable    as T
 import qualified Data.Traversable as T
-
+import Foreign.Storable (Storable(..))
+import Foreign.Ptr      (Ptr,castPtr)
 
 import Data.Vector.Fixed.Cont     (Vector(..),Dim,S,Z,Arity,vector,Add)
 import qualified Data.Vector.Fixed.Cont as C
@@ -583,6 +585,37 @@ izipWithM_
   => (Int -> a -> b -> m c) -> v a -> v b -> m ()
 {-# INLINE izipWithM_ #-}
 izipWithM_ f xs ys = C.izipWithM_ f (C.cvec xs) (C.cvec ys)
+
+
+----------------------------------------------------------------
+
+-- | Default implementation of 'alignment' for 'Storable' type class
+--   for fixed vectors.
+defaultAlignemnt :: forall a v. Storable a => v a -> Int
+defaultAlignemnt _ = alignment (undefined :: a)
+{-# INLINE defaultAlignemnt #-}
+
+-- | Default implementation of 'sizeOf` for 'Storable' type class for
+--   fixed vectors
+defaultSizeOf
+  :: forall a v. (Storable a, Vector v a)
+  => v a -> Int
+defaultSizeOf _ = sizeOf (undefined :: a) * C.arity (undefined :: Dim v)
+{-# INLINE defaultSizeOf #-}
+
+-- | Default implementation of 'peek' for 'Storable' type class for
+--   fixed vector
+defaultPeek :: (Storable a, Vector v a) => Ptr (v a) -> IO (v a)
+{-# INLINE defaultPeek #-}
+defaultPeek ptr
+  = generateM (peekElemOff (castPtr ptr))
+
+-- | Default implementation of 'poke' for 'Storable' type class for
+--   fixed vector
+defaultPoke :: (Storable a, Vector v a) => Ptr (v a) -> v a -> IO ()
+{-# INLINE defaultPoke #-}
+defaultPoke ptr
+  = imapM_ (pokeElemOff (castPtr ptr))
 
 
 ----------------------------------------------------------------
