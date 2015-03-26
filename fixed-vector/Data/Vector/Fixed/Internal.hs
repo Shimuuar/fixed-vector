@@ -523,12 +523,31 @@ zipWith :: (Vector v a, Vector v b, Vector v c)
 zipWith f v u = vector
               $ C.zipWith f (C.cvec v) (C.cvec u)
 
+-- | Zip three vector together
+zipWith3
+  :: (Vector v a, Vector v b, Vector v c, Vector v d)
+  => (a -> b -> c -> d)
+  -> v a -> v b -> v c
+  -> v d
+{-# INLINE zipWith3 #-}
+zipWith3 f v1 v2 v3
+  = vector
+  $ C.zipWith3 f (C.cvec v1) (C.cvec v2) (C.cvec v3)
+
 -- | Zip two vector together using monadic function.
 zipWithM :: (Vector v a, Vector v b, Vector v c, Monad m)
          => (a -> b -> m c) -> v a -> v b -> m (v c)
 {-# INLINE zipWithM #-}
 zipWithM f v u = liftM vector
                $ C.zipWithM f (C.cvec v) (C.cvec u)
+
+-- | Zip two vector elementwise using monadic function and discard
+--   result
+zipWithM_
+  :: (Vector v a, Vector v b, Vector v c, Monad m, Vector v (m c))
+  => (a -> b -> m c) -> v a -> v b -> m ()
+{-# INLINE zipWithM_ #-}
+zipWithM_ f xs ys = C.zipWithM_ f (C.cvec xs) (C.cvec ys)
 
 -- | Zip two vector together using function which takes element index
 --   as well.
@@ -538,6 +557,17 @@ izipWith :: (Vector v a, Vector v b, Vector v c)
 izipWith f v u = vector
                $ C.izipWith f (C.cvec v) (C.cvec u)
 
+-- | Zip three vector together
+izipWith3
+  :: (Vector v a, Vector v b, Vector v c, Vector v d)
+  => (Int -> a -> b -> c -> d)
+  -> v a -> v b -> v c
+  -> v d
+{-# INLINE izipWith3 #-}
+izipWith3 f v1 v2 v3
+  = vector
+  $ C.izipWith3 f (C.cvec v1) (C.cvec v2) (C.cvec v3)
+
 -- | Zip two vector together using monadic function which takes element
 --   index as well..
 izipWithM :: (Vector v a, Vector v b, Vector v c, Monad m)
@@ -545,6 +575,14 @@ izipWithM :: (Vector v a, Vector v b, Vector v c, Monad m)
 {-# INLINE izipWithM #-}
 izipWithM f v u = liftM vector
                 $ C.izipWithM f (C.cvec v) (C.cvec u)
+
+-- | Zip two vector elementwise using monadic function and discard
+--   result
+izipWithM_
+  :: (Vector v a, Vector v b, Vector v c, Monad m, Vector v (m c))
+  => (Int -> a -> b -> m c) -> v a -> v b -> m ()
+{-# INLINE izipWithM_ #-}
+izipWithM_ f xs ys = C.izipWithM_ f (C.cvec xs) (C.cvec ys)
 
 
 ----------------------------------------------------------------

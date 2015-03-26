@@ -1,3 +1,10 @@
+Changes in 0.8.0.0
+
+  * NFData instances for all data type
+
+  * {i,}zipWith3 and {i,}zipWithM_ added
+
+
 Changes in 0.7.0.3
 
   * GHC 7.10 support

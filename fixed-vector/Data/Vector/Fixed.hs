@@ -131,9 +131,13 @@ module Data.Vector.Fixed (
   , any
     -- * Zips
   , zipWith
+  , zipWith3
   , zipWithM
+  , zipWithM_
   , izipWith
+  , izipWith3
   , izipWithM
+  , izipWithM_
     -- * Conversion
   , convert
   , toList

@@ -103,9 +103,13 @@ module Data.Vector.Fixed.Cont (
   , reverse
     -- ** Zips
   , zipWith
+  , zipWith3
   , izipWith
+  , izipWith3
   , zipWithM
+  , zipWithM_
   , izipWithM
+  , izipWithM_
     -- * Running ContVec
   , runContVec
     -- ** Getters
@@ -147,7 +151,7 @@ import GHC.TypeLits
 import qualified Data.Foldable    as F
 import qualified Data.Traversable as F
 
-import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,any,all
+import Prelude hiding ( replicate,map,zipWith,zipWith3,maximum,minimum,and,or,any,all
                       , foldl,foldr,foldl1,length,sum,reverse,scanl,scanl1
                       , head,tail,mapM,mapM_,sequence,sequence_,concat
                       )
@@ -888,6 +892,12 @@ zipWith :: (Arity n) => (a -> b -> c)
 {-# INLINE zipWith #-}
 zipWith = izipWith . const
 
+-- | Zip three vectors together
+zipWith3 :: (Arity n) => (a -> b -> c -> d)
+         -> ContVec n a -> ContVec n b -> ContVec n c -> ContVec n d
+{-# INLINE zipWith3 #-}
+zipWith3 f v1 v2 v3 = zipWith (\a (b, c) -> f a b c) v1 (zipWith (,) v2 v3)
+
 -- | Zip two vector together using function which takes element index
 --   as well.
 izipWith :: (Arity n) => (Int -> a -> b -> c)
@@ -898,11 +908,22 @@ izipWith f vecA vecB = ContVec $ \funC ->
   $ inspect vecA
   $ izipWithF f funC
 
+-- | Zip three vectors together
+izipWith3 :: (Arity n) => (Int -> a -> b -> c -> d)
+          -> ContVec n a -> ContVec n b -> ContVec n c -> ContVec n d
+{-# INLINE izipWith3 #-}
+izipWith3 f v1 v2 v3 = izipWith (\i a (b, c) -> f i a b c) v1 (zipWith (,) v2 v3)
+
 -- | Zip two vector together using monadic function.
 zipWithM :: (Arity n, Monad m) => (a -> b -> m c)
          -> ContVec n a -> ContVec n b -> m (ContVec n c)
 {-# INLINE zipWithM #-}
 zipWithM f v w = sequence $ zipWith f v w
+
+zipWithM_ :: (Arity n, Monad m)
+          => (a -> b -> m c) -> ContVec n a -> ContVec n b -> m ()
+{-# INLINE zipWithM_ #-}
+zipWithM_ f xs ys = sequence_ (zipWith f xs ys)
 
 -- | Zip two vector together using monadic function which takes element
 --   index as well..
@@ -911,6 +932,10 @@ izipWithM :: (Arity n, Monad m) => (Int -> a -> b -> m c)
 {-# INLINE izipWithM #-}
 izipWithM f v w = sequence $ izipWith f v w
 
+izipWithM_ :: (Arity n, Monad m)
+           => (Int -> a -> b -> m c) -> ContVec n a -> ContVec n b -> m ()
+{-# INLINE izipWithM_ #-}
+izipWithM_ f xs ys = sequence_ (izipWith f xs ys)
 
 izipWithF :: forall n a b c r. (Arity n)
           => (Int -> a -> b -> c) -> Fun n c r -> Fun n a (Fun n b r)
