@@ -546,7 +546,7 @@ zipWithM f v u = liftM vector
 -- | Zip two vector elementwise using monadic function and discard
 --   result
 zipWithM_
-  :: (Vector v a, Vector v b, Vector v c, Monad m, Vector v (m c))
+  :: (Vector v a, Vector v b, Monad m)
   => (a -> b -> m c) -> v a -> v b -> m ()
 {-# INLINE zipWithM_ #-}
 zipWithM_ f xs ys = C.zipWithM_ f (C.cvec xs) (C.cvec ys)

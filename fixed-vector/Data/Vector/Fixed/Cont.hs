@@ -290,7 +290,7 @@ class Arity n where
   -- | Reverse order of parameters.
   reverseF :: Fun n a b -> Fun n a b
   -- | Worker function for 'gunfold'
-  gunfoldF :: (Arity n, Data a)
+  gunfoldF :: (Data a)
            => (forall b x. Data b => c (b -> x) -> c x)
            -> T_gunfold c r a n -> c r
   -- | Proof that `Fn (n+k) a b ~ Fn n a (Fn k a b)`
@@ -967,8 +967,7 @@ data T_izip a c r n = T_izip Int [a] (Fn n c r)
 
 -- | Run continuation vector. It's same as 'inspect' but with
 --   arguments flipped.
-runContVec :: Arity n
-           => Fun n a r
+runContVec :: Fun n a r
            -> ContVec n a
            -> r
 runContVec f (ContVec c) = c f

@@ -64,7 +64,7 @@ type Vec3 = Vec (S (S (S Z)))
 type Vec4 = Vec (S (S (S (S Z))))
 type Vec5 = Vec (S (S (S (S (S Z)))))
 
-class (IVector (Vec n) a, MVector (MVec n) a) => Unbox n a
+class (Arity n, IVector (Vec n) a, MVector (MVec n) a) => Unbox n a
 
 
 ----------------------------------------------------------------

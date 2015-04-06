@@ -75,16 +75,16 @@ type Vec5 = Vec (S (S (S (S (S Z)))))
 ----------------------------------------------------------------
 
 -- | Get underlying pointer. Data may not be modified through pointer.
-unsafeToForeignPtr :: Storable a => Vec n a -> ForeignPtr a
+unsafeToForeignPtr :: Vec n a -> ForeignPtr a
 {-# INLINE unsafeToForeignPtr #-}
 unsafeToForeignPtr (Vec fp) = fp
 
 -- | Construct vector from foreign pointer.
-unsafeFromForeignPtr :: Storable a => ForeignPtr a -> Vec n a
+unsafeFromForeignPtr :: ForeignPtr a -> Vec n a
 {-# INLINE unsafeFromForeignPtr #-}
 unsafeFromForeignPtr = Vec
 
-unsafeWith :: Storable a => (Ptr a -> IO b) -> Vec n a -> IO b
+unsafeWith :: (Ptr a -> IO b) -> Vec n a -> IO b
 {-# INLINE unsafeWith #-}
 unsafeWith f (Vec fp) = f (getPtr fp)
 

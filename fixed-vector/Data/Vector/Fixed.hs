@@ -169,7 +169,7 @@ import Data.Monoid         (Monoid(..))
 import qualified Data.Foldable    as F
 import qualified Data.Traversable as T
 import Foreign.Storable (Storable(..))
-import Foreign.Ptr      (Ptr,castPtr)
+import Foreign.Ptr      (castPtr)
 
 import Data.Vector.Fixed.Cont     (Vector(..),VectorN,Dim,length,ContVec,vector,
                                    empty,S,Z,Arity,Fun(..),accum,apply,
