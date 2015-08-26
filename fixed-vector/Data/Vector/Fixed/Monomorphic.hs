@@ -83,6 +83,7 @@ module Data.Vector.Fixed.Monomorphic (
   , or
   , all
   , any
+  , find
     -- * Zips
   , zipWith
   , zipWithM
@@ -98,7 +99,7 @@ import Control.Monad (liftM)
 import Data.Monoid   (Monoid)
 import qualified Data.Vector.Fixed as F
 import Data.Vector.Fixed.Cont (S,Z,Arity,Fun(..))
-import Prelude (Num,Eq,Ord,Functor(..),Monad(..),Int,Bool,(.),($))
+import Prelude (Num,Eq,Ord,Functor(..),Monad(..),Int,Bool,(.),($),Maybe)
 
 
 
@@ -295,6 +296,9 @@ any :: (VectorMono v, VectorElm v ~ a) => (a -> Bool) -> v -> Bool
 any f = F.any f . Mono
 {-# INLINE any #-}
 
+find :: (VectorMono v, VectorElm v ~ a) => (a -> Bool) -> v -> Maybe a
+find f = F.find f . Mono
+{-# INLINE find #-}
 
 ----------------------------------------------------------------
 

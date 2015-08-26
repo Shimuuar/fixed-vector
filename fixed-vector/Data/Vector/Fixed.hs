@@ -129,6 +129,7 @@ module Data.Vector.Fixed (
   , or
   , all
   , any
+  , find
     -- * Zips
   , zipWith
   , zipWith3

@@ -135,12 +135,13 @@ module Data.Vector.Fixed.Cont (
   , or
   , all
   , any
+  , find
     -- ** Data.Data.Data
   , gfoldl
   , gunfold
   ) where
 
-import Control.Applicative (Applicative(..),(<$>))
+import Control.Applicative (Applicative(..),(<$>),(<|>))
 import Control.Monad       (liftM)
 import Data.Complex        (Complex(..))
 import Data.Data           (Typeable,Data)
@@ -1154,6 +1155,13 @@ all f = foldr (\x b -> f x && b) True
 any :: Arity n => (a -> Bool) -> ContVec n a -> Bool
 any f = foldr (\x b -> f x && b) True
 {-# INLINE any #-}
+
+-- | The 'find' function takes a predicate and a vector and returns
+--   the leftmost element of the vector matching the predicate,
+--   or 'Nothing' if there is no such element.
+find :: Arity n => (a -> Bool) -> ContVec n a -> Maybe a
+find f = foldl (\r x -> r <|> if f x then Just x else Nothing) Nothing
+{-# INLINE find #-}
 
 -- | Generic 'Data.Data.gfoldl' which could work with any vector.
 gfoldl :: forall c v a. (Vector v a, Data a)
