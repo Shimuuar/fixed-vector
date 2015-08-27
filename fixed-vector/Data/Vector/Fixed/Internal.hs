@@ -373,6 +373,12 @@ any :: (Vector v a) => (a -> Bool) -> v a -> Bool
 any f = (C.any f) . C.cvec
 {-# INLINE any #-}
 
+-- | The 'find' function takes a predicate and a vector and returns
+--   the leftmost element of the vector matching the predicate,
+--   or 'Nothing' if there is no such element.
+find :: (Vector v a) => (a -> Bool) -> v a -> Maybe a
+find f = (C.find f) . C.cvec
+{-# INLINE find #-}
 
 ----------------------------------------------------------------
 
