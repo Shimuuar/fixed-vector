@@ -92,5 +92,5 @@ Test-Suite doctests
     base >=3 && <5,
     primitive,
     -- Additional test dependencies.
-    doctest   == 0.9.*,
+    doctest   >= 0.9,
     filemanip == 0.3.6.*
