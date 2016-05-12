@@ -137,6 +137,7 @@ module Data.Vector.Fixed.Cont (
 
 import Control.Applicative (Applicative(..),(<$>),(<|>))
 import Control.Monad       (liftM)
+import Data.Coerce
 import Data.Complex        (Complex(..))
 import Data.Data           (Typeable,Data)
 import Data.Typeable       (Proxy(..))
@@ -373,12 +374,12 @@ constFun (Fun f) = Fun $ \_ -> f
 
 -- | Curry first parameter of n-ary function
 curryFirst :: Fun (S n) a b -> a -> Fun n a b
-curryFirst (Fun f) x = Fun (f x)
+curryFirst = coerce
 {-# INLINE curryFirst #-}
 
 -- | Uncurry first parameter of n-ary function
 uncurryFirst :: (a -> Fun n a b) -> Fun (S n) a b
-uncurryFirst f = Fun $ fmap unFun f
+uncurryFirst = coerce
 {-# INLINE uncurryFirst #-}
 
 -- | Curry last parameter of n-ary function
