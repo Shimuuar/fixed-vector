@@ -1,5 +1,4 @@
 {-# LANGUAGE TypeOperators         #-}
-{-# LANGUAGE CPP                   #-}
 {-# LANGUAGE EmptyDataDecls        #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -9,10 +8,7 @@
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE Rank2Types            #-}
 {-# LANGUAGE GADTs #-}
--- Needed for NatIso
-#if __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE DataKinds, TypeOperators, UndecidableInstances #-}
-#endif
 -- |
 -- API for Church-encoded vectors. Implementation of function from
 -- "Data.Vector.Fixed" module uses these function internally in order
@@ -24,11 +20,9 @@ module Data.Vector.Fixed.Cont (
   , Add
     -- ** Isomorphism between Peano number and Nats
     -- $natiso
-#if __GLASGOW_HASKELL__ >= 708
   , NatIso
   , ToPeano
   , ToNat
-#endif
     -- ** Synonyms for small numerals
   , N1
   , N2
@@ -145,10 +139,8 @@ import Control.Applicative (Applicative(..),(<$>),(<|>))
 import Control.Monad       (liftM)
 import Data.Complex        (Complex(..))
 import Data.Data           (Typeable,Data)
-#if __GLASGOW_HASKELL__ >= 708
 import Data.Typeable       (Proxy(..))
 import GHC.TypeLits
-#endif
 import qualified Data.Foldable    as F
 import qualified Data.Traversable as F
 
@@ -188,7 +180,6 @@ type N6 = S N5
 -- impossible to define their properties inductively. So Peano number
 -- are used everywhere.
 
-#if __GLASGOW_HASKELL__ >= 708
 -- | Isomorphism between two representations of natural numbers
 class (ToNat a ~ b, ToPeano b ~ a) => NatIso (a :: *) (b :: Nat) where
 
@@ -208,7 +199,7 @@ instance ( NatIso k (n - 1)
          , ToPeano  n    ~ S k
          , n ~ (1 + (n - 1))    -- n is positive
          ) => NatIso (S k) n where
-#endif
+
 
 
 ----------------------------------------------------------------
@@ -1300,10 +1291,9 @@ instance (b~a, c~a, d~a, e~a, f~a, g~a) => Vector ((,,,,,,) b c d e f g) a where
   {-# INLINE construct #-}
   {-# INLINE inspect #-}
 
-#if __GLASGOW_HASKELL__ >= 708
 type instance Dim Proxy = Z
 
 instance Vector Proxy a where
   construct = Fun Proxy
   inspect _ = unFun
-#endif
+

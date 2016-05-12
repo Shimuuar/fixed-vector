@@ -1,12 +1,12 @@
-{-# LANGUAGE CPP #-}
-{-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE CPP                   #-}
+{-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE StandaloneDeriving    #-}
+{-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE UndecidableInstances  #-}
-{-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE DeriveDataTypeable #-}
 -- |
 -- Unboxed vectors with fixed length.
 module Data.Vector.Fixed.Unboxed(
@@ -50,13 +50,8 @@ import qualified Data.Vector.Fixed.Primitive as P
 data family Vec  n a
 data family MVec n s a
 
-#if __GLASGOW_HASKELL__ >= 708
 deriving instance Typeable Vec
 deriving instance Typeable MVec
-#else
-deriving instance Typeable2 Vec
-deriving instance Typeable3 MVec
-#endif
 
 type Vec1 = Vec (S Z)
 type Vec2 = Vec (S (S Z))
