@@ -270,7 +270,7 @@ instance (Arity n, NFData a) => NFData (VecList n a) where
 type instance Dim (VecList n) = n
 
 instance Arity n => Vector (VecList n) a where
-  construct = Fun $ accum
+  construct = accum
     (\(T_List f) a -> T_List (f . Cons a))
     (\(T_List f)   -> f Nil)
     (T_List id :: T_List a n n)

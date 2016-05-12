@@ -150,7 +150,7 @@ newtype T_idx n = T_idx Int
 -- | Generic construct implementation for array-based vectors.
 constructVec :: forall v a. (Arity (Dim v), IVector v a) => Fun (Dim v) a (v a)
 {-# INLINE constructVec #-}
-constructVec = Fun $
+constructVec =
   accum step
         (\(T_new _ st) -> runST $ unsafeFreeze =<< st :: v a)
         (T_new 0 new :: T_new v a (Dim v))

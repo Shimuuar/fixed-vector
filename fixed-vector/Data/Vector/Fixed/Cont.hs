@@ -219,20 +219,19 @@ newtype Fun n a b = Fun { unFun :: Fn n a b }
 
 instance Arity n => Functor (Fun n a) where
   fmap (f :: b -> c) (Fun g0 :: Fun n a b)
-     = Fun $ accum
-             (\(T_fmap g) a -> T_fmap (g a))
+     = accum (\(T_fmap g) a -> T_fmap (g a))
              (\(T_fmap x) -> f x)
              (T_fmap g0 :: T_fmap a b n)
   {-# INLINE fmap #-}
 
 instance Arity n => Applicative (Fun n a) where
-  pure (x :: x) = Fun $ accum (\(T_pure r) (_::a) -> T_pure r)
-                              (\(T_pure r)        -> r)
-                              (T_pure x :: T_pure x n)
+  pure (x :: x) = accum (\(T_pure r) (_::a) -> T_pure r)
+                        (\(T_pure r)        -> r)
+                        (T_pure x :: T_pure x n)
   (Fun f0 :: Fun n a (p -> q)) <*> (Fun g0 :: Fun n a p)
-    = Fun $ accum (\(T_ap f g) a -> T_ap (f a) (g a))
-                  (\(T_ap f g)   -> f g)
-                  (T_ap f0 g0 :: T_ap a (p -> q) p n)
+    = accum (\(T_ap f g) a -> T_ap (f a) (g a))
+            (\(T_ap f g)   -> f g)
+            (T_ap f0 g0 :: T_ap a (p -> q) p n)
   {-# INLINE pure  #-}
   {-# INLINE (<*>) #-}
 
@@ -260,7 +259,7 @@ class Arity n where
   accum :: (forall k. t (S k) -> a -> t k) -- ^ Fold function
         -> (t Z -> b)                      -- ^ Extract result of fold
         -> t n                             -- ^ Initial value
-        -> Fn n a b                        -- ^ Reduction function
+        -> Fun n a b                       -- ^ Reduction function
 
   -- | Apply all parameters to the function.
   applyFun :: (forall k. t (S k) -> (a, t k)) -- ^ Get value to apply to function
@@ -316,7 +315,7 @@ applyM f t = do (v,_) <- applyFunM f t
                 return v
 
 instance Arity Z where
-  accum     _ g t = g t
+  accum     _ g t = Fun $ g t
   applyFun  _ t h = (h,t)
   applyFunM _ t   = return (empty, t)
   arity  _ = 0
@@ -332,7 +331,7 @@ instance Arity Z where
   {-# INLINE witSum #-}
 
 instance Arity n => Arity (S n) where
-  accum     f g t = \a -> accum  f g (f t a)
+  accum     f g t = Fun $ \a -> unFun $ accum f g (f t a)
   applyFun  f t h = case f t of (a,u) -> applyFun f u (h a)
   applyFunM f t   = do (a,t')   <- f t
                        (vec,tZ) <- applyFunM f t'
@@ -385,9 +384,9 @@ uncurryFirst = coerce
 -- | Curry last parameter of n-ary function
 curryLast :: forall n a b. Arity n => Fun (S n) a b -> Fun n a (a -> b)
 {-# INLINE curryLast #-}
-curryLast (Fun f0) = Fun $ accum (\(T_fun f) a -> T_fun (f a))
-                                 (\(T_fun f)   -> f)
-                                 (T_fun f0 :: T_fun a b n)
+curryLast (Fun f0) = accum (\(T_fun f) a -> T_fun (f a))
+                           (\(T_fun f)   -> f)
+                           (T_fun f0 :: T_fun a b n)
 
 newtype T_fun a b n = T_fun (Fn (S n) a b)
 
@@ -395,7 +394,7 @@ newtype T_fun a b n = T_fun (Fn (S n) a b)
 curryMany :: forall n k a b. Arity n
           => Fun (Add n k) a b -> Fun n a (Fun k a b)
 {-# INLINE curryMany #-}
-curryMany (Fun f0) = Fun $ accum
+curryMany (Fun f0) = accum
   (\(T_curry f) a -> T_curry (f a))
   (\(T_curry f) -> Fun f :: Fun k a b)
   ( T_curry f0 :: T_curry a b k n)
@@ -430,9 +429,9 @@ shuffleFun :: forall n a b r. Arity n
            => (b -> Fun n a r) -> Fun n a (b -> r)
 {-# INLINE shuffleFun #-}
 shuffleFun f0
-  = Fun $ accum (\(T_shuffle f) a -> T_shuffle $ \x -> f x a)
-                (\(T_shuffle f)   -> f)
-                (T_shuffle (fmap unFun f0) :: T_shuffle b a r n)
+  = accum (\(T_shuffle f) a -> T_shuffle $ \x -> f x a)
+          (\(T_shuffle f)   -> f)
+          (T_shuffle (fmap unFun f0) :: T_shuffle b a r n)
 
 newtype T_shuffle x a r n = T_shuffle (x -> Fn n a r)
 
@@ -510,10 +509,10 @@ newtype ContVec n a = ContVec (forall r. Fun n a r -> r)
 type instance Dim (ContVec n) = n
 
 instance Arity n => Vector (ContVec n) a where
-  construct = Fun $
-    accum (\(T_mkN f) a -> T_mkN (f . cons a))
-          (\(T_mkN f)   -> f empty)
-          (T_mkN id :: T_mkN n a n)
+  construct = accum
+    (\(T_mkN f) a -> T_mkN (f . cons a))
+    (\(T_mkN f)   -> f empty)
+    (T_mkN id :: T_mkN n a n)
   inspect (ContVec c) f = c f
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
@@ -545,9 +544,9 @@ sequenceAF :: forall f n a b. (Applicative f, Arity n)
      => Fun n a b -> Fun n (f a) (f b)
 {-# INLINE sequenceAF #-}
 sequenceAF (Fun f0)
-  = Fun $ accum (\(T_sequenceA f) a -> T_sequenceA (f <*> a))
-                (\(T_sequenceA f)   -> f)
-                (T_sequenceA (pure f0) :: T_sequenceA f a b n)
+  = accum (\(T_sequenceA f) a -> T_sequenceA (f <*> a))
+          (\(T_sequenceA f)   -> f)
+          (T_sequenceA (pure f0) :: T_sequenceA f a b n)
 
 newtype T_sequenceA f a b n = T_sequenceA (f (Fn n a b))
 
@@ -742,7 +741,7 @@ imapM_ f = ifoldl (\m i a -> m >> f i a >> return ()) (return ())
 imapMF :: forall m n a b r. (Arity n, Monad m)
        => (Int -> a -> m b) -> Fun n b r -> Fun n a (m r)
 {-# INLINE imapMF #-}
-imapMF f (Fun funB) = Fun $
+imapMF f (Fun funB) =
   accum (\(T_mapM i m) a -> T_mapM (i+1) $ do b   <- f i a
                                               fun <- m
                                               return $ fun b
@@ -755,7 +754,7 @@ data T_mapM a m r n = T_mapM Int (m (Fn n a r))
 imapF :: forall n a b r. Arity n
       => (Int -> a -> b) -> Fun n b r -> Fun n a r
 {-# INLINE imapF #-}
-imapF f (Fun funB) = Fun $
+imapF f (Fun funB) =
   accum (\(T_map i g) b -> T_map (i+1) (g (f i b)))
         (\(T_map _ r)   -> r)
         (  T_map 0 funB :: T_map b r n)
@@ -775,8 +774,8 @@ scanl1 f (ContVec cont) = ContVec $
   cont . scanl1F f
 
 scanlF :: forall n a b r. (Arity n) => (b -> a -> b) -> b -> Fun (S n) b r -> Fun n a r
-scanlF f b0 (Fun fun0) = Fun
-  $ accum step fini start
+scanlF f b0 (Fun fun0)
+  = accum step fini start
   where
     step  :: forall k. T_scanl r b (S k) -> a -> T_scanl r b k
     step (T_scanl b fn) a = let b' = f b a in T_scanl b' (fn b')
@@ -784,7 +783,7 @@ scanlF f b0 (Fun fun0) = Fun
     start = T_scanl b0 (fun0 b0)  :: T_scanl r b n
 
 scanl1F :: forall n a r. (Arity n) => (a -> a -> a) -> Fun n a r -> Fun n a r
-scanl1F f (Fun fun0) = Fun $ accum step fini start
+scanl1F f (Fun fun0) = accum step fini start
   where
     step  :: forall k. T_scanl1 r a (S k) -> a -> T_scanl1 r a k
     step (T_scanl1 Nothing  fn) a = T_scanl1 (Just a) (fn a)
@@ -934,7 +933,7 @@ izipWithF :: forall n a b c r. (Arity n)
           => (Int -> a -> b -> c) -> Fun n c r -> Fun n a (Fun n b r)
 {-# INLINE izipWithF #-}
 izipWithF f (Fun g0) =
-  fmap (\v -> Fun $ accum
+  fmap (\v -> accum
               (\(T_izip i (a:as) g) b -> T_izip (i+1) as (g $ f i a b))
               (\(T_izip _ _      x)   -> x)
               (T_izip 0 v g0 :: (T_izip a c r n))
@@ -943,7 +942,7 @@ izipWithF f (Fun g0) =
 
 makeList :: forall n a. Arity n => Fun n a [a]
 {-# INLINE makeList #-}
-makeList = Fun $ accum
+makeList = accum
     (\(T_mkList xs) x -> T_mkList (xs . (x:)))
     (\(T_mkList xs) -> xs [])
     (T_mkList id :: T_mkList a n)
@@ -978,7 +977,7 @@ head :: forall n a. Arity (S n) => ContVec (S n) a -> a
 --       that `Arity (S n)' ⇒ `Arity n'
 {-# INLINE head #-}
 head
-  = runContVec $ Fun
+  = runContVec
   $ accum (\(T_head m) a -> T_head $ case m of { Nothing -> Just a; x -> x })
           (\(T_head (Just x)) -> x)
           (T_head Nothing :: T_head a (S n))
@@ -991,7 +990,7 @@ index :: forall n a. Arity n => Int -> ContVec n a -> a
 {-# INLINE index #-}
 index n
   | n < 0     = error "Data.Vector.Fixed.Cont.index: index out of range"
-  | otherwise = runContVec $ Fun $ accum
+  | otherwise = runContVec $ accum
      (\(T_Index x) a -> T_Index $ case x of
                           Left  0 -> Right a
                           Left  i -> Left (i - 1)
@@ -1026,7 +1025,7 @@ elementTy k f v = inspect v
 elementF :: forall a n f r. (Arity n, Functor f)
          => Int -> (a -> f a) -> Fun n a r -> Fun n a (f r)
 {-# INLINE elementF #-}
-elementF n f (Fun fun0) = Fun $ accum step fini start
+elementF n f (Fun fun0) = accum step fini start
   where
     step :: forall k. T_lens f a r (S k) -> a -> T_lens f a r k
     step (T_lens (Left (0,fun))) a = T_lens $ Right $ fmap fun $ f a
@@ -1054,7 +1053,7 @@ ifoldl :: forall n a b. Arity n
        => (b -> Int -> a -> b) -> b -> ContVec n a -> b
 {-# INLINE ifoldl #-}
 ifoldl f b v
-  = inspect v $ Fun
+  = inspect v
   $ accum (\(T_ifoldl i r) a -> T_ifoldl (i+1) (f r i a))
           (\(T_ifoldl _ r) -> r)
           (T_ifoldl 0 b :: T_ifoldl b n)
@@ -1090,7 +1089,7 @@ foldl1 :: forall n a. (Arity (S n))
        => (a -> a -> a) -> ContVec (S n) a -> a
 {-# INLINE foldl1 #-}
 foldl1 f
-  = runContVec $ Fun
+  = runContVec
   $ accum (\(T_foldl1 r       ) a -> T_foldl1 $ Just $ maybe a (flip f a) r)
           (\(T_foldl1 (Just x))   -> x)
           (T_foldl1 Nothing :: T_foldl1 a (S n))
@@ -1105,7 +1104,7 @@ ifoldr :: forall n a b. Arity n
       => (Int -> a -> b -> b) -> b -> ContVec n a -> b
 {-# INLINE ifoldr #-}
 ifoldr f z
-  = runContVec $ Fun
+  = runContVec
   $ accum (\(T_ifoldr i g) a -> T_ifoldr (i+1) (g . f i a))
           (\(T_ifoldr _ g)   -> g z)
           (T_ifoldr 0 id :: T_ifoldr b n)
@@ -1181,7 +1180,7 @@ gunfold f inj _
 gfoldlF :: forall c r a n. (Arity n, Data a)
          => (forall x y. Data x => c (x -> y) -> x -> c y)
          -> c (Fn n a r) -> Fun n a (c r)
-gfoldlF f c0 = Fun $ accum
+gfoldlF f c0 = accum
   (\(T_gfoldl c) x -> T_gfoldl (f c x))
   (\(T_gfoldl c)   -> c)
   (T_gfoldl c0 :: T_gfoldl c r a n)
