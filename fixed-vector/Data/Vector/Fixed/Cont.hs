@@ -382,11 +382,11 @@ uncurryFirst = coerce
 {-# INLINE uncurryFirst #-}
 
 -- | Curry last parameter of n-ary function
-curryLast :: forall n a b. Arity n => Fun (S n) a b -> Fun n a (a -> b)
+curryLast :: Arity n => Fun (S n) a b -> Fun n a (a -> b)
 {-# INLINE curryLast #-}
 curryLast (Fun f0) = accum (\(T_fun f) a -> T_fun (f a))
                            (\(T_fun f)   -> f)
-                           (T_fun f0 :: T_fun a b n)
+                           (T_fun f0)
 
 newtype T_fun a b n = T_fun (Fn (S n) a b)
 
@@ -423,15 +423,14 @@ withFun :: (Fun n a b -> Fun n a b) -> Fun (S n) a b -> Fun (S n) a b
 withFun f fun = Fun $ \a -> unFun $ f $ curryFirst fun a
 {-# INLINE withFun #-}
 
-
 -- | Move function parameter to the result of N-ary function.
-shuffleFun :: forall n a b r. Arity n
+shuffleFun :: Arity n
            => (b -> Fun n a r) -> Fun n a (b -> r)
 {-# INLINE shuffleFun #-}
 shuffleFun f0
   = accum (\(T_shuffle f) a -> T_shuffle $ \x -> f x a)
           (\(T_shuffle f)   -> f)
-          (T_shuffle (fmap unFun f0) :: T_shuffle b a r n)
+          (T_shuffle (fmap unFun f0))
 
 newtype T_shuffle x a r n = T_shuffle (x -> Fn n a r)
 
@@ -1082,8 +1081,6 @@ data T_ifoldl b n = T_ifoldl !Int b
 -- But it require constraint `Arity n` whereas `Vector v a` gives
 -- `Arity (S n)`.  Latter imply former but GHC cannot infer it.
 
-newtype T_foldl1 a n = T_foldl1 (Maybe a)
-
 -- | Left fold.
 foldl1 :: forall n a. (Arity (S n))
        => (a -> a -> a) -> ContVec (S n) a -> a
@@ -1092,7 +1089,9 @@ foldl1 f
   = runContVec
   $ accum (\(T_foldl1 r       ) a -> T_foldl1 $ Just $ maybe a (flip f a) r)
           (\(T_foldl1 (Just x))   -> x)
-          (T_foldl1 Nothing :: T_foldl1 a (S n))
+          (T_foldl1 Nothing)
+
+newtype T_foldl1 a n = T_foldl1 (Maybe a)
 
 -- | Right fold over continuation vector
 foldr :: Arity n => (a -> b -> b) -> b -> ContVec n a -> b
@@ -1107,8 +1106,7 @@ ifoldr f z
   = runContVec
   $ accum (\(T_ifoldr i g) a -> T_ifoldr (i+1) (g . f i a))
           (\(T_ifoldr _ g)   -> g z)
-          (T_ifoldr 0 id :: T_ifoldr b n)
-
+          (T_ifoldr 0 id)
 
 data T_ifoldr b n = T_ifoldr Int (b -> b)
 
