@@ -961,9 +961,25 @@ izipWithF f (Fun g0) =
               (T_izip 0 v g0 :: (T_izip a c r n))
        ) makeList
 
-join :: forall n a. Arity n => ContVec n (ContVec n a) -> ContVec n a
-join vec = ContVec $ \(Fun f) ->
-  undefined
+join :: Arity n => ContVec n (ContVec n a) -> ContVec n a
+join (ContVec contA) = ContVec $ \fun -> contA (joinF fun)
+
+joinF :: forall n a r. Arity n
+      => Fun n a r -> Fun n (ContVec n a) r
+joinF fun = Fun $ accum step fini init
+  where
+    step :: forall k. T_join r a (S k) -> ContVec n a -> T_join r a k
+    step = undefined
+    --
+    fini :: T_join r a Z -> r
+    fini (T_join r) = r
+    --
+    init :: T_join r a n
+    init = undefined
+
+newtype T_join r a n = T_join (Fn n (ContVec n a) r)
+
+
 {-
   apply step (T_join vec) f
   where
@@ -984,7 +1000,6 @@ newtype T_mkList a n = T_mkList ([a] -> [a])
 
 data T_izip a c r n = T_izip Int [a] (Fn n c r)
 
-newtype T_join a n = T_join (ContVec n (ContVec n a))
 
 
 ----------------------------------------------------------------
