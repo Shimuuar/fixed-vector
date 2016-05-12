@@ -409,7 +409,7 @@ uncurryMany f =
   case witSum :: WitSum n k a b of
     WitSum ->
       case fmap unFun f :: Fun n a (Fn k a b) of
-        Fun g -> Fun g
+        g -> coerce g
 
 
 -- | Apply last parameter to function. Unlike 'apFun' we need to
