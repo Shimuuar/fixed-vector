@@ -53,6 +53,7 @@ module Data.Vector.Fixed.Cont (
   , apLast
   , shuffleFun
   , withFun
+  , contramapFun
     -- * Vector type class
   , Dim
   , Vector(..)
@@ -444,7 +445,19 @@ shuffleFun f0
 
 newtype T_shuffle x a r n = T_shuffle (x -> Fn n a r)
 
+-- | Contravariant map for 'Fun'
+contramapFun
+  :: forall n a b r. Arity n
+  => (b -> a) -> Fun n a r -> Fun n b r
+contramapFun f func = Fun $ accum step fini ini
+  where
+    step :: forall k. T_contra a r (S k) -> b -> T_contra a r k
+    step (T_contra g) b = T_contra (g (f b))
+    fini (T_contra r) = r
+    ini = T_contra (unFun func) :: T_contra a r n
 
+    
+newtype T_contra a r n = T_contra (Fn n a r)
 
 ----------------------------------------------------------------
 -- Type class for fixed vectors
@@ -950,12 +963,15 @@ izipWithF f (Fun g0) =
 
 join :: forall n a. Arity n => ContVec n (ContVec n a) -> ContVec n a
 join vec = ContVec $ \(Fun f) ->
+  undefined
+{-
   apply step (T_join vec) f
   where
     step :: forall k. Arity k => T_join a (S k) -> (a, T_join a k)
     step (T_join v) = ( head $ head v
                       , T_join $ fmap tail $ tail v
                       )
+-}
 
 makeList :: forall n a. Arity n => Fun n a [a]
 {-# INLINE makeList #-}
