@@ -948,6 +948,14 @@ izipWithF f (Fun g0) =
               (T_izip 0 v g0 :: (T_izip a c r n))
        ) makeList
 
+join :: forall n a. Arity n => ContVec n (ContVec n a) -> ContVec n a
+join vec = ContVec $ \(Fun f) ->
+  apply step (T_join vec) f
+  where
+    step :: forall k. Arity k => T_join a (S k) -> (a, T_join a k)
+    step (T_join v) = ( head $ head v
+                      , T_join $ fmap tail $ tail v
+                      )
 
 makeList :: forall n a. Arity n => Fun n a [a]
 {-# INLINE makeList #-}
@@ -960,6 +968,7 @@ newtype T_mkList a n = T_mkList ([a] -> [a])
 
 data T_izip a c r n = T_izip Int [a] (Fn n c r)
 
+newtype T_join a n = T_join (ContVec n (ContVec n a))
 
 
 ----------------------------------------------------------------
