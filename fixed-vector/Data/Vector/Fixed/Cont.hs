@@ -511,7 +511,7 @@ instance Arity n => Vector (ContVec n) a where
   construct = accum
     (\(T_mkN f) a -> T_mkN (f . cons a))
     (\(T_mkN f)   -> f empty)
-    (T_mkN id :: T_mkN n a n)
+    (T_mkN id)
   inspect (ContVec c) f = c f
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
@@ -717,7 +717,6 @@ mapM :: (Arity n, Monad m) => (a -> m b) -> ContVec n a -> m (ContVec n b)
 {-# INLINE mapM #-}
 mapM = imapM . const
 
--- {-
 -- | Apply monadic function to every element of the vector and its index.
 imapM :: (Arity n, Monad m) => (Int -> a -> m b) -> ContVec n a -> m (ContVec n b)
 {-# INLINE imapM #-}
@@ -737,7 +736,7 @@ imapM_ :: (Arity n, Monad m) => (Int -> a -> m b) -> ContVec n a -> m ()
 imapM_ f = ifoldl (\m i a -> m >> f i a >> return ()) (return ())
 
 
-imapMF :: forall m n a b r. (Arity n, Monad m)
+imapMF :: (Arity n, Monad m)
        => (Int -> a -> m b) -> Fun n b r -> Fun n a (m r)
 {-# INLINE imapMF #-}
 imapMF f (Fun funB) =
@@ -746,17 +745,17 @@ imapMF f (Fun funB) =
                                               return $ fun b
                            )
         (\(T_mapM _ m) -> m)
-        (T_mapM 0 (return funB) :: T_mapM b m r n)
+        (T_mapM 0 (return funB))
 
 data T_mapM a m r n = T_mapM Int (m (Fn n a r))
 
-imapF :: forall n a b r. Arity n
+imapF :: Arity n
       => (Int -> a -> b) -> Fun n b r -> Fun n a r
 {-# INLINE imapF #-}
 imapF f (Fun funB) =
   accum (\(T_map i g) b -> T_map (i+1) (g (f i b)))
         (\(T_map _ r)   -> r)
-        (  T_map 0 funB :: T_map b r n)
+        (  T_map 0 funB)
 
 data T_map a r n = T_map Int (Fn n a r)
 
@@ -1082,8 +1081,7 @@ data T_ifoldl b n = T_ifoldl !Int b
 -- `Arity (S n)`.  Latter imply former but GHC cannot infer it.
 
 -- | Left fold.
-foldl1 :: forall n a. (Arity (S n))
-       => (a -> a -> a) -> ContVec (S n) a -> a
+foldl1 :: (Arity (S n)) => (a -> a -> a) -> ContVec (S n) a -> a
 {-# INLINE foldl1 #-}
 foldl1 f
   = runContVec
@@ -1099,8 +1097,7 @@ foldr :: Arity n => (a -> b -> b) -> b -> ContVec n a -> b
 foldr = ifoldr . const
 
 -- | Right fold over continuation vector
-ifoldr :: forall n a b. Arity n
-      => (Int -> a -> b -> b) -> b -> ContVec n a -> b
+ifoldr :: Arity n => (Int -> a -> b -> b) -> b -> ContVec n a -> b
 {-# INLINE ifoldr #-}
 ifoldr f z
   = runContVec
@@ -1175,13 +1172,13 @@ gunfold f inj _
     gun = T_gunfold (inj $ unFun con) :: T_gunfold c (v a) a (Dim v)
 
 
-gfoldlF :: forall c r a n. (Arity n, Data a)
+gfoldlF :: (Arity n, Data a)
          => (forall x y. Data x => c (x -> y) -> x -> c y)
          -> c (Fn n a r) -> Fun n a (c r)
 gfoldlF f c0 = accum
   (\(T_gfoldl c) x -> T_gfoldl (f c x))
   (\(T_gfoldl c)   -> c)
-  (T_gfoldl c0 :: T_gfoldl c r a n)
+  (T_gfoldl   c0)
 
 newtype T_gfoldl c r a n = T_gfoldl (c (Fn n a r))
 
