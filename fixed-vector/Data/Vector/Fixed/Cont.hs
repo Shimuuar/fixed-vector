@@ -611,60 +611,51 @@ toList = foldr (:) []
 
 
 -- | Execute monadic action for every element of vector. Synonym for 'pure'.
-replicate :: forall n a. (Arity n)
-          => a -> ContVec n a
+replicate :: (Arity n) => a -> ContVec n a
 {-# INLINE replicate #-}
-replicate a =
-  apply (\T_replicate -> (a, T_replicate))
-        (T_replicate :: T_replicate n)
+replicate a = apply (\Proxy -> (a, Proxy)) Proxy
 
 -- | Execute monadic action for every element of vector.
-replicateM :: forall m n a. (Arity n, Monad m)
-           => m a -> m (ContVec n a)
+replicateM :: (Arity n, Monad m) => m a -> m (ContVec n a)
 {-# INLINE replicateM #-}
-replicateM act =
-  applyM (\T_replicate -> do { a <- act; return (a, T_replicate) } )
-         (T_replicate :: T_replicate n)
-
-
-data T_replicate n = T_replicate
+replicateM act
+  = applyM (\Proxy -> do { a <- act; return (a, Proxy)}) Proxy
 
 
 -- | Generate vector from function which maps element's index to its value.
-generate :: forall n a. (Arity n) => (Int -> a) -> ContVec n a
+generate :: (Arity n) => (Int -> a) -> ContVec n a
 {-# INLINE generate #-}
 generate f =
   apply (\(T_generate n) -> (f n, T_generate (n + 1)))
-        (T_generate 0 :: T_generate n)
+        (T_generate 0)
 
 -- | Generate vector from monadic function which maps element's index
 --   to its value.
-generateM :: forall m n a. (Monad m, Arity n)
-           => (Int -> m a) -> m (ContVec n a)
+generateM :: (Monad m, Arity n) => (Int -> m a) -> m (ContVec n a)
 {-# INLINE generateM #-}
 generateM f =
   applyM (\(T_generate n) -> do { a <- f n; return (a, T_generate (n + 1)) } )
-         (T_generate 0 :: T_generate n)
+         (T_generate 0)
 
 
 newtype T_generate n = T_generate Int
 
 -- | Unfold vector.
-unfoldr :: forall n b a. Arity n => (b -> (a,b)) -> b -> ContVec n a
+unfoldr :: Arity n => (b -> (a,b)) -> b -> ContVec n a
 {-# INLINE unfoldr #-}
 unfoldr f b0 =
   apply (\(T_unfoldr b) -> let (a,b') = f b in (a, T_unfoldr b'))
-        (T_unfoldr b0 :: T_unfoldr b n)
+        (T_unfoldr b0)
 
 newtype T_unfoldr b n = T_unfoldr b
 
 
 -- | Unit vector along Nth axis.
-basis :: forall n a. (Num a, Arity n) => Int -> ContVec n a
+basis :: (Num a, Arity n) => Int -> ContVec n a
 {-# INLINE basis #-}
 basis n0 =
-  apply (\(T_basis n) -> ((if n == 0 then 1 else 0) :: a, T_basis (n - 1)))
-        (T_basis n0 :: T_basis n)
+  apply (\(T_basis n) -> (if n == 0 then 1 else 0, T_basis (n - 1)))
+        (T_basis n0)
 
 newtype T_basis n = T_basis Int
 
@@ -798,18 +789,15 @@ sequence_ = mapM_ id
 {-# INLINE sequence_ #-}
 
 -- | The dual of sequenceA
-distribute :: forall f n a. (Functor f, Arity n)
-           => f (ContVec n a) -> ContVec n (f a)
+distribute :: (Functor f, Arity n) => f (ContVec n a) -> ContVec n (f a)
 {-# INLINE distribute #-}
 distribute f0
   = apply step start
   where
     -- It's not possible to use ContVec as accumulator type since `head'
     -- require Arity constraint on `k'. So we use plain lists
-    step :: forall k. T_distribute a f (S k) -> (f a, T_distribute a f k)
     step (T_distribute f) = ( fmap (\(x:_) -> x) f
                             , T_distribute $ fmap (\(_:x) -> x) f)
-    start :: T_distribute a f n
     start = T_distribute (fmap toList f0)
 
 collect :: (Functor f, Arity n) => (a -> ContVec n b) -> f a -> ContVec n (f b)
@@ -817,8 +805,7 @@ collect f = distribute . fmap f
 {-# INLINE collect #-}
 
 -- | The dual of sequence
-distributeM :: forall m n a. (Monad m, Arity n)
-            => m (ContVec n a) -> ContVec n (m a)
+distributeM :: (Monad m, Arity n) => m (ContVec n a) -> ContVec n (m a)
 {-# INLINE distributeM #-}
 distributeM f0
   = apply step start
@@ -845,7 +832,7 @@ cons a (ContVec cont) = ContVec $ \f -> cont $ curryFirst f a
 {-# INLINE cons #-}
 
 -- | Prepend single element vector to another vector.
-consV :: forall n a. ContVec (S Z) a -> ContVec n a -> ContVec (S n) a
+consV :: ContVec (S Z) a -> ContVec n a -> ContVec (S n) a
 {-# INLINE consV #-}
 consV (ContVec cont1) (ContVec cont)
   = ContVec $ \f -> cont $ curryFirst f $ cont1 $ Fun id
@@ -919,23 +906,23 @@ izipWithM_ :: (Arity n, Monad m)
 {-# INLINE izipWithM_ #-}
 izipWithM_ f xs ys = sequence_ (izipWith f xs ys)
 
-izipWithF :: forall n a b c r. (Arity n)
+izipWithF :: (Arity n)
           => (Int -> a -> b -> c) -> Fun n c r -> Fun n a (Fun n b r)
 {-# INLINE izipWithF #-}
 izipWithF f (Fun g0) =
   fmap (\v -> accum
               (\(T_izip i (a:as) g) b -> T_izip (i+1) as (g $ f i a b))
               (\(T_izip _ _      x)   -> x)
-              (T_izip 0 v g0 :: (T_izip a c r n))
+              (T_izip 0 v g0)
        ) makeList
 
 
-makeList :: forall n a. Arity n => Fun n a [a]
+makeList :: Arity n => Fun n a [a]
 {-# INLINE makeList #-}
 makeList = accum
     (\(T_mkList xs) x -> T_mkList (xs . (x:)))
     (\(T_mkList xs) -> xs [])
-    (T_mkList id :: T_mkList a n)
+    (T_mkList id)
 
 newtype T_mkList a n = T_mkList ([a] -> [a])
 
