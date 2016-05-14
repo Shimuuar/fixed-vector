@@ -274,7 +274,7 @@ instance Arity n => Vector (VecList n) a where
     (\(T_List f) a -> T_List (f . Cons a))
     (\(T_List f)   -> f Nil)
     (T_List id :: T_List a n n)
-  inspect v (Fun f) = apply step (Flip v) f
+  inspect v = inspect $ apply step (Flip v)
     where
       step :: Flip VecList a (S k)  -> (a, Flip VecList a k)
       step (Flip (Cons a xs)) = (a, Flip xs)

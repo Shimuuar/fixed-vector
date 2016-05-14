@@ -300,10 +300,9 @@ data WitSum n k a b where
 apply :: Arity n
       => (forall k. t (S k) -> (a, t k)) -- ^ Get value to apply to function
       -> t n                             -- ^ Initial value
-      -> Fn n a b                        -- ^ N-ary function
-      -> b
+      -> ContVec n a                     -- ^ N-ary function
 {-# INLINE apply #-}
-apply step z f = fst $ applyFun step z f
+apply step z = ContVec $ \(Fun f) -> fst $ applyFun step z f
 
 -- | Apply all parameters to the function using monadic actions.
 applyM :: (Monad m, Arity n)
@@ -570,10 +569,9 @@ empty = ContVec (\(Fun r) -> r)
 --   list is shorter than resulting vector.
 fromList :: forall n a. Arity n => [a] -> ContVec n a
 {-# INLINE fromList #-}
-fromList xs = ContVec $ \(Fun fun) ->
+fromList xs =
   apply step
         (T_flist xs :: T_flist a n)
-        fun
   where
     step (T_flist []    ) = error "Data.Vector.Fixed.Cont.fromList: too few elements"
     step (T_flist (a:as)) = (a, T_flist as)
@@ -616,10 +614,9 @@ toList = foldr (:) []
 replicate :: forall n a. (Arity n)
           => a -> ContVec n a
 {-# INLINE replicate #-}
-replicate a = ContVec $ \(Fun fun) ->
+replicate a =
   apply (\T_replicate -> (a, T_replicate))
         (T_replicate :: T_replicate n)
-        fun
 
 -- | Execute monadic action for every element of vector.
 replicateM :: forall m n a. (Arity n, Monad m)
@@ -636,10 +633,9 @@ data T_replicate n = T_replicate
 -- | Generate vector from function which maps element's index to its value.
 generate :: forall n a. (Arity n) => (Int -> a) -> ContVec n a
 {-# INLINE generate #-}
-generate f = ContVec $ \(Fun fun) ->
+generate f =
   apply (\(T_generate n) -> (f n, T_generate (n + 1)))
         (T_generate 0 :: T_generate n)
-         fun
 
 -- | Generate vector from monadic function which maps element's index
 --   to its value.
@@ -656,10 +652,9 @@ newtype T_generate n = T_generate Int
 -- | Unfold vector.
 unfoldr :: forall n b a. Arity n => (b -> (a,b)) -> b -> ContVec n a
 {-# INLINE unfoldr #-}
-unfoldr f b0 = ContVec $ \(Fun fun) ->
+unfoldr f b0 =
   apply (\(T_unfoldr b) -> let (a,b') = f b in (a, T_unfoldr b'))
         (T_unfoldr b0 :: T_unfoldr b n)
-         fun
 
 newtype T_unfoldr b n = T_unfoldr b
 
@@ -667,10 +662,9 @@ newtype T_unfoldr b n = T_unfoldr b
 -- | Unit vector along Nth axis.
 basis :: forall n a. (Num a, Arity n) => Int -> ContVec n a
 {-# INLINE basis #-}
-basis n0 = ContVec $ \(Fun fun) ->
+basis n0 =
   apply (\(T_basis n) -> ((if n == 0 then 1 else 0) :: a, T_basis (n - 1)))
         (T_basis n0 :: T_basis n)
-        fun
 
 newtype T_basis n = T_basis Int
 
@@ -808,7 +802,7 @@ distribute :: forall f n a. (Functor f, Arity n)
            => f (ContVec n a) -> ContVec n (f a)
 {-# INLINE distribute #-}
 distribute f0
-  =  ContVec $ \(Fun fun) -> apply step start fun
+  = apply step start
   where
     -- It's not possible to use ContVec as accumulator type since `head'
     -- require Arity constraint on `k'. So we use plain lists
@@ -827,12 +821,10 @@ distributeM :: forall m n a. (Monad m, Arity n)
             => m (ContVec n a) -> ContVec n (m a)
 {-# INLINE distributeM #-}
 distributeM f0
-  =  ContVec $ \(Fun fun) -> apply step start fun
+  = apply step start
   where
-    step :: forall k. T_distribute a m (S k) -> (m a, T_distribute a m k)
     step (T_distribute f) = ( liftM (\(x:_) -> x) f
                             , T_distribute $ liftM (\(_:x) -> x) f)
-    start :: T_distribute a m n
     start = T_distribute (liftM toList f0)
 
 collectM :: (Monad m, Arity n) => (a -> ContVec n b) -> m a -> ContVec n (m b)
@@ -969,7 +961,7 @@ vector = runContVec construct
 {-# INLINE[1] vector #-}
 
 -- | Finalizer function for getting head of the vector.
-head :: forall n a. Arity (S n) => ContVec (S n) a -> a
+head :: Arity (S n) => ContVec (S n) a -> a
 -- NOTE: we need constraint `Arity (S n)' instead of `Arity n' because
 --       `Vector v' entails `Arity (Dim v)' and GHC cannot figure out
 --       that `Arity (S n)' ⇒ `Arity n'
@@ -978,13 +970,13 @@ head
   = runContVec
   $ accum (\(T_head m) a -> T_head $ case m of { Nothing -> Just a; x -> x })
           (\(T_head (Just x)) -> x)
-          (T_head Nothing :: T_head a (S n))
+          (T_head Nothing)
 
 data T_head a n = T_head (Maybe a)
 
 
 -- | /O(n)/ Get value at specified index.
-index :: forall n a. Arity n => Int -> ContVec n a -> a
+index :: Arity n => Int -> ContVec n a -> a
 {-# INLINE index #-}
 index n
   | n < 0     = error "Data.Vector.Fixed.Cont.index: index out of range"
@@ -998,7 +990,7 @@ index n
                         Left  _ -> error "Data.Vector.Fixed.index: index out of range"
                         Right a -> a
      )
-     ( T_Index (Left n) :: T_Index a n)
+     (T_Index (Left n))
 
 newtype T_Index a n = T_Index (Either Int a)
 

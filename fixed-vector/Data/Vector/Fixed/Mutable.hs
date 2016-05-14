@@ -31,7 +31,7 @@ module Data.Vector.Fixed.Mutable (
 
 import Control.Monad.ST
 import Control.Monad.Primitive
-import Data.Vector.Fixed.Cont (Dim,Arity,Fun(..),S,arity,apply,accum)
+import Data.Vector.Fixed.Cont (Dim,Arity,Fun(..),S,Vector(..),arity,apply,accum)
 import Prelude hiding (read)
 
 
@@ -139,10 +139,10 @@ thaw v = clone =<< unsafeThaw v
 -- | Generic inspect implementation for array-based vectors.
 inspectVec :: forall v a b. (Arity (Dim v), IVector v a) => v a -> Fun (Dim v) a b -> b
 {-# INLINE inspectVec #-}
-inspectVec v (Fun f)
-  = apply (\(T_idx i) -> (unsafeIndex v i, T_idx (i+1)))
-          (T_idx 0 :: T_idx (Dim v))
-          f
+inspectVec v
+  = inspect
+  $ apply (\(T_idx i) -> (unsafeIndex v i, T_idx (i+1)))
+          (T_idx 0)
 
 newtype T_idx n = T_idx Int
 
