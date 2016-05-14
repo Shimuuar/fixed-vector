@@ -654,10 +654,9 @@ newtype T_unfoldr b n = T_unfoldr b
 basis :: (Num a, Arity n) => Int -> ContVec n a
 {-# INLINE basis #-}
 basis n0 =
-  apply (\(T_basis n) -> (if n == 0 then 1 else 0, T_basis (n - 1)))
-        (T_basis n0)
+  apply (\(T_Index n) -> (if n == 0 then 1 else 0, T_Index (n - 1)))
+        (T_Index n0)
 
-newtype T_basis n = T_basis Int
 
 
 mk1 :: a -> ContVec N1 a
