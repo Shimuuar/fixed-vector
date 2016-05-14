@@ -603,7 +603,7 @@ fromListM xs = do
     step (T_flist []    ) = Nothing
     step (T_flist (a:as)) = return (a, T_flist as)
 
-data T_flist a n = T_flist [a]
+newtype T_flist a n = T_flist [a]
 
 
 -- | Convert vector to the list
