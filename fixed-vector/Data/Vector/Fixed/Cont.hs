@@ -408,9 +408,8 @@ uncurryMany :: forall n k a b. Arity n
 {-# INLINE uncurryMany #-}
 uncurryMany f =
   case witSum :: WitSum n k a b of
-    WitSum ->
-      case fmap unFun f :: Fun n a (Fn k a b) of
-        g -> coerce g
+    WitSum -> coerce (fmap unFun f :: Fun n a (Fn k a b))
+
 
 
 -- | Apply last parameter to function. Unlike 'apFun' we need to
