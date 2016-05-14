@@ -218,10 +218,10 @@ newtype Fun n a b = Fun { unFun :: Fn n a b }
 
 
 instance Arity n => Functor (Fun n a) where
-  fmap (f :: b -> c) (Fun g0)
-     = accum (\(T_fmap g) a -> T_fmap (g a))
-             (\(T_fmap x)   -> f x)
-             (T_fmap g0)
+  fmap f fun
+     = accum (\(T_Flip g) a -> T_Flip (curryFirst g a))
+             (\(T_Flip x)   -> f (unFun x))
+             (T_Flip fun)
   {-# INLINE fmap #-}
 
 instance Arity n => Applicative (Fun n a) where
@@ -242,7 +242,6 @@ instance Arity n => Monad (Fun n a) where
   {-# INLINE (>>=)  #-}
 
 
-newtype T_fmap a b   n = T_fmap (Fn n a b)
 data    T_ap   a b c n = T_ap (Fn n a b) (Fn n a c)
 
 
@@ -357,6 +356,10 @@ apGunfold :: Data a
           -> T_gunfold c r a n
 apGunfold f (T_gunfold c) = T_gunfold $ f c
 {-# INLINE apGunfold #-}
+
+
+newtype T_Flip  a b n = T_Flip (Fun n a b)
+newtype T_Index n     = T_Index Int
 
 
 
@@ -625,19 +628,17 @@ replicateM act
 generate :: (Arity n) => (Int -> a) -> ContVec n a
 {-# INLINE generate #-}
 generate f =
-  apply (\(T_generate n) -> (f n, T_generate (n + 1)))
-        (T_generate 0)
+  apply (\(T_index n) -> (f n, T_index (n + 1)))
+        (T_index 0)
 
 -- | Generate vector from monadic function which maps element's index
 --   to its value.
 generateM :: (Monad m, Arity n) => (Int -> m a) -> m (ContVec n a)
 {-# INLINE generateM #-}
 generateM f =
-  applyM (\(T_generate n) -> do { a <- f n; return (a, T_generate (n + 1)) } )
-         (T_generate 0)
+  applyM (\(T_index n) -> do { a <- f n; return (a, T_index (n + 1)) } )
+         (T_index 0)
 
-
-newtype T_generate n = T_generate Int
 
 -- | Unfold vector.
 unfoldr :: Arity n => (b -> (a,b)) -> b -> ContVec n a
