@@ -218,16 +218,16 @@ newtype Fun n a b = Fun { unFun :: Fn n a b }
 
 
 instance Arity n => Functor (Fun n a) where
-  fmap (f :: b -> c) (Fun g0 :: Fun n a b)
+  fmap (f :: b -> c) (Fun g0)
      = accum (\(T_fmap g) a -> T_fmap (g a))
              (\(T_fmap x) -> f x)
-             (T_fmap g0 :: T_fmap a b n)
+             (T_fmap g0)
   {-# INLINE fmap #-}
 
 instance Arity n => Applicative (Fun n a) where
-  pure (x :: x) = accum (\(T_pure r) (_::a) -> T_pure r)
-                        (\(T_pure r)        -> r)
-                        (T_pure x :: T_pure x n)
+  pure x = accum (\(T_pure r) _ -> T_pure r)
+                 (\(T_pure r)   -> r)
+                 (T_pure x)
   (Fun f0 :: Fun n a (p -> q)) <*> (Fun g0 :: Fun n a p)
     = accum (\(T_ap f g) a -> T_ap (f a) (g a))
             (\(T_ap f g)   -> f g)
