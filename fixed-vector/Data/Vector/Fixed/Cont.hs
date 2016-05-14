@@ -394,7 +394,7 @@ curryMany :: forall n k a b. Arity n
 {-# INLINE curryMany #-}
 curryMany (Fun f0) = accum
   (\(T_curry f) a -> T_curry (f a))
-  (\(T_curry f) -> Fun f :: Fun k a b)
+  (\(T_curry f) -> Fun f)
   ( T_curry f0 :: T_curry a b k n)
 
 newtype T_curry a b k n = T_curry (Fn (Add n k) a b)
@@ -557,11 +557,10 @@ empty = ContVec (\(Fun r) -> r)
 
 -- | Convert list to continuation-based vector. Will throw error if
 --   list is shorter than resulting vector.
-fromList :: forall n a. Arity n => [a] -> ContVec n a
+fromList :: Arity n => [a] -> ContVec n a
 {-# INLINE fromList #-}
 fromList xs =
-  apply step
-        (T_flist xs :: T_flist a n)
+  apply step (T_flist xs)
   where
     step (T_flist []    ) = error "Data.Vector.Fixed.Cont.fromList: too few elements"
     step (T_flist (a:as)) = (a, T_flist as)
@@ -1013,14 +1012,13 @@ foldl :: Arity n => (b -> a -> b) -> b -> ContVec n a -> b
 foldl f = ifoldl (\b _ a -> f b a)
 
 -- | Left fold over continuation vector.
-ifoldl :: forall n a b. Arity n
-       => (b -> Int -> a -> b) -> b -> ContVec n a -> b
+ifoldl :: Arity n => (b -> Int -> a -> b) -> b -> ContVec n a -> b
 {-# INLINE ifoldl #-}
 ifoldl f b v
   = inspect v
   $ accum (\(T_ifoldl i r) a -> T_ifoldl (i+1) (f r i a))
           (\(T_ifoldl _ r) -> r)
-          (T_ifoldl 0 b :: T_ifoldl b n)
+          (T_ifoldl 0 b)
 
 -- | Monadic left fold over continuation vector.
 foldM :: (Arity n, Monad m)
