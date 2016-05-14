@@ -358,8 +358,8 @@ apGunfold f (T_gunfold c) = T_gunfold $ f c
 {-# INLINE apGunfold #-}
 
 
-newtype T_Flip  a b n = T_Flip (Fun n a b)
-newtype T_Index n     = T_Index Int
+newtype T_Flip    a b n = T_Flip (Fun n a b)
+newtype T_Counter n     = T_Counter Int
 
 
 
@@ -627,16 +627,16 @@ replicateM act
 generate :: (Arity n) => (Int -> a) -> ContVec n a
 {-# INLINE generate #-}
 generate f =
-  apply (\(T_index n) -> (f n, T_index (n + 1)))
-        (T_index 0)
+  apply (\(T_Counter n) -> (f n, T_Counter (n + 1)))
+        (T_Counter 0)
 
 -- | Generate vector from monadic function which maps element's index
 --   to its value.
 generateM :: (Monad m, Arity n) => (Int -> m a) -> m (ContVec n a)
 {-# INLINE generateM #-}
 generateM f =
-  applyM (\(T_index n) -> do { a <- f n; return (a, T_index (n + 1)) } )
-         (T_index 0)
+  applyM (\(T_Counter n) -> do { a <- f n; return (a, T_Counter (n + 1)) } )
+         (T_Counter 0)
 
 
 -- | Unfold vector.
@@ -653,8 +653,8 @@ newtype T_unfoldr b n = T_unfoldr b
 basis :: (Num a, Arity n) => Int -> ContVec n a
 {-# INLINE basis #-}
 basis n0 =
-  apply (\(T_Index n) -> (if n == 0 then 1 else 0, T_Index (n - 1)))
-        (T_Index n0)
+  apply (\(T_Counter n) -> (if n == 0 then 1 else 0, T_Counter (n - 1)))
+        (T_Counter n0)
 
 
 
