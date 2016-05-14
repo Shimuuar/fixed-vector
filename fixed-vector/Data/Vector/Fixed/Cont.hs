@@ -1,3 +1,4 @@
+{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE EmptyDataDecls        #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
@@ -36,14 +37,12 @@ module Data.Vector.Fixed.Cont (
   , Arity(..)
   , apply
   , applyM
-  , WitSum(..)
     -- ** Combinators
   , constFun
   , curryFirst
   , uncurryFirst
   , curryLast
   , curryMany
-  , uncurryMany
   , apLast
   , shuffleFun
   , withFun
@@ -277,21 +276,20 @@ class Arity n where
   -- | Arity of function.
   arity :: n -> Int
 
+
   -- | Reverse order of parameters.
   reverseF :: Fun n a b -> Fun n a b
+  -- | Uncurry /n/ first parameters of n-ary function
+  uncurryMany :: Fun (Add n k) a b -> Fun n a (Fun k a b)
+  
   -- | Worker function for 'gunfold'
   gunfoldF :: (Data a)
            => (forall b x. Data b => c (b -> x) -> c x)
            -> T_gunfold c r a n -> c r
-  -- | Proof that `Fn (n+k) a b ~ Fn n a (Fn k a b)`
-  witSum :: WitSum n k a b
 
 
 newtype T_gunfold c r a n = T_gunfold (c (Fn n a r))
 
--- | Value that carry proof that `Fn (Add n k) a b ~ Fn n a (Fn k a b)`
-data WitSum n k a b where
-  WitSum :: (Fn (Add n k) a b ~ Fn n a (Fn k a b)) => WitSum n k a b
 
 
 -- | Apply all parameters to the function.
@@ -322,10 +320,10 @@ instance Arity Z where
   {-# INLINE arity     #-}
   reverseF = id
   gunfoldF _ (T_gunfold c) = c
-  {-# INLINE reverseF #-}
-  {-# INLINE gunfoldF #-}
-  witSum = WitSum
-  {-# INLINE witSum #-}
+  uncurryMany = coerce
+  {-# INLINE reverseF    #-}
+  {-# INLINE gunfoldF    #-}
+  {-# INLINE uncurryMany #-}
 
 instance Arity n => Arity (S n) where
   accum     f g t = Fun $ \a -> unFun $ accum f g (f t a)
@@ -340,15 +338,14 @@ instance Arity n => Arity (S n) where
   {-# INLINE arity     #-}
   reverseF f   = Fun $ \a -> unFun (reverseF $ apLast f a)
   gunfoldF f c = gunfoldF f (apGunfold f c)
-  {-# INLINE reverseF #-}
-  {-# INLINE gunfoldF #-}
-  witSum = witSumWorker
-  {-# INLINE witSum #-}
-
-witSumWorker :: forall n k a b. Arity n => WitSum (S n) k a b
-{-# INLINE witSumWorker #-}
-witSumWorker = case witSum :: WitSum n k a b of
-                 WitSum -> WitSum
+  
+  uncurryMany :: forall k a b. Fun (Add (S n) k) a b -> Fun (S n) a (Fun k a b)
+  uncurryMany f
+    = coerce
+     (fmap uncurryMany (curryFirst f) :: a -> Fun n a (Fun k a b))
+  {-# INLINE reverseF    #-}
+  {-# INLINE gunfoldF    #-}
+  {-# INLINE uncurryMany #-}
 
 apGunfold :: Data a
           => (forall b x. Data b => c (b -> x) -> c x)
@@ -401,14 +398,6 @@ curryMany (Fun f0) = accum
   ( T_curry f0 :: T_curry a b k n)
 
 newtype T_curry a b k n = T_curry (Fn (Add n k) a b)
-
--- | Uncurry /n/ first parameters of n-ary function
-uncurryMany :: forall n k a b. Arity n
-            => Fun n a (Fun k a b) -> Fun (Add n k) a b
-{-# INLINE uncurryMany #-}
-uncurryMany f =
-  case witSum :: WitSum n k a b of
-    WitSum -> coerce (fmap unFun f :: Fun n a (Fn k a b))
 
 
 
