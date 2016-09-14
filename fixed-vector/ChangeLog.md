@@ -1,3 +1,13 @@
+Changes in 0.9.0.0
+
+  * Simplification of `Arity` type class. This change shouldn't affect client
+    code.
+
+  * Support for GHC < 7.8 is droppped.
+
+  * Fixed bug in `any`.
+
+
 Changes in 0.8.1.0
 
   * `find` function added.
@@ -44,7 +54,7 @@ Changes in 0.6.3.0
 
 Changes in 0.6.2.0
 
-  * `Vec1' type synonym for boxed/unboxed/etc. vectors added.
+  * `Vec1` type synonym for boxed/unboxed/etc. vectors added.
 
   * Vector instance for Data.Typeable.Proxy (GHC >= 7.8)
 
@@ -56,37 +66,37 @@ Changes in 0.6.1.1
 
 Changes in 0.6.1.0
 
-  * `distribute', `collect' and their monadic variants added.
+  * `distribute` `collect` and their monadic variants added.
 
 
 Changes in 0.6.0.0
 
   * Data instance for all array-based vectors added.
 
-  * Storable instance added for `Storable.Vec'.
+  * Storable instance added for `Storable.Vec`.
 
   * Monoid instances added for all vectors.
 
 
 Changes in 0.5.1.0
 
-  * Zero-element vector `Empty' is added.
+  * Zero-element vector `Empty'`is added.
 
 
 Changes in 0.5.0.0
 
-  * `ContVec' now behaves like normal vector. `Arity' type class is
+  * `ContVec` now behaves like normal vector. `Arity` type class is
     reworked. `Id' data type is removed.
 
   * Construction of vector reworked.
 
-  * `reverse', `snoc', `consV', `fold' and `foldMap' are added.
+  * `reverse`, `snoc`, `consV`, `fold` and `foldMap` are added.
 
   * Type changing maps and zips are added.
 
   * Vector indexing with type level numbers is added.
 
-  * Twan van Laarhoven's lens added. (`element' and `elementTy')
+  * Twan van Laarhoven's lens added. (`element` and `elementTy`)
 
   * Ord instances added to vector data types defined in the library.
 
@@ -103,29 +113,29 @@ Changes in 0.4.3.0
 
 Changes in 0.4.2.0
 
-  * 1-tuple `Only' added.
+  * 1-tuple `Only` added.
 
-  * fromList' and fromListM added.
+  * `fromList'` and fromListM added.
 
   * apply functions from Arity type class generalized.
 
 
 Changes in 0.4.1.0
 
-  * `cons' function added.
+  * `cons` function added.
 
-  * Getter for `Fun' data type added.
+  * Getter for `Fun` data type added.
 
 
 Changes in 0.4.0.0
 
   * Wrapper for monomorphics vectors is added.
 
-  * `VecList' is reimplemented as GADT and constructors are exported.
+  * `VecList` is reimplemented as GADT and constructors are exported.
 
-  * Constructor of `ContVecT' is exported
+  * Constructor of `ContVecT` is exported
 
-  * Empty `ContVecT' is implemented as `empty'.
+  * Empty `ContVecT` is implemented as `empty`.
 
   * Typeable, Foldable and Traversable instances are added where
     appropriate
@@ -137,7 +147,7 @@ Changes in 0.3.0.0
 
   * Indexing function restored.
 
-  * `unfoldr' added.
+  * `unfoldr` added.
 
 
 Changes in 0.2.0.0
