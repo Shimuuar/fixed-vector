@@ -54,7 +54,7 @@ Bug-reports:    https://github.com/Shimuuar/fixed-vector/issues
 Category:       Data
 Build-Type:     Simple
 extra-source-files:
-  ChangeLog
+  ChangeLog.md
 
 source-repository head
   type:     hg
