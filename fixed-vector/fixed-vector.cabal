@@ -63,7 +63,7 @@ source-repository head
 Library
   Ghc-options:          -Wall
   Build-Depends:
-    base >=4.7 && <5,
+    base >=4.8 && <5,
     deepseq,
     primitive
   Exposed-modules:
