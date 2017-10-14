@@ -23,16 +23,19 @@ module Data.Vector.Fixed.Unboxed(
   , Unbox
   ) where
 
+import Control.Applicative   (Const(..))
 import Control.Monad
-import Control.DeepSeq (NFData(..))
+import Control.DeepSeq       (NFData(..))
 import Data.Complex
-import Data.Monoid     (Monoid(..))
 import Data.Data
-import Data.Int        (Int8, Int16, Int32, Int64 )
-import Data.Word       (Word,Word8,Word16,Word32,Word64)
-import Foreign.Storable (Storable(..))
-import Prelude (Show(..),Eq(..),Ord(..),Int,Double,Float,Char,Bool(..))
-import Prelude ((++),(||),($),(.),seq)
+import Data.Functor.Identity (Identity(..))
+import Data.Int              (Int8, Int16, Int32, Int64 )
+import Data.Monoid           (Monoid(..),Dual(..),Sum(..),Product(..),All(..),Any(..))
+import Data.Ord              (Down(..))
+import Data.Word             (Word,Word8,Word16,Word32,Word64)
+import Foreign.Storable      (Storable(..))
+import Prelude               ( Show(..),Eq(..),Ord(..),Int,Double,Float,Char,Bool(..)
+                             , (++),(||),($),(.),seq)
 
 import Data.Vector.Fixed (Dim,Vector(..),VectorN,S,Z,toList,eq,ord,replicate,zipWith,foldl,
                           defaultSizeOf,defaultAlignemnt,defaultPeek,defaultPoke
@@ -280,7 +283,7 @@ instance (Arity n, MVector (MVec n) a) => MVector (MVec n) (Complex a) where
   {-# INLINE unsafeWrite #-}
 
 instance (Arity n, IVector (Vec n) a) => IVector (Vec n) (Complex a) where
-  unsafeFreeze (MV_Complex v) = V_Complex `liftM` unsafeFreeze v 
+  unsafeFreeze (MV_Complex v) = V_Complex `liftM` unsafeFreeze v
   {-# INLINE unsafeFreeze #-}
   unsafeThaw   (V_Complex  v) = MV_Complex `liftM` unsafeThaw v
   {-# INLINE unsafeThaw   #-}
@@ -380,3 +383,117 @@ instance ( Arity n
   unsafeIndex  (V_3 v w u) i
     = (unsafeIndex v i, unsafeIndex w i, unsafeIndex u i)
   {-# INLINE unsafeIndex  #-}
+
+
+----------------------------------------------------------------
+-- Newtype wrappers
+
+newtype instance MVec n s (Const a b) = MV_Const (MVec n s a)
+newtype instance Vec  n   (Const a b) = V_Const  (Vec  n   a)
+instance Unbox n a => Unbox n (Const a b)
+
+instance (Unbox n a) => MVector (MVec n) (Const a b) where
+  overlaps (MV_Const v) (MV_Const w)   = overlaps v w
+  new                                  = MV_Const `liftM` new
+  copy (MV_Const v) (MV_Const w)       = copy v w
+  move (MV_Const v) (MV_Const w)       = move v w
+  unsafeRead  (MV_Const v) i           = Const `liftM` unsafeRead v i
+  unsafeWrite (MV_Const v) i (Const x) = unsafeWrite v i x
+  {-# INLINE overlaps    #-}
+  {-# INLINE new         #-}
+  {-# INLINE move        #-}
+  {-# INLINE copy        #-}
+  {-# INLINE unsafeRead  #-}
+  {-# INLINE unsafeWrite #-}
+
+instance (Unbox n a) => IVector (Vec n) (Const a b) where
+  unsafeFreeze (MV_Const v)   = V_Const  `liftM` unsafeFreeze v
+  unsafeThaw   (V_Const  v)   = MV_Const `liftM` unsafeThaw   v
+  unsafeIndex  (V_Const  v) i = Const (unsafeIndex v i)
+  {-# INLINE unsafeFreeze #-}
+  {-# INLINE unsafeThaw   #-}
+  {-# INLINE unsafeIndex  #-}
+
+
+----------------------------------------------------------------
+-- Newtype wrappers with kind * -> *
+
+#define primNewMV(ty,con)                         \
+instance Unbox n a => MVector (MVec n) (ty a) where {     \
+; overlaps (con v) (con w) = overlaps v w           \
+; new = con `liftM` new                             \
+; copy (con v) (con w) = copy v w                   \
+; move (con v) (con w) = move v w                   \
+; unsafeRead  (con v) i = ty `liftM` unsafeRead v i            \
+; unsafeWrite (con v) i (ty x) = unsafeWrite v i x       \
+; {-# INLINE overlaps    #-}                        \
+; {-# INLINE new         #-}                        \
+; {-# INLINE move        #-}                        \
+; {-# INLINE copy        #-}                        \
+; {-# INLINE unsafeRead  #-}                        \
+; {-# INLINE unsafeWrite #-}                        \
+}
+
+#define primNewIV(ty,con,mcon)                             \
+instance Unbox n a => IVector (Vec n) (ty a)  where {          \
+; unsafeFreeze (mcon v)   = con  `liftM` unsafeFreeze v \
+; unsafeThaw   (con  v)   = mcon `liftM` unsafeThaw   v \
+; unsafeIndex  (con  v) i = ty (unsafeIndex v i)             \
+; {-# INLINE unsafeFreeze #-}                           \
+; {-# INLINE unsafeThaw   #-}                           \
+; {-# INLINE unsafeIndex  #-}                           \
+}
+
+#define primNewWrap(ty,con,mcon) \
+newtype instance MVec n s (ty a) = mcon (MVec n s a) ; \
+newtype instance Vec  n   (ty a) = con  (Vec  n   a) ; \
+instance Unbox n a => Unbox n (ty a) ; \
+primNewMV(ty, mcon     )          ; \
+primNewIV(ty, con, mcon)
+
+
+primNewWrap(Identity, V_Identity, MV_Identity)
+primNewWrap(Down, V_Down, MV_Down)
+primNewWrap(Dual, V_Dual, MV_Dual)
+primNewWrap(Sum, V_Sum, MV_Sum)
+primNewWrap(Product, V_Product, MV_Product)
+
+
+----------------------------------------------------------------
+-- Monomorphic newtype wrappers
+
+#define primNewMonoMV(ty,con)                         \
+instance Arity n => MVector (MVec n) ty where {     \
+; overlaps (con v) (con w) = overlaps v w           \
+; new = con `liftM` new                             \
+; copy (con v) (con w) = copy v w                   \
+; move (con v) (con w) = move v w                   \
+; unsafeRead  (con v) i = ty `liftM` unsafeRead v i            \
+; unsafeWrite (con v) i (ty x) = unsafeWrite v i x       \
+; {-# INLINE overlaps    #-}                        \
+; {-# INLINE new         #-}                        \
+; {-# INLINE move        #-}                        \
+; {-# INLINE copy        #-}                        \
+; {-# INLINE unsafeRead  #-}                        \
+; {-# INLINE unsafeWrite #-}                        \
+}
+
+#define primNewMonoIV(ty,con,mcon)                             \
+instance Arity n => IVector (Vec n) ty where {          \
+; unsafeFreeze (mcon v)   = con  `liftM` unsafeFreeze v \
+; unsafeThaw   (con  v)   = mcon `liftM` unsafeThaw   v \
+; unsafeIndex  (con  v) i = ty (unsafeIndex v i)             \
+; {-# INLINE unsafeFreeze #-}                           \
+; {-# INLINE unsafeThaw   #-}                           \
+; {-# INLINE unsafeIndex  #-}                           \
+}
+
+#define primNewMonoWrap(ty,repr,con,mcon) \
+newtype instance MVec n s ty = mcon (MVec n s repr) ; \
+newtype instance Vec  n   ty = con  (Vec  n   repr) ; \
+instance Arity n => Unbox n ty ; \
+primNewMonoMV(ty, mcon     )          ; \
+primNewMonoIV(ty, con, mcon)
+
+primNewMonoWrap(Any, Bool, V_Any, MV_Any)
+primNewMonoWrap(All, Bool, V_All, MV_All)
