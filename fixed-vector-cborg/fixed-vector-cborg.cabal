@@ -1,0 +1,45 @@
+Name:           fixed-vector-binary
+Version:        0.6.0.0
+Synopsis:       Binary instances for fixed-vector
+Description:
+  CBOR serialization instances for fixed-vector's types. Generic
+  serialization functions are proviede as well
+  
+Cabal-Version:  >= 1.8
+License:        BSD3
+License-File:   LICENSE
+Author:         Aleksey Khudyakov <alexey.skladnoy@gmail.com>
+Maintainer:     Aleksey Khudyakov <alexey.skladnoy@gmail.com>
+Bug-reports:    https://github.com/Shimuuar/fixed-vector/issues
+Category:       Data
+Build-Type:     Simple
+extra-source-files:
+  ChangeLog
+
+source-repository head
+  type:     hg
+  location: http://bitbucket.org/Shimuuar/fixed-vector
+source-repository head
+  type:     git
+  location: http://github.com/Shimuuar/fixed-vector
+
+Library
+  Ghc-options:          -Wall
+  Build-Depends: base         >=3 && <5
+               , fixed-vector >=0.6
+               , cborg
+               , serialise
+  Exposed-modules:
+    Data.Vector.Fixed.Instances.CBOR
+
+Test-Suite test
+  Type:           exitcode-stdio-1.0
+  Hs-source-dirs: test
+  Main-is:        QC.hs
+  Build-Depends:
+    base >=3 && <5,
+    fixed-vector,
+    fixed-vector-binary,
+    serialise,
+    tasty,
+    tasty-quickcheck
