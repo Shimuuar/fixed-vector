@@ -1,28 +1,51 @@
-# The following enables several GHC versions to be tested; often it's enough to
-# test only against the last release in a major GHC version. Feel free to omit
-# lines listings versions you don't need/want testing for.
-env:
- - CABALVER=1.22 GHCVER=7.10.3
- - CABALVER=1.22 GHCVER=8.0.2
- - CABALVER=1.22 GHCVER=8.2.1
- - CABALVER=head GHCVER=head
+# This file has been generated -- see https://github.com/hvr/multi-ghc-travis
+language: c
+sudo: false
+
+cache:
+  directories:
+    - $HOME/.cabsnap
+    - $HOME/.cabal/packages
+
+before_cache:
+  - rm -fv $HOME/.cabal/packages/hackage.haskell.org/build-reports.log
+  - rm -fv $HOME/.cabal/packages/hackage.haskell.org/00-index.tar
 
 matrix:
-  allow_failures:
-   - env: GHCVER=head
+  include:
+    - env: CABALVER=1.18 GHCVER=7.4.2
+      compiler: ": #GHC 7.4.2"
+      addons: {apt: {packages: [cabal-install-1.18,ghc-7.4.2], sources: [hvr-ghc]}}
+    - env: CABALVER=1.18 GHCVER=7.6.3
+      compiler: ": #GHC 7.6.3"
+      addons: {apt: {packages: [cabal-install-1.18,ghc-7.6.3], sources: [hvr-ghc]}}
+    - env: CABALVER=1.18 GHCVER=7.8.3
+      compiler: ": #GHC 7.8.3"
+      addons: {apt: {packages: [cabal-install-1.18,ghc-7.8.3], sources: [hvr-ghc]}}
+    - env: CABALVER=1.22 GHCVER=7.10.3
+      compiler: ": #GHC 7.10.3"
+      addons: {apt: {packages: [cabal-install-1.22,ghc-7.10.3], sources: [hvr-ghc]}}
+    - env: CABALVER=1.24 GHCVER=8.0.2
+      compiler: ": #GHC 8.0.1"
+      addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.2], sources: [hvr-ghc]}}
+    - env: CABALVER=1.24 GHCVER=8.2.1
+      compiler: ": #GHC 8.2.1"
+      addons: {apt: {packages: [cabal-install-1.24,ghc-8.2.1], sources: [hvr-ghc]}}
 
-
-# Note: the distinction between `before_install` and `install` is not important.
 before_install:
- - sudo add-apt-repository -y ppa:hvr/ghc
- - sudo apt-get update
- - sudo apt-get install cabal-install-$CABALVER ghc-$GHCVER
+ - unset CC
  - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
 
 install:
  - cabal --version
  - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
- - travis_retry cabal update
+ - if [ -f $HOME/.cabal/packages/hackage.haskell.org/00-index.tar.gz ];
+   then
+     zcat $HOME/.cabal/packages/hackage.haskell.org/00-index.tar.gz >
+          $HOME/.cabal/packages/hackage.haskell.org/00-index.tar;
+   fi
+ - travis_retry cabal update -v
+ - sed -i 's/^jobs:/-- jobs:/' ${HOME}/.cabal/config
 
 # Here starts the actual work to be performed for the package under test; any
 # command which exits with a non-zero exit code causes the build to fail.
