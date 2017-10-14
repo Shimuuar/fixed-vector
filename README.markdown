@@ -1,22 +1,33 @@
 
 # Fixed-vector [![Build Status](https://travis-ci.org/Shimuuar/fixed-vector.png?branch=master)](https://travis-ci.org/Shimuuar/fixed-vector)
 
-Generic library for vectors with statically known size. Same functions could be
-used to work with both ADT based vector like 
+Generic library for vectors with statically known size. It's able to work with
+product types where types of all elements are same. For example following type
+could be used:
 
 ```haskell
 data Vec3 a = Vec3 a a a
 ```
 
-Tuples are vectors too:
+Tuples of same types work as well:
 
 ```
 >>> sum (1,2,3)
 6
 ```
 
-Vectors which are represented internally by arrays are provided by library. Both
-boxed and unboxed arrays are supported.
+Library provides set of vector parametrized by length. Boxed, unboxed and
+storable vectors are all supported.
+
+Basic idea is to establish isomorphism between N-element vector and its Church
+encoding (`∀r. (a → a → r) → r` for 2-element vector) and all functions work on
+Church-encoded vectors. This allows to decouple functions from representation of
+vectors and allows to implement deforestation.
+
+Downside of this approach is inability to work with vectors larger than tens of
+elements. If you need larger
+vectors [vector-sized](https://hackage.haskell.org/package/vector) could provide
+similar functionality.
 
 
 # Get involved!
@@ -24,15 +35,6 @@ boxed and unboxed arrays are supported.
 Please report bugs via
 [github issue tracker](https://github.com/Shimuuar/fixed-vector/issues)
 
-You can create and contribute patches using either mercurial or git:
-
-[git mirror](https://github.com/Shimuuar/fixed-vector)
-
-* `git clone git://https://github.com/Shimuuar/fixed-vector.git`
-
-[mercurial mirror](https://bitbucket.org/Shimuuar/fixed-vector)
-
-* `hg clone https://bitbucket.org/Shimuuar/fixed-vector`
 
 
 # Authors
