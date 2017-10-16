@@ -1,9 +1,10 @@
-{-# LANGUAGE StandaloneDeriving    #-}
-{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE DeriveDataTypeable    #-}
+{-# LANGUAGE StandaloneDeriving    #-}
+{-# LANGUAGE TypeFamilies          #-}
 -- |
 -- Unboxed vectors with fixed length. Vectors from
 -- "Data.Vector.Fixed.Unboxed" provide more flexibility at no
@@ -29,6 +30,7 @@ import Data.Monoid              (Monoid(..))
 import Data.Primitive.ByteArray
 import Data.Primitive
 import qualified Foreign.Storable as Foreign (Storable(..))
+import GHC.TypeLits
 import Prelude (Show(..),Eq(..),Ord(..),Num(..))
 import Prelude ((++),($),($!),undefined,seq)
 
@@ -44,19 +46,19 @@ import qualified Data.Vector.Fixed.Cont as C
 ----------------------------------------------------------------
 
 -- | Unboxed vector with fixed length
-newtype Vec n a = Vec ByteArray
+newtype Vec (n :: Nat) a = Vec ByteArray
 
 -- | Mutable unboxed vector with fixed length
-newtype MVec n s a = MVec (MutableByteArray s)
+newtype MVec (n :: Nat) s a = MVec (MutableByteArray s)
 
 deriving instance Typeable Vec
 deriving instance Typeable MVec
 
-type Vec1 = Vec (S Z)
-type Vec2 = Vec (S (S Z))
-type Vec3 = Vec (S (S (S Z)))
-type Vec4 = Vec (S (S (S (S Z))))
-type Vec5 = Vec (S (S (S (S (S Z)))))
+type Vec1 = Vec 1
+type Vec2 = Vec 2
+type Vec3 = Vec 3
+type Vec4 = Vec 4
+type Vec5 = Vec 5
 
 
 
@@ -77,12 +79,13 @@ instance (Arity n, Prim a) => MVector (MVec n) a where
   overlaps (MVec v) (MVec u) = sameMutableByteArray v u
   {-# INLINE overlaps    #-}
   new = do
-    v <- newByteArray $! arity (undefined :: n) * sizeOf (undefined :: a)
+    v <- newByteArray $! arity (Proxy :: Proxy (C.Peano n))
+                       * sizeOf (undefined :: a)
     return $ MVec v
   {-# INLINE new         #-}
   copy                       = move
   {-# INLINE copy        #-}
-  move (MVec dst) (MVec src) = copyMutableByteArray dst 0 src 0 (arity (undefined :: n))
+  move (MVec dst) (MVec src) = copyMutableByteArray dst 0 src 0 (arity (Proxy :: Proxy (C.Peano n)))
   {-# INLINE move        #-}
   unsafeRead  (MVec v) i   = readByteArray  v i
   {-# INLINE unsafeRead  #-}

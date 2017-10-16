@@ -1,8 +1,10 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE Rank2Types            #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TypeFamilies          #-}
 -- |
 -- Type classes for vectors which are implemented on top of the arrays
 -- and support in-place mutation. API is similar to one used in the
@@ -29,9 +31,12 @@ module Data.Vector.Fixed.Mutable (
   , inspectVec
   ) where
 
+import Control.Applicative (Const(..))
 import Control.Monad.ST
 import Control.Monad.Primitive
-import Data.Vector.Fixed.Cont (Dim,Arity,Fun(..),S,Vector(..),arity,apply,accum)
+import Data.Typeable  (Proxy(..))
+import GHC.TypeLits
+import Data.Vector.Fixed.Cont (Dim,PeanoNum(..),Peano,Arity,Fun(..),Vector(..),ContVec,arity,apply,accum)
 import Prelude hiding (read)
 
 
@@ -43,7 +48,7 @@ import Prelude hiding (read)
 type family Mutable (v :: * -> *) :: * -> * -> *
 
 -- | Dimension for mutable vector.
-type family DimM (v :: * -> * -> *) :: *
+type family DimM (v :: * -> * -> *) :: Nat
 
 -- | Type class for mutable vectors.
 class (Arity (DimM v)) => MVector v a where
@@ -71,7 +76,7 @@ class (Arity (DimM v)) => MVector v a where
 
 -- | Length of mutable vector. Function doesn't evaluate its argument.
 lengthM :: forall v s a. (Arity (DimM v)) => v s a -> Int
-lengthM _ = arity (undefined :: DimM v)
+lengthM _ = arity (Proxy :: Proxy (Peano (DimM v)))
 
 -- | Create copy of vector.
 clone :: (PrimMonad m, MVector v a) => v (PrimState m) a -> m (v (PrimState m) a)
@@ -137,27 +142,27 @@ thaw v = clone =<< unsafeThaw v
 ----------------------------------------------------------------
 
 -- | Generic inspect implementation for array-based vectors.
-inspectVec :: forall v a b. (Arity (Dim v), IVector v a) => v a -> Fun (Dim v) a b -> b
+inspectVec :: forall v a b. (Arity (Dim v), IVector v a) => v a -> Fun (Peano (Dim v)) a b -> b
 {-# INLINE inspectVec #-}
 inspectVec v
-  = inspect
-  $ apply (\(T_idx i) -> (unsafeIndex v i, T_idx (i+1)))
-          (T_idx 0)
-
-newtype T_idx n = T_idx Int
+  = inspect cv
+  where
+    cv :: ContVec (Dim v) a
+    cv = apply (\(Const i) -> (unsafeIndex v i, Const (i+1)))
+               (Const 0 :: Const Int (Peano (Dim v)))
 
 
 -- | Generic construct implementation for array-based vectors.
-constructVec :: forall v a. (Arity (Dim v), IVector v a) => Fun (Dim v) a (v a)
+constructVec :: forall v a. (Arity (Dim v), IVector v a) => Fun (Peano (Dim v)) a (v a)
 {-# INLINE constructVec #-}
 constructVec =
   accum step
         (\(T_new _ st) -> runST $ unsafeFreeze =<< st :: v a)
-        (T_new 0 new :: T_new v a (Dim v))
+        (T_new 0 new :: T_new v a (Peano (Dim v)))
 
 data T_new v a n = T_new Int (forall s. ST s (Mutable v s a))
 
-step :: (IVector v a) => T_new v a (S n) -> a -> T_new v a n
+step :: (IVector v a) => T_new v a ('S n) -> a -> T_new v a n
 step (T_new i st) x = T_new (i+1) $ do
   mv <- st
   unsafeWrite mv i x

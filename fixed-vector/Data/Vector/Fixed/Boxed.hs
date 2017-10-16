@@ -1,9 +1,10 @@
-{-# LANGUAGE StandaloneDeriving    #-}
-{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE DeriveDataTypeable    #-}
+{-# LANGUAGE StandaloneDeriving    #-}
+{-# LANGUAGE TypeFamilies          #-}
 -- |
 -- Vector which could hold any value.
 module Data.Vector.Fixed.Boxed (
@@ -26,8 +27,9 @@ import Data.Data
 import qualified Data.Foldable    as F
 import qualified Data.Traversable as T
 import Foreign.Storable (Storable(..))
-import Prelude (Show(..),Eq(..),Ord(..),Functor(..),Monad(..))
-import Prelude ((++),($),($!),undefined,error,seq)
+import GHC.TypeLits
+import Prelude ( Show(..),Eq(..),Ord(..),Functor(..),Monad(..)
+               , (++),($),($!),undefined,error,seq)
 
 import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable
@@ -40,19 +42,19 @@ import qualified Data.Vector.Fixed.Cont as C
 ----------------------------------------------------------------
 
 -- | Vector with fixed length which can hold any value.
-newtype Vec n a = Vec (Array a)
+newtype Vec (n :: Nat) a = Vec (Array a)
 
 -- | Mutable unboxed vector with fixed length
-newtype MVec n s a = MVec (MutableArray s a)
+newtype MVec (n :: Nat) s a = MVec (MutableArray s a)
 
 deriving instance Typeable Vec
 deriving instance Typeable MVec
 
-type Vec1 = Vec (S Z)
-type Vec2 = Vec (S (S Z))
-type Vec3 = Vec (S (S (S Z)))
-type Vec4 = Vec (S (S (S (S Z))))
-type Vec5 = Vec (S (S (S (S (S Z)))))
+type Vec1 = Vec 1
+type Vec2 = Vec 2
+type Vec3 = Vec 3
+type Vec4 = Vec 4
+type Vec5 = Vec 5
 
 
 instance (Typeable n, Arity n, Data a) => Data (Vec n a) where
@@ -97,12 +99,12 @@ instance (Arity n) => MVector (MVec n) a where
   overlaps (MVec v) (MVec u) = sameMutableArray v u
   {-# INLINE overlaps    #-}
   new = do
-    v <- newArray (arity (undefined :: n)) uninitialised
+    v <- newArray (arity (Proxy :: Proxy (C.Peano n))) uninitialised
     return $ MVec v
   {-# INLINE new         #-}
   copy = move
   {-# INLINE copy        #-}
-  move (MVec dst) (MVec src) = copyMutableArray dst 0 src 0 (arity (undefined :: n))
+  move (MVec dst) (MVec src) = copyMutableArray dst 0 src 0 (arity (Proxy :: Proxy (C.Peano n)))
   {-# INLINE move        #-}
   unsafeRead  (MVec v) i   = readArray  v i
   {-# INLINE unsafeRead  #-}

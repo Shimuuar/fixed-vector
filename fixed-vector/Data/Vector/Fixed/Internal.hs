@@ -1,3 +1,5 @@
+{-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -13,14 +15,17 @@ import Control.Applicative (Applicative)
 import Control.Monad       (liftM)
 import Control.DeepSeq     (NFData(..))
 import Data.Monoid         (Monoid(..))
+import Data.Typeable       (Proxy(..))
 import qualified Data.Foldable    as T
 import qualified Data.Traversable as T
 import Foreign.Storable (Storable(..))
 import Foreign.Ptr      (Ptr,castPtr)
+import GHC.TypeLits
 
-import Data.Vector.Fixed.Cont     (Vector(..),Dim,S,Z,Arity,vector,Add)
+import           Data.Vector.Fixed.Cont     (Vector(..),Dim,Arity,vector,Add)
 import qualified Data.Vector.Fixed.Cont as C
-import           Data.Vector.Fixed.Cont   (ContVec,Index)
+
+
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
                       , foldl,foldr,foldl1,length,sum,reverse,scanl,scanl1
                       , head,tail,mapM,mapM_,sequence,sequence_,concat
@@ -31,63 +36,63 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
 -- Constructors
 ----------------------------------------------------------------
 
--- | Variadic vector constructor. Resulting vector should be converted
---   from 'ContVec' using 'vector' function.  For example:
---
--- >>> vector $ mkN 'a' 'b' 'c' :: (Char,Char,Char)
--- ('a','b','c')
-mkN :: Make (S Z) a r => a -> r
-mkN = unGo $ make id
-{-# INLINE mkN #-}
+-- -- | Variadic vector constructor. Resulting vector should be converted
+-- --   from 'ContVec' using 'vector' function.  For example:
+-- --
+-- -- >>> vector $ mkN 'a' 'b' 'c' :: (Char,Char,Char)
+-- -- ('a','b','c')
+-- mkN :: Make (S Z) a r => a -> r
+-- mkN = unGo $ make id
+-- {-# INLINE mkN #-}
 
 
--- | Type class for variadic vector constructors.
-class Make n a r where
-  make :: (ContVec Z a -> ContVec n a) -> r
+-- -- | Type class for variadic vector constructors.
+-- class Make n a r where
+--   make :: (ContVec Z a -> ContVec n a) -> r
 
-instance (a'~a, Make (S n) a r) => Make n a' (a -> r) where
-  make f a = make (C.cons a . f)
-  {-# INLINE make #-}
+-- instance (a'~a, Make (S n) a r) => Make n a' (a -> r) where
+--   make f a = make (C.cons a . f)
+--   {-# INLINE make #-}
 
-instance Arity n =>  Make n a (ContVec n a) where
-  make f = C.reverse $ f C.empty
-  {-# INLINE make #-}
+-- instance Arity n =>  Make n a (ContVec n a) where
+--   make f = C.reverse $ f C.empty
+--   {-# INLINE make #-}
 
-newtype Go r = Go { unGo :: r }
+-- newtype Go r = Go { unGo :: r }
 
-instance Make Z a r => Make Z a (Go r) where
-  make f = Go $ make f
-  {-# INLINE make #-}
+-- instance Make Z a r => Make Z a (Go r) where
+--   make f = Go $ make f
+--   {-# INLINE make #-}
 
--- | Cons value to continuation based vector.
-(<|) :: a -> ContVec n a -> ContVec (S n) a
-(<|) = C.cons
-{-# INLINE (<|) #-}
+-- -- | Cons value to continuation based vector.
+-- (<|) :: a -> ContVec n a -> ContVec (S n) a
+-- (<|) = C.cons
+-- {-# INLINE (<|) #-}
 
-infixr 1 <|
+-- infixr 1 <|
 
 
-mk0 :: (Vector v a, Dim v ~ C.Z) => v a
-mk0 = vector $ C.empty
+mk0 :: (Vector v a, Dim v ~ 0) => v a
+mk0 = vector C.empty
 {-# INLINE mk0 #-}
 
-mk1 :: (Vector v a, Dim v ~ C.N1) => a -> v a
+mk1 :: (Vector v a, Dim v ~ 1) => a -> v a
 mk1 a1 = vector $ C.mk1 a1
 {-# INLINE mk1 #-}
 
-mk2 :: (Vector v a, Dim v ~ C.N2) => a -> a -> v a
+mk2 :: (Vector v a, Dim v ~ 2) => a -> a -> v a
 mk2 a1 a2 = vector $ C.mk2 a1 a2
 {-# INLINE mk2 #-}
 
-mk3 :: (Vector v a, Dim v ~ C.N3) => a -> a -> a -> v a
+mk3 :: (Vector v a, Dim v ~ 3) => a -> a -> a -> v a
 mk3 a1 a2 a3 = vector $ C.mk3 a1 a2 a3
 {-# INLINE mk3 #-}
 
-mk4 :: (Vector v a, Dim v ~ C.N4) => a -> a -> a -> a -> v a
+mk4 :: (Vector v a, Dim v ~ 4) => a -> a -> a -> a -> v a
 mk4 a1 a2 a3 a4 = vector $ C.mk4 a1 a2 a3 a4
 {-# INLINE mk4 #-}
 
-mk5 :: (Vector v a, Dim v ~ C.N5) => a -> a -> a -> a -> a -> v a
+mk5 :: (Vector v a, Dim v ~ 5) => a -> a -> a -> a -> a -> v a
 mk5 a1 a2 a3 a4 a5 = vector $ C.mk5 a1 a2 a3 a4 a5
 {-# INLINE mk5 #-}
 
@@ -188,7 +193,7 @@ generateM = liftM vector . C.generateM
 --   >>> let x = mk3 1 2 3 :: Vec3 Int
 --   >>> head x
 --   1
-head :: (Vector v a, Dim v ~ S n) => v a -> a
+head :: (Vector v a, 1 <= Dim v) => v a -> a
 {-# INLINE head #-}
 head = C.head . C.cvec
 
@@ -200,24 +205,28 @@ head = C.head . C.cvec
 --   >>> import Data.Complex
 --   >>> tail (1,2,3) :: Complex Double
 --   2.0 :+ 3.0
-tail :: (Vector v a, Vector w a, Dim v ~ S (Dim w))
+tail :: (Vector v a, Vector w a, Dim v ~ (Dim w + 1))
      => v a -> w a
 {-# INLINE tail #-}
 tail = vector . C.tail . C.cvec
 
 -- | Cons element to the vector
-cons :: (Vector v a, Vector w a, S (Dim v) ~ Dim w)
+cons :: (Vector v a, Vector w a, Dim w ~ (Dim v + 1))
      => a -> v a -> w a
 {-# INLINE cons #-}
 cons a = vector . C.cons a . C.cvec
 
 -- | Append element to the vector
-snoc :: (Vector v a, Vector w a, S (Dim v) ~ Dim w)
+snoc :: (Vector v a, Vector w a, Dim w ~ (Dim v + 1))
      => a -> v a -> w a
 {-# INLINE snoc #-}
 snoc a = vector . C.snoc a . C.cvec
 
-concat :: (Vector v a, Vector u a, Vector w a, (Add (Dim v) (Dim u)) ~ Dim w)
+concat :: ( Vector v a, Vector u a, Vector w a
+          , (Dim v + Dim u) ~ Dim w
+            -- Tautology
+          , C.Peano (Dim v + Dim u) ~ Add (C.Peano (Dim v)) (C.Peano (Dim u))
+          )
        => v a -> u a -> w a
 {-# INLINE concat #-}
 concat v u = vector $ C.concat (C.cvec v) (C.cvec u)
@@ -238,17 +247,17 @@ runIndex :: Arity n => Int -> C.ContVec n r -> r
 runIndex = C.index
 {-# INLINE[0] runIndex #-}
 
--- | Get element from vector at statically known index
-index :: (Vector v a, C.Index k (Dim v)) => v a -> k -> a
-{-# INLINE index #-}
-index v k = C.runContVec (C.getF k)
-          $ C.cvec v  
+-- -- | Get element from vector at statically known index
+-- index :: (Vector v a, C.Index k (Dim v)) => v a -> k -> a
+-- {-# INLINE index #-}
+-- index v k = C.runContVec (C.getF k)
+--           $ C.cvec v  
 
--- | Set n'th element in the vector
-set :: (Vector v a, C.Index k (Dim v)) => k -> a -> v a -> v a
-{-# INLINE set #-}
-set k a v = inspect v
-          $ C.putF k a construct 
+-- -- | Set n'th element in the vector
+-- set :: (Vector v a, C.Index k (Dim v)) => k -> a -> v a -> v a
+-- {-# INLINE set #-}
+-- set k a v = inspect v
+--           $ C.putF k a construct 
 
 -- | Twan van Laarhoven's lens for element of vector
 element :: (Vector v a, Functor f) => Int -> (a -> f a) -> (v a -> f (v a))
@@ -257,8 +266,8 @@ element i f v = vector `fmap` C.element i f (C.cvec v)
 
 -- | Twan van Laarhoven's lens for element of vector with statically
 --   known index.
-elementTy :: (Vector v a, Index k (Dim v), Functor f)
-          => k -> (a -> f a) -> (v a -> f (v a))
+elementTy :: (Vector v a, KnownNat k, k + 1 <= Dim v, Functor f)
+          => proxy k -> (a -> f a) -> (v a -> f (v a))
 {-# INLINE elementTy #-}
 elementTy k f v = vector `fmap` C.elementTy k f (C.cvec v)
 
@@ -278,7 +287,7 @@ foldr f x = C.foldr f x
 
 
 -- | Left fold over vector
-foldl1 :: (Vector v a, Dim v ~ S n) => (a -> a -> a) -> v a -> a
+foldl1 :: (Vector v a, 1 <= Dim v) => (a -> a -> a) -> v a -> a
 {-# INLINE foldl1 #-}
 foldl1 f = C.foldl1 f
          . C.cvec
@@ -338,7 +347,7 @@ sum = C.sum . C.cvec
 --   >>> let x = mk3 1 2 3 :: Vec3 Int
 --   >>> maximum x
 --   3
-maximum :: (Vector v a, Dim v ~ S n, Ord a) => v a -> a
+maximum :: (Vector v a, 1 <= Dim v, Ord a) => v a -> a
 maximum = C.maximum . C.cvec
 {-# INLINE maximum #-}
 
@@ -350,7 +359,7 @@ maximum = C.maximum . C.cvec
 --   >>> let x = mk3 1 2 3 :: Vec3 Int
 --   >>> minimum x
 --   1
-minimum :: (Vector v a, Dim v ~ S n, Ord a) => v a -> a
+minimum :: (Vector v a, 1 <= Dim v, Ord a) => v a -> a
 minimum = C.minimum . C.cvec
 {-# INLINE minimum #-}
 
@@ -464,7 +473,7 @@ imapM_ :: (Vector v a, Monad m) => (Int -> a -> m b) -> v a -> m ()
 imapM_ f = ifoldl (\m i a -> m >> f i a >> return ()) (return ())
 
 -- | Left scan over vector
-scanl :: (Vector v a, Vector w b, Dim w ~ S (Dim v))
+scanl :: (Vector v a, Vector w b, Dim w ~ (Dim v + 1))
       => (b -> a -> b) -> b -> v a -> w b
 {-# INLINE scanl #-}
 scanl f x0 = vector . C.scanl f x0 . C.cvec
@@ -607,7 +616,7 @@ defaultAlignemnt _ = alignment (undefined :: a)
 defaultSizeOf
   :: forall a v. (Storable a, Vector v a)
   => v a -> Int
-defaultSizeOf _ = sizeOf (undefined :: a) * C.arity (undefined :: Dim v)
+defaultSizeOf _ = sizeOf (undefined :: a) * C.arity (Proxy :: Proxy (C.Peano (Dim v)))
 {-# INLINE defaultSizeOf #-}
 
 -- | Default implementation of 'peek' for 'Storable' type class for

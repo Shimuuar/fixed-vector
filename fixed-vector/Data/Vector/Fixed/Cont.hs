@@ -1,40 +1,31 @@
-{-# LANGUAGE InstanceSigs #-}
-{-# LANGUAGE TypeOperators         #-}
-{-# LANGUAGE EmptyDataDecls        #-}
+{-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE EmptyDataDecls        #-}
 {-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE GADTs                 #-}
+{-# LANGUAGE InstanceSigs          #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE Rank2Types            #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE DataKinds, TypeOperators, UndecidableInstances #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeOperators         #-}
+{-# LANGUAGE UndecidableInstances  #-}
 -- |
 -- API for Church-encoded vectors. Implementation of function from
 -- "Data.Vector.Fixed" module uses these function internally in order
 -- to provide shortcut fusion.
 module Data.Vector.Fixed.Cont (
     -- * Type-level numbers
-    S
-  , Z
+    PeanoNum(..)
+  , Peano
   , Add
-    -- ** Isomorphism between Peano number and Nats
-    -- $natiso
-  , NatIso
-  , ToPeano
-  , ToNat
-    -- ** Synonyms for small numerals
-  , N1
-  , N2
-  , N3
-  , N4
-  , N5
-  , N6
     -- * N-ary functions
   , Fn
   , Fun(..)
-  , Arity(..)
+  , Arity
+  , ArityPeano(..)
   , apply
   , applyM
     -- ** Combinators
@@ -51,7 +42,6 @@ module Data.Vector.Fixed.Cont (
   , Vector(..)
   , VectorN
   , length
-  , Index(..)
     -- * Vector as continuation
   , ContVec(..)
     -- * Construction of ContVec
@@ -134,15 +124,16 @@ module Data.Vector.Fixed.Cont (
   , gunfold
   ) where
 
-import Control.Applicative (Applicative(..),(<$>),(<|>),Const(..))
+import Control.Applicative (Applicative(..),(<|>),Const(..))
 import Control.Monad       (liftM)
 import Data.Coerce
 import Data.Complex        (Complex(..))
-import Data.Data           (Typeable,Data)
+import Data.Data           (Data)
 import Data.Typeable       (Proxy(..))
-import GHC.TypeLits
 import qualified Data.Foldable    as F
 import qualified Data.Traversable as F
+import Unsafe.Coerce       (unsafeCoerce)
+import GHC.TypeLits
 
 import Prelude hiding ( replicate,map,zipWith,zipWith3,maximum,minimum,and,or,any,all
                       , foldl,foldr,foldl1,length,sum,reverse,scanl,scanl1
@@ -154,52 +145,21 @@ import Prelude hiding ( replicate,map,zipWith,zipWith3,maximum,minimum,and,or,an
 -- Naturals
 ----------------------------------------------------------------
 
--- | Type level zero
-data Z   deriving Typeable
--- | Successor of n
-data S n deriving Typeable
+-- | Peano numbers. Since type level naturals don't support induction
+--   we have to convert type nats to Peano representation first and
+--   work with it,
+data PeanoNum = Z
+              | S PeanoNum
+
+-- | Convert type level natural to Peano representation
+type family Peano (n :: Nat) :: PeanoNum where
+  Peano 0 = 'Z
+  Peano n = 'S (Peano (n - 1))
 
 -- | Type family for sum of unary natural numbers.
-type family Add n m :: *
-
-type instance Add  Z    n = n
-type instance Add (S n) k = S (Add n k)
-
-type N1 = S Z
-type N2 = S N1
-type N3 = S N2
-type N4 = S N3
-type N5 = S N4
-type N6 = S N5
-
-
--- $natiso
---
--- It's only become possible to define isomorphism between Peano
--- number and built-in @Nat@ number in GHC 7.8. It's however
--- impossible to define their properties inductively. So Peano number
--- are used everywhere.
-
--- | Isomorphism between two representations of natural numbers
-class (ToNat a ~ b, ToPeano b ~ a) => NatIso (a :: *) (b :: Nat) where
-
--- | Convert Peano number to Nat
-type family ToNat   (a :: *  ) :: Nat where
-  ToNat  Z    = 0
-  ToNat (S k) = 1 + ToNat k
-
--- | Convert Nat number to Peano represenation
-type family ToPeano (b :: Nat) :: * where
-  ToPeano 0 = Z
-  ToPeano n = S (ToPeano (n - 1))
-
-instance NatIso  Z 0 where
-instance ( NatIso k (n - 1)
-         , ToPeano (n - 1) ~ k
-         , ToPeano  n    ~ S k
-         , n ~ (1 + (n - 1))    -- n is positive
-         ) => NatIso (S k) n where
-
+type family Add (n :: PeanoNum) (m :: PeanoNum) :: PeanoNum where
+  Add  'Z    n = n
+  Add ('S n) k = 'S (Add n k)
 
 
 ----------------------------------------------------------------
@@ -207,23 +167,23 @@ instance ( NatIso k (n - 1)
 ----------------------------------------------------------------
 
 -- | Type family for n-ary functions.
-type family   Fn n a b
-type instance Fn Z     a b = b
-type instance Fn (S n) a b = a -> Fn n a b
+type family   Fn (n :: PeanoNum) (a :: *) (b :: *) where
+  Fn 'Z     a b = b
+  Fn ('S n) a b = a -> Fn n a b
 
 -- | Newtype wrapper which is used to make 'Fn' injective. It's also a
 --   reader monad.
 newtype Fun n a b = Fun { unFun :: Fn n a b }
 
 
-instance Arity n => Functor (Fun n a) where
+instance ArityPeano n => Functor (Fun n a) where
   fmap f fun
      = accum (\(T_Flip g) a -> T_Flip (curryFirst g a))
              (\(T_Flip x)   -> f (unFun x))
              (T_Flip fun)
   {-# INLINE fmap #-}
 
-instance Arity n => Applicative (Fun n a) where
+instance ArityPeano n => Applicative (Fun n a) where
   pure x = accum (\Proxy _ -> Proxy)
                  (\Proxy   -> x)
                   Proxy
@@ -234,12 +194,11 @@ instance Arity n => Applicative (Fun n a) where
   {-# INLINE pure  #-}
   {-# INLINE (<*>) #-}
 
-instance Arity n => Monad (Fun n a) where
+instance ArityPeano n => Monad (Fun n a) where
   return  = pure
   f >>= g = shuffleFun g <*> f
   {-# INLINE return #-}
   {-# INLINE (>>=)  #-}
-
 
 data T_ap a b c n = T_ap (Fn n a b) (Fn n a c)
 
@@ -249,30 +208,37 @@ data T_ap a b c n = T_ap (Fn n a b) (Fn n a c)
 -- Generic operations of N-ary functions
 ----------------------------------------------------------------
 
+class ( ArityPeano (Peano n)
+      , Peano (n+1) ~ 'S (Peano n)
+      ) => Arity (n :: Nat)
+instance ( ArityPeano (Peano n)
+         , Peano (n+1) ~ 'S (Peano n)
+         ) => Arity n
+
 -- | Type class for handling /n/-ary functions.
-class Arity n where
+class ArityPeano n where
   -- | Left fold over /n/ elements exposed as n-ary function. These
   --   elements are supplied as arguments to the function.
-  accum :: (forall k. t (S k) -> a -> t k) -- ^ Fold function
-        -> (t Z -> b)                      -- ^ Extract result of fold
-        -> t n                             -- ^ Initial value
-        -> Fun n a b                       -- ^ Reduction function
+  accum :: (forall k. t ('S k) -> a -> t k) -- ^ Fold function
+        -> (t 'Z -> b)                      -- ^ Extract result of fold
+        -> t n                              -- ^ Initial value
+        -> Fun n a b                        -- ^ Reduction function
   -- | Apply all parameters to the function.
-  applyFun :: (forall k. t (S k) -> (a, t k)) -- ^ Get value to apply to function
-           -> t n                             -- ^ Initial value
-           -> Fn n a b                        -- ^ N-ary function
-           -> (b, t Z)
+  applyFun :: (forall k. t ('S k) -> (a, t k)) -- ^ Get value to apply to function
+           -> t n                              -- ^ Initial value
+           -> Fn n a b                         -- ^ N-ary function
+           -> (b, t 'Z)
   -- | Apply all parameters to the function using monadic
   --   actions. Note that for identity monad it's same as
   --   applyFun. Ignoring newtypes:
   --
-  -- > forall b. Fn n a b -> b  ~ ContVecn n a
+  -- > forall b. Fn n a b -> b  ~ ContVec n a
   applyFunM :: Monad m
-              => (forall k. t (S k) -> m (a, t k)) -- ^ Get value to apply to function
-              -> t n                               -- ^ Initial value
-              -> m (ContVec n a, t Z)
+              => (forall k. t ('S k) -> m (a, t k)) -- ^ Get value to apply to function
+              -> t n                                -- ^ Initial value
+              -> m (CVecPeano n a, t 'Z)
   -- | Arity of function.
-  arity :: n -> Int
+  arity :: proxy n -> Int
   -- | Reverse order of parameters.
   reverseF :: Fun n a b -> Fun n a b
   -- | Worker function for 'gunfold'
@@ -280,6 +246,11 @@ class Arity n where
            => (forall b x. Data b => c (b -> x) -> c x)
            -> T_gunfold c r a n -> c r
 
+newtype CVecPeano n a = CVecPeano (forall r. Fun n a r -> r)
+
+consPeano :: a -> CVecPeano n a -> CVecPeano ('S n) a
+consPeano a (CVecPeano cont) = CVecPeano $ \f -> cont $ curryFirst f a
+{-# INLINE consPeano #-}
 
 newtype T_gunfold c r a n = T_gunfold (c (Fn n a r))
 
@@ -287,25 +258,25 @@ newtype T_gunfold c r a n = T_gunfold (c (Fn n a r))
 
 -- | Apply all parameters to the function.
 apply :: Arity n
-      => (forall k. t (S k) -> (a, t k)) -- ^ Get value to apply to function
-      -> t n                             -- ^ Initial value
-      -> ContVec n a                     -- ^ N-ary function
+      => (forall k. t ('S k) -> (a, t k)) -- ^ Get value to apply to function
+      -> t (Peano n)                      -- ^ Initial value
+      -> ContVec n a                      -- ^ N-ary function
 {-# INLINE apply #-}
 apply step z = ContVec $ \(Fun f) -> fst $ applyFun step z f
 
 -- | Apply all parameters to the function using monadic actions.
 applyM :: (Monad m, Arity n)
-       => (forall k. t (S k) -> m (a, t k)) -- ^ Get value to apply to function
-       -> t n                               -- ^ Initial value
+       => (forall k. t ('S k) -> m (a, t k)) -- ^ Get value to apply to function
+       -> t (Peano n)                        -- ^ Initial value
        -> m (ContVec n a)
 {-# INLINE applyM #-}
-applyM f t = do (v,_) <- applyFunM f t
-                return v
+applyM f t = do (CVecPeano v,_) <- applyFunM f t
+                return (ContVec v)
 
-instance Arity Z where
+instance ArityPeano 'Z where
   accum     _ g t = Fun $ g t
   applyFun  _ t h = (h,t)
-  applyFunM _ t   = return (empty, t)
+  applyFunM _ t   = return (CVecPeano unFun, t)
   arity  _ = 0
   {-# INLINE accum     #-}
   {-# INLINE applyFun  #-}
@@ -316,13 +287,13 @@ instance Arity Z where
   {-# INLINE reverseF    #-}
   {-# INLINE gunfoldF    #-}
 
-instance Arity n => Arity (S n) where
+instance ArityPeano n => ArityPeano ('S n) where
   accum     f g t = Fun $ \a -> unFun $ accum f g (f t a)
   applyFun  f t h = case f t of (a,u) -> applyFun f u (h a)
   applyFunM f t   = do (a,t')   <- f t
                        (vec,tZ) <- applyFunM f t'
-                       return (cons a vec , tZ)
-  arity    _ = 1 + arity (undefined :: n)
+                       return (consPeano a vec , tZ)
+  arity    _ = 1 + arity (undefined :: Proxy n)
   {-# INLINE accum     #-}
   {-# INLINE applyFun  #-}
   {-# INLINE applyFunM #-}
@@ -334,7 +305,7 @@ instance Arity n => Arity (S n) where
 
 apGunfold :: Data a
           => (forall b x. Data b => c (b -> x) -> c x)
-          -> T_gunfold c r a (S n)
+          -> T_gunfold c r a ('S n)
           -> T_gunfold c r a n
 apGunfold f (T_gunfold c) = T_gunfold $ f c
 {-# INLINE apGunfold #-}
@@ -349,55 +320,57 @@ newtype T_Flip a b n = T_Flip (Fun n a b)
 ----------------------------------------------------------------
 
 -- | Prepend ignored parameter to function
-constFun :: Fun n a b -> Fun (S n) a b
+constFun :: Fun n a b -> Fun ('S n) a b
 constFun (Fun f) = Fun $ \_ -> f
 {-# INLINE constFun #-}
 
 -- | Curry first parameter of n-ary function
-curryFirst :: Fun (S n) a b -> a -> Fun n a b
+curryFirst :: Fun ('S n) a b -> a -> Fun n a b
 curryFirst = coerce
 {-# INLINE curryFirst #-}
 
 -- | Uncurry first parameter of n-ary function
-uncurryFirst :: (a -> Fun n a b) -> Fun (S n) a b
+uncurryFirst :: (a -> Fun n a b) -> Fun ('S n) a b
 uncurryFirst = coerce
 {-# INLINE uncurryFirst #-}
 
 -- | Curry last parameter of n-ary function
-curryLast :: Arity n => Fun (S n) a b -> Fun n a (a -> b)
+curryLast :: ArityPeano n => Fun ('S n) a b -> Fun n a (a -> b)
 {-# INLINE curryLast #-}
-curryLast (Fun f0) = accum (\(T_fun f) a -> T_fun (f a))
-                           (\(T_fun f)   -> f)
-                           (T_fun f0)
-
-newtype T_fun a b n = T_fun (Fn (S n) a b)
+-- FIXME: prove
+curryLast = unsafeCoerce
+-- curryLast (Fun f0) = accum (\(T_fun f) a -> T_fun (f a))
+--                            (\(T_fun f)   -> f)
+--                            (T_fun f0)
+-- newtype T_fun a b n = T_fun (Fn ('S n) a b)
 
 -- | Curry /n/ first parameters of n-ary function
-curryMany :: forall n k a b. Arity n
+curryMany :: forall n k a b. ArityPeano n
           => Fun (Add n k) a b -> Fun n a (Fun k a b)
 {-# INLINE curryMany #-}
-curryMany (Fun f0) = accum
-  (\(T_curry f) a -> T_curry (f a))
-  (\(T_curry f) -> Fun f)
-  ( T_curry f0 :: T_curry a b k n)
-
-newtype T_curry a b k n = T_curry (Fn (Add n k) a b)
+-- FIXME: prove
+curryMany = unsafeCoerce
+-- curryMany (Fun f0) = accum
+--   (\(T_curry f) a -> T_curry (f a))
+--   (\(T_curry f)   -> Fun f)
+--   ( T_curry f0 :: T_curry a b k n)
+-- newtype T_curry a b k n = T_curry (Fn (Add n k) a b)
 
 
 
 -- | Apply last parameter to function. Unlike 'apFun' we need to
 --   traverse all parameters but last hence 'Arity' constraint.
-apLast :: Arity n => Fun (S n) a b -> a -> Fun n a b
+apLast :: ArityPeano n => Fun ('S n) a b -> a -> Fun n a b
 apLast f x = fmap ($ x) $ curryLast f
 {-# INLINE apLast #-}
 
 -- | Recursive step for the function
-withFun :: (Fun n a b -> Fun n a b) -> Fun (S n) a b -> Fun (S n) a b
+withFun :: (Fun n a b -> Fun n a b) -> Fun ('S n) a b -> Fun ('S n) a b
 withFun f fun = Fun $ \a -> unFun $ f $ curryFirst fun a
 {-# INLINE withFun #-}
 
 -- | Move function parameter to the result of N-ary function.
-shuffleFun :: Arity n
+shuffleFun :: ArityPeano n
            => (b -> Fun n a r) -> Fun n a (b -> r)
 {-# INLINE shuffleFun #-}
 shuffleFun f0
@@ -414,7 +387,7 @@ newtype T_shuffle x a r n = T_shuffle (x -> Fn n a r)
 ----------------------------------------------------------------
 
 -- | Size of vector expressed as type-level natural.
-type family Dim (v :: * -> *)
+type family Dim (v :: * -> *) :: Nat
 
 -- | Type class for vectors with fixed length. Instance should provide
 -- two functions: one to create vector and another for vector
@@ -423,9 +396,9 @@ type family Dim (v :: * -> *)
 -- > inspect v construct = v
 class Arity (Dim v) => Vector v a where
   -- | N-ary function for creation of vectors.
-  construct :: Fun (Dim v) a (v a)
+  construct :: Fun (Peano (Dim v)) a (v a)
   -- | Deconstruction of vector.
-  inspect   :: v a -> Fun (Dim v) a b -> b
+  inspect   :: v a -> Fun (Peano (Dim v)) a b -> b
   -- | Optional more efficient implementation of indexing. Shouldn't
   --   be used directly, use 'Data.Vector.Fixed.!' instead.
   basicIndex :: v a -> Int -> a
@@ -442,32 +415,7 @@ class (Vector (v n) a, Dim (v n) ~ n) => VectorN v n a
 -- | Length of vector. Function doesn't evaluate its argument.
 length :: forall v a. Arity (Dim v) => v a -> Int
 {-# INLINE length #-}
-length _ = arity (undefined :: Dim v)
-
--- | Type class for indexing of vector when index value is known at
---   compile time.
-class Index k n where
-  getF  :: k -> Fun n a a
-  putF  :: k -> a -> Fun n a r -> Fun n a r
-  lensF :: Functor f => k -> (a -> f a) -> Fun n a r -> Fun n a (f r)
-
-instance Arity n => Index Z (S n) where
-  getF  _       = Fun $ \(a :: a) -> unFun (pure a :: Fun n a a)
-  putF  _ a (Fun f) = Fun $ \_ -> f a
-  lensF _ f fun = Fun $ \(a :: a) -> unFun $
-    (\g -> g <$> f a) <$> shuffleFun (curryFirst fun)
-  {-# INLINE getF  #-}
-  {-# INLINE putF  #-}
-  {-# INLINE lensF #-}
-
-instance Index k n => Index (S k) (S n) where
-  getF  _       = Fun $ \(_::a) -> unFun (getF  (undefined :: k) :: Fun n a a)
-  putF _ a (f :: Fun (S n) a b)
-    = withFun (putF (undefined :: k) a) f
-  lensF _ f fun = Fun $ \a -> unFun (lensF (undefined :: k) f (curryFirst fun a))
-  {-# INLINE getF  #-}
-  {-# INLINE putF  #-}
-  {-# INLINE lensF #-}
+length _ = arity (Proxy :: Proxy (Peano (Dim v)))
 
 
 ----------------------------------------------------------------
@@ -476,20 +424,22 @@ instance Index k n => Index (S k) (S n) where
 
 -- | Vector represented as continuation. Alternative wording: it's
 --   Church encoded N-element vector.
-newtype ContVec n a = ContVec (forall r. Fun n a r -> r)
+newtype ContVec n a = ContVec (forall r. Fun (Peano n) a r -> r)
 
 type instance Dim (ContVec n) = n
 
 instance Arity n => Vector (ContVec n) a where
   construct = accum
-    (\(T_mkN f) a -> T_mkN (f . cons a))
-    (\(T_mkN f)   -> f empty)
+    (\(T_mkN f) a -> T_mkN (f . consPeano a))
+    (\(T_mkN f)   -> case f (CVecPeano (\(Fun r) -> r)) of
+                       CVecPeano x -> ContVec x
+    )
     (T_mkN id)
   inspect (ContVec c) f = c f
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
 
-newtype T_mkN n_tot a n = T_mkN (ContVec n a -> ContVec n_tot a)
+newtype T_mkN n_tot a n = T_mkN (CVecPeano n a -> CVecPeano n_tot a)
 
 instance Arity n => VectorN ContVec n a
 
@@ -512,7 +462,7 @@ instance (Arity n) => F.Traversable (ContVec n) where
   sequenceA v = inspect v $ sequenceAF construct
   {-# INLINE sequenceA #-}
 
-sequenceAF :: forall f n a b. (Applicative f, Arity n)
+sequenceAF :: forall f n a b. (Applicative f, ArityPeano n)
      => Fun n a b -> Fun n (f a) (f b)
 {-# INLINE sequenceAF #-}
 sequenceAF (Fun f0)
@@ -534,7 +484,7 @@ cvec v = ContVec (inspect v)
 {-# INLINE[0] cvec #-}
 
 -- | Create empty vector.
-empty :: ContVec Z a
+empty :: ContVec 0 a
 {-# INLINE empty #-}
 empty = ContVec (\(Fun r) -> r)
 
@@ -554,24 +504,23 @@ fromList xs =
 fromList' :: forall n a. Arity n => [a] -> ContVec n a
 {-# INLINE fromList' #-}
 fromList' xs = ContVec $ \(Fun fun) ->
-  let (r,rest) = applyFun step (Const xs :: Const [a] n) fun
+  let (r,rest) = applyFun step (Const xs :: Const [a] (Peano n)) fun
       step (Const []    ) = error "Data.Vector.Fixed.Cont.fromList': too few elements"
       step (Const (a:as)) = (a, Const as)
   in case rest of
        Const [] -> r
-       _          -> error "Data.Vector.Fixed.Cont.fromList': too many elements"
+       _        -> error "Data.Vector.Fixed.Cont.fromList': too many elements"
 
 -- | Convert list to continuation-based vector. Will fail with
 --   'Nothing' if list doesn't have right length.
 fromListM :: forall n a. Arity n => [a] -> Maybe (ContVec n a)
 {-# INLINE fromListM #-}
 fromListM xs = do
-  (v,Const []) <- applyFunM step (Const xs :: Const [a] n)
-  return v
+  (CVecPeano v,Const []) <- applyFunM step (Const xs :: Const [a] (Peano n))
+  return (ContVec v)
   where
     step (Const []    ) = Nothing
     step (Const (a:as)) = return (a, Const as)
-
 
 
 -- | Convert vector to the list
@@ -615,7 +564,6 @@ unfoldr f b0 =
   apply (\(Const b) -> let (a,b') = f b in (a, Const b'))
         (Const b0)
 
-
 -- | Unit vector along Nth axis.
 basis :: (Num a, Arity n) => Int -> ContVec n a
 {-# INLINE basis #-}
@@ -625,23 +573,23 @@ basis n0 =
 
 
 
-mk1 :: a -> ContVec N1 a
+mk1 :: a -> ContVec 1 a
 mk1 a1 = ContVec $ \(Fun f) -> f a1
 {-# INLINE mk1 #-}
 
-mk2 :: a -> a -> ContVec N2 a
+mk2 :: a -> a -> ContVec 2 a
 mk2 a1 a2 = ContVec $ \(Fun f) -> f a1 a2
 {-# INLINE mk2 #-}
 
-mk3 :: a -> a -> a -> ContVec N3 a
+mk3 :: a -> a -> a -> ContVec 3 a
 mk3 a1 a2 a3 = ContVec $ \(Fun f) -> f a1 a2 a3
 {-# INLINE mk3 #-}
 
-mk4 :: a -> a -> a -> a -> ContVec N4 a
+mk4 :: a -> a -> a -> a -> ContVec 4 a
 mk4 a1 a2 a3 a4 = ContVec $ \(Fun f) -> f a1 a2 a3 a4
 {-# INLINE mk4 #-}
 
-mk5 :: a -> a -> a -> a -> a -> ContVec N5 a
+mk5 :: a -> a -> a -> a -> a -> ContVec 5 a
 mk5 a1 a2 a3 a4 a5 = ContVec $ \(Fun f) -> f a1 a2 a3 a4 a5
 {-# INLINE mk5 #-}
 
@@ -686,7 +634,7 @@ imapM_ :: (Arity n, Monad m) => (Int -> a -> m b) -> ContVec n a -> m ()
 imapM_ f = ifoldl (\m i a -> m >> f i a >> return ()) (return ())
 
 
-imapMF :: (Arity n, Monad m)
+imapMF :: (ArityPeano n, Monad m)
        => (Int -> a -> m b) -> Fun n b r -> Fun n a (m r)
 {-# INLINE imapMF #-}
 imapMF f (Fun funB) =
@@ -699,7 +647,7 @@ imapMF f (Fun funB) =
 
 data T_mapM a m r n = T_mapM Int (m (Fn n a r))
 
-imapF :: Arity n
+imapF :: ArityPeano n
       => (Int -> a -> b) -> Fun n b r -> Fun n a r
 {-# INLINE imapF #-}
 imapF f (Fun funB) =
@@ -710,7 +658,7 @@ imapF f (Fun funB) =
 data T_map a r n = T_map Int (Fn n a r)
 
 -- | Left scan over vector
-scanl :: (Arity n) => (b -> a -> b) -> b -> ContVec n a -> ContVec (S n) b
+scanl :: (Arity n) => (b -> a -> b) -> b -> ContVec n a -> ContVec (n+1) b
 {-# INLINE scanl #-}
 scanl f b0 (ContVec cont) = ContVec $
   cont . scanlF f b0
@@ -721,19 +669,19 @@ scanl1 :: (Arity n) => (a -> a -> a) -> ContVec n a -> ContVec n a
 scanl1 f (ContVec cont) = ContVec $
   cont . scanl1F f
 
-scanlF :: forall n a b r. (Arity n) => (b -> a -> b) -> b -> Fun (S n) b r -> Fun n a r
+scanlF :: forall n a b r. (ArityPeano n) => (b -> a -> b) -> b -> Fun ('S n) b r -> Fun n a r
 scanlF f b0 (Fun fun0)
   = accum step fini start
   where
-    step  :: forall k. T_scanl r b (S k) -> a -> T_scanl r b k
+    step  :: forall k. T_scanl r b ('S k) -> a -> T_scanl r b k
     step (T_scanl b fn) a = let b' = f b a in T_scanl b' (fn b')
     fini (T_scanl _ r) = r
     start = T_scanl b0 (fun0 b0)  :: T_scanl r b n
 
-scanl1F :: forall n a r. (Arity n) => (a -> a -> a) -> Fun n a r -> Fun n a r
+scanl1F :: forall n a r. (ArityPeano n) => (a -> a -> a) -> Fun n a r -> Fun n a r
 scanl1F f (Fun fun0) = accum step fini start
   where
-    step  :: forall k. T_scanl1 r a (S k) -> a -> T_scanl1 r a k
+    step  :: forall k. T_scanl1 r a ('S k) -> a -> T_scanl1 r a k
     step (T_scanl1 Nothing  fn) a = T_scanl1 (Just a) (fn a)
     step (T_scanl1 (Just x) fn) a = let a' = f x a in T_scanl1 (Just a') (fn a')
     fini (T_scanl1 _ r) = r
@@ -785,29 +733,34 @@ collectM f = distributeM . liftM f
 
 
 -- | /O(1)/ Tail of vector.
-tail :: ContVec (S n) a -> ContVec n a
+tail :: {-FIXME-} Arity n => ContVec (n+1) a -> ContVec n a
 tail (ContVec cont) = ContVec $ \f -> cont $ constFun f
 {-# INLINE tail #-}
 
 -- | /O(1)/ Prepend element to vector
-cons :: a -> ContVec n a -> ContVec (S n) a
+cons :: {-FIXME-} Arity n => a -> ContVec n a -> ContVec (n+1) a
 cons a (ContVec cont) = ContVec $ \f -> cont $ curryFirst f a
 {-# INLINE cons #-}
 
 -- | Prepend single element vector to another vector.
-consV :: ContVec (S Z) a -> ContVec n a -> ContVec (S n) a
+consV :: {-FIXME-} Arity n => ContVec 1 a -> ContVec n a -> ContVec (n+1) a
 {-# INLINE consV #-}
 consV (ContVec cont1) (ContVec cont)
   = ContVec $ \f -> cont $ curryFirst f $ cont1 $ Fun id
 
 -- | /O(1)/ Append element to vector
-snoc :: Arity n => a -> ContVec n a -> ContVec (S n) a
+snoc :: Arity n => a -> ContVec n a -> ContVec (n+1) a
 snoc a (ContVec cont) = ContVec $ \f -> cont $ apLast f a
 {-# INLINE snoc #-}
 
 -- | Concatenate vector
-concat :: (Arity n, Arity k, Arity (Add n k))
-       => ContVec n a -> ContVec k a -> ContVec (Add n k) a
+concat :: ( Arity n
+          , Arity k
+          , Arity (n + k)
+          -- Tautology
+          , Peano (n + k) ~ Add (Peano n) (Peano k)
+          )
+       => ContVec n a -> ContVec k a -> ContVec (n + k) a
 {-# INLINE concat #-}
 concat v u = inspect u
            $ inspect v
@@ -869,7 +822,7 @@ izipWithM_ :: (Arity n, Monad m)
 {-# INLINE izipWithM_ #-}
 izipWithM_ f xs ys = sequence_ (izipWith f xs ys)
 
-izipWithF :: (Arity n)
+izipWithF :: (ArityPeano n)
           => (Int -> a -> b -> c) -> Fun n c r -> Fun n a (Fun n b r)
 {-# INLINE izipWithF #-}
 izipWithF f (Fun g0) =
@@ -880,7 +833,7 @@ izipWithF f (Fun g0) =
        ) makeList
 
 
-makeList :: Arity n => Fun n a [a]
+makeList :: ArityPeano n => Fun n a [a]
 {-# INLINE makeList #-}
 makeList = accum
     (\(Const xs) x -> Const (xs . (x:)))
@@ -897,7 +850,7 @@ data T_izip a c r n = T_izip Int [a] (Fn n c r)
 
 -- | Run continuation vector. It's same as 'inspect' but with
 --   arguments flipped.
-runContVec :: Fun n a r
+runContVec :: Fun (Peano n) a r
            -> ContVec n a
            -> r
 runContVec f (ContVec c) = c f
@@ -909,10 +862,7 @@ vector = runContVec construct
 {-# INLINE[1] vector #-}
 
 -- | Finalizer function for getting head of the vector.
-head :: Arity (S n) => ContVec (S n) a -> a
--- NOTE: we need constraint `Arity (S n)' instead of `Arity n' because
---       `Vector v' entails `Arity (Dim v)' and GHC cannot figure out
---       that `Arity (S n)' ⇒ `Arity n'
+head :: (Arity n, 1<=n) => ContVec n a -> a
 {-# INLINE head #-}
 head
   = runContVec
@@ -946,27 +896,27 @@ element :: (Arity n, Functor f)
 element i f v = inspect v
               $ elementF i f construct
 
--- | Twan van Laarhoven's lens for element of vector with statically
+-- | Twan van Laarhoven lens for element of vector with statically
 --   known index.
-elementTy :: (Arity n, Index k n, Functor f)
-          => k -> (a -> f a) -> ContVec n a -> f (ContVec n a)
+elementTy :: (Arity n, KnownNat k, k + 1 <= n, Functor f)
+          => proxy k -> (a -> f a) -> ContVec n a -> f (ContVec n a)
 {-# INLINE elementTy #-}
-elementTy k f v = inspect v
-                $ lensF k f construct
+elementTy p f v = inspect v
+                $ elementF (fromIntegral (natVal p)) f construct
 
 
 -- | Helper for implementation of Twan van Laarhoven lens.
-elementF :: forall a n f r. (Arity n, Functor f)
+elementF :: forall a n f r. (ArityPeano n, Functor f)
          => Int -> (a -> f a) -> Fun n a r -> Fun n a (f r)
 {-# INLINE elementF #-}
 elementF n f (Fun fun0) = accum step fini start
   where
-    step :: forall k. T_lens f a r (S k) -> a -> T_lens f a r k
+    step :: forall k. T_lens f a r ('S k) -> a -> T_lens f a r k
     step (T_lens (Left (0,fun))) a = T_lens $ Right $ fmap fun $ f a
     step (T_lens (Left (i,fun))) a = T_lens $ Left (i-1, fun a)
     step (T_lens (Right fun))    a = T_lens $ Right $ fmap ($ a) fun
     --
-    fini :: T_lens f a r Z -> f r
+    fini :: T_lens f a r 'Z -> f r
     fini (T_lens (Left  _)) = error "Data.Vector.Fixed.lensF: Index out of range"
     fini (T_lens (Right r)) = r
     --
@@ -1016,7 +966,7 @@ data T_ifoldl b n = T_ifoldl !Int b
 -- `Arity (S n)`.  Latter imply former but GHC cannot infer it.
 
 -- | Left fold.
-foldl1 :: (Arity (S n)) => (a -> a -> a) -> ContVec (S n) a -> a
+foldl1 :: (Arity n, 1 <= n) => (a -> a -> a) -> ContVec n a -> a
 {-# INLINE foldl1 #-}
 foldl1 f
   = runContVec
@@ -1046,12 +996,12 @@ sum = foldl (+) 0
 {-# INLINE sum #-}
 
 -- | Minimal element of vector.
-minimum :: (Ord a, Arity (S n)) => ContVec (S n) a -> a
+minimum :: (Ord a, Arity n, 1<=n) => ContVec n a -> a
 minimum = foldl1 min
 {-# INLINE minimum #-}
 
 -- | Maximal element of vector.
-maximum :: (Ord a, Arity (S n)) => ContVec (S n) a -> a
+maximum :: (Ord a, Arity n, 1<=n) => ContVec n a -> a
 maximum = foldl1 max
 {-# INLINE maximum #-}
 
@@ -1089,7 +1039,7 @@ gfoldl :: forall c v a. (Vector v a, Data a)
        -> v a -> c (v a)
 gfoldl f inj v
   = inspect v
-  $ gfoldlF f (inj $ unFun (construct :: Fun (Dim v) a (v a)))
+  $ gfoldlF f (inj $ unFun (construct :: Fun (Peano (Dim v)) a (v a)))
 
 -- | Generic 'Data.Data.gunfoldl' which could work with any
 --   vector. Since vector can only have one constructor argument for
@@ -1101,13 +1051,13 @@ gunfold :: forall con c v a. (Vector v a, Data a)
 gunfold f inj _
   = gunfoldF f gun
   where
-    con = construct                   :: Fun (Dim v) a (v a)
-    gun = T_gunfold (inj $ unFun con) :: T_gunfold c (v a) a (Dim v)
+    con = construct                   :: Fun (Peano (Dim v)) a (v a)
+    gun = T_gunfold (inj $ unFun con) :: T_gunfold c (v a) a (Peano (Dim v))
 
 
-gfoldlF :: (Arity n, Data a)
-         => (forall x y. Data x => c (x -> y) -> x -> c y)
-         -> c (Fn n a r) -> Fun n a (c r)
+gfoldlF :: (ArityPeano n, Data a)
+        => (forall x y. Data x => c (x -> y) -> x -> c y)
+        -> c (Fn n a r) -> Fun n a (c r)
 gfoldlF f c0 = accum
   (\(T_gfoldl c) x -> T_gfoldl (f c x))
   (\(T_gfoldl c)   -> c)
@@ -1153,16 +1103,16 @@ newtype T_gfoldl c r a n = T_gfoldl (c (Fn n a r))
 -- Instances
 ----------------------------------------------------------------
 
-type instance Dim Complex = N2
+type instance Dim Complex = 2
 
-instance RealFloat a => Vector Complex a where
+instance Vector Complex a where
   construct = Fun (:+)
   inspect (x :+ y) (Fun f) = f x y
   {-# INLINE construct #-}
   {-# INLINE inspect #-}
 
 
-type instance Dim ((,) a) = N2
+type instance Dim ((,) a) = 2
 
 -- | Note this instance (and other instances for tuples) is
 --   essentially monomorphic in element type. Vector type /v/ of 2
@@ -1175,7 +1125,7 @@ instance (b~a) => Vector ((,) b) a where
   {-# INLINE inspect #-}
 
 
-type instance Dim ((,,) a b) = N3
+type instance Dim ((,,) a b) = 3
 
 instance (b~a, c~a) => Vector ((,,) b c) a where
   construct = Fun (,,)
@@ -1184,7 +1134,7 @@ instance (b~a, c~a) => Vector ((,,) b c) a where
   {-# INLINE inspect #-}
 
 
-type instance Dim ((,,,) a b c) = N4
+type instance Dim ((,,,) a b c) = 4
 
 instance (b~a, c~a, d~a) => Vector ((,,,) b c d) a where
   construct = Fun (,,,)
@@ -1193,7 +1143,7 @@ instance (b~a, c~a, d~a) => Vector ((,,,) b c d) a where
   {-# INLINE inspect #-}
 
 
-type instance Dim ((,,,,) a b c d) = N5
+type instance Dim ((,,,,) a b c d) = 5
 
 instance (b~a, c~a, d~a, e~a) => Vector ((,,,,) b c d e) a where
   construct = Fun (,,,,)
@@ -1202,7 +1152,7 @@ instance (b~a, c~a, d~a, e~a) => Vector ((,,,,) b c d e) a where
   {-# INLINE inspect #-}
 
 
-type instance Dim ((,,,,,) a b c d e) = N6
+type instance Dim ((,,,,,) a b c d e) = 6
 
 instance (b~a, c~a, d~a, e~a, f~a) => Vector ((,,,,,) b c d e f) a where
   construct = Fun (,,,,,)
@@ -1211,7 +1161,7 @@ instance (b~a, c~a, d~a, e~a, f~a) => Vector ((,,,,,) b c d e f) a where
   {-# INLINE inspect #-}
 
 
-type instance Dim ((,,,,,,) a b c d e f) = S N6
+type instance Dim ((,,,,,,) a b c d e f) = 7
 
 instance (b~a, c~a, d~a, e~a, f~a, g~a) => Vector ((,,,,,,) b c d e f g) a where
   construct = Fun (,,,,,,)
@@ -1219,7 +1169,7 @@ instance (b~a, c~a, d~a, e~a, f~a, g~a) => Vector ((,,,,,,) b c d e f g) a where
   {-# INLINE construct #-}
   {-# INLINE inspect #-}
 
-type instance Dim Proxy = Z
+type instance Dim Proxy = 0
 
 instance Vector Proxy a where
   construct = Fun Proxy

@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP                   #-}
+{-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
@@ -35,10 +36,11 @@ import Data.Monoid           (Monoid(..),Dual(..),Sum(..),Product(..),All(..),An
 import Data.Ord              (Down(..))
 import Data.Word             (Word,Word8,Word16,Word32,Word64)
 import Foreign.Storable      (Storable(..))
+import GHC.TypeLits
 import Prelude               ( Show(..),Eq(..),Ord(..),Int,Double,Float,Char,Bool(..)
                              , (++),(||),($),(.),seq)
 
-import Data.Vector.Fixed (Dim,Vector(..),VectorN,S,Z,toList,eq,ord,replicate,zipWith,foldl,
+import Data.Vector.Fixed (Dim,Vector(..),VectorN,toList,eq,ord,replicate,zipWith,foldl,
                           defaultSizeOf,defaultAlignemnt,defaultPeek,defaultPoke
                          )
 import Data.Vector.Fixed.Mutable
@@ -51,17 +53,17 @@ import qualified Data.Vector.Fixed.Primitive as P
 -- Data type
 ----------------------------------------------------------------
 
-data family Vec  n a
-data family MVec n s a
+data family Vec  (n :: Nat) a
+data family MVec (n :: Nat) s a
 
 deriving instance Typeable Vec
 deriving instance Typeable MVec
 
-type Vec1 = Vec (S Z)
-type Vec2 = Vec (S (S Z))
-type Vec3 = Vec (S (S (S Z)))
-type Vec4 = Vec (S (S (S (S Z))))
-type Vec5 = Vec (S (S (S (S (S Z)))))
+type Vec1 = Vec 1
+type Vec2 = Vec 2
+type Vec3 = Vec 3
+type Vec4 = Vec 4
+type Vec5 = Vec 5
 
 class (Arity n, IVector (Vec n) a, MVector (MVec n) a) => Unbox n a
 

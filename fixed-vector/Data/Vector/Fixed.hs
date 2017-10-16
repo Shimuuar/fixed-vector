@@ -1,10 +1,13 @@
-{-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# LANGUAGE TypeFamilies      #-}
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE DeriveDataTypeable    #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE GADTs               #-}
-{-# LANGUAGE DeriveDataTypeable  #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 -- |
 -- Generic API for vectors with fixed length.
 --
@@ -36,15 +39,6 @@ module Data.Vector.Fixed (
     -- * Vector type class
     -- ** Vector size
     Dim
-  , Z
-  , S
-    -- ** Synonyms for small numerals
-  , N1
-  , N2
-  , N3
-  , N4
-  , N5
-  , N6
     -- ** Type class
   , Vector(..)
   , VectorN
@@ -65,10 +59,10 @@ module Data.Vector.Fixed (
   , ContVec
   , empty
   , vector
-  , (<|)
+  -- , (<|)
     -- ** Variadic function
-  , Make
-  , mkN
+  -- , Make
+  -- , mkN
     -- ** Functions
   , replicate
   , replicateM
@@ -85,10 +79,10 @@ module Data.Vector.Fixed (
   , concat
   , reverse
     -- ** Indexing & lenses
-  , C.Index
+  -- , C.Index
   , (!)
-  , index
-  , set
+  -- , index
+  -- , set
   , element
   , elementTy
     -- ** Comparison
@@ -173,10 +167,10 @@ import qualified Data.Foldable    as F
 import qualified Data.Traversable as T
 import Foreign.Storable (Storable(..))
 import Foreign.Ptr      (castPtr)
+import GHC.TypeLits
 
-import Data.Vector.Fixed.Cont     (Vector(..),VectorN,Dim,length,ContVec,vector,
-                                   empty,S,Z,Arity,Fun(..),accum,apply,
-                                   N1,N2,N3,N4,N5,N6,vector)
+import Data.Vector.Fixed.Cont     (Vector(..),VectorN,Dim,length,ContVec,PeanoNum(..),
+                                   vector,empty,Arity,Fun(..),accum,apply,vector)
 import qualified Data.Vector.Fixed.Cont as C
 import Data.Vector.Fixed.Internal
 
@@ -260,8 +254,8 @@ import Prelude (Char)
 -- | Vector based on the lists. Not very useful by itself but is
 --   necessary for implementation.
 data VecList n a where
-  Nil  :: VecList Z a
-  Cons :: a -> VecList n a -> VecList (S n) a
+  Nil  :: VecList 0 a
+  Cons :: a -> VecList (n - 1) a -> VecList n a
   deriving (Typeable)
 
 instance (Arity n, NFData a) => NFData (VecList n a) where
@@ -272,17 +266,19 @@ instance (Arity n, NFData a) => NFData (VecList n a) where
 type instance Dim (VecList n) = n
 
 instance Arity n => Vector (VecList n) a where
-  construct = accum
-    (\(T_List f) a -> T_List (f . Cons a))
-    (\(T_List f)   -> f Nil)
-    (T_List id :: T_List a n n)
-  inspect v = inspect $ apply step (Flip v)
-    where
-      step :: Flip VecList a (S k)  -> (a, Flip VecList a k)
-      step (Flip (Cons a xs)) = (a, Flip xs)
-  {-# INLINE construct #-}
-  {-# INLINE inspect   #-}
-instance Arity n => VectorN VecList n a
+  construct = undefined
+  inspect   = undefined
+--   construct = accum
+--     (\(T_List f) a -> T_List (f . Cons a))
+--     (\(T_List f)   -> f Nil)
+--     (T_List id :: T_List a n n)
+--   inspect v = inspect $ apply step (Flip v)
+--     where
+--       step :: Flip VecList a ('S k)  -> (a, Flip VecList a k)
+--       step (Flip (Cons a xs)) = (a, Flip xs)
+--   {-# INLINE construct #-}
+--   {-# INLINE inspect   #-}
+-- instance Arity n => VectorN VecList n a
 
 newtype Flip f a n = Flip (f n a)
 
@@ -342,7 +338,7 @@ instance Monoid a => Monoid (Only a) where
 instance NFData a => NFData (Only a) where
   rnf (Only a) = rnf a
 
-type instance Dim Only = S Z
+type instance Dim Only = 1
 
 instance Vector Only a where
   construct = Fun Only
@@ -375,7 +371,7 @@ instance T.Traversable Empty where
 instance NFData (Empty a) where
   rnf Empty = ()
 
-type instance Dim Empty = Z
+type instance Dim Empty = 0
 
 instance Vector Empty a where
   construct = Fun Empty

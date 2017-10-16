@@ -1,9 +1,10 @@
-{-# LANGUAGE StandaloneDeriving    #-}
-{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE DeriveDataTypeable    #-}
+{-# LANGUAGE StandaloneDeriving    #-}
+{-# LANGUAGE TypeFamilies          #-}
 -- |
 -- Storable-based unboxed vectors.
 module Data.Vector.Fixed.Storable (
@@ -34,6 +35,7 @@ import Foreign.ForeignPtr
 import Foreign.Marshal.Array ( advancePtr, copyArray, moveArray )
 import GHC.ForeignPtr        ( ForeignPtr(..), mallocPlainForeignPtrBytes )
 import GHC.Ptr               ( Ptr(..) )
+import GHC.TypeLits
 import Prelude (Show(..),Eq(..),Ord(..),Num(..),Monad(..),IO,Int)
 import Prelude ((++),(&&),(||),($),undefined,seq)
 
@@ -48,19 +50,19 @@ import qualified Data.Vector.Fixed.Cont as C
 ----------------------------------------------------------------
 
 -- | Storable-based vector with fixed length
-newtype Vec n a = Vec (ForeignPtr a)
+newtype Vec (n :: Nat) a = Vec (ForeignPtr a)
 
 -- | Storable-based mutable vector with fixed length
-newtype MVec n s a = MVec (ForeignPtr a)
+newtype MVec (n :: Nat) s a = MVec (ForeignPtr a)
 
 deriving instance Typeable Vec
 deriving instance Typeable MVec
 
-type Vec1 = Vec (S Z)
-type Vec2 = Vec (S (S Z))
-type Vec3 = Vec (S (S (S Z)))
-type Vec4 = Vec (S (S (S (S Z))))
-type Vec5 = Vec (S (S (S (S (S Z)))))
+type Vec1 = Vec 1
+type Vec2 = Vec 2
+type Vec3 = Vec 3
+type Vec4 = Vec 4
+type Vec5 = Vec 5
 
 
 
@@ -104,23 +106,23 @@ instance (Arity n, Storable a) => MVector (MVec n) a where
       between x y z = x >= y && x < z
       p = getPtr fp
       q = getPtr fq
-      n = arity (undefined :: n)
+      n = arity (Proxy :: Proxy (C.Peano n))
   {-# INLINE overlaps    #-}
   new = unsafePrimToPrim $ do
-    fp <- mallocVector $ arity (undefined :: n)
+    fp <- mallocVector $ arity (Proxy :: Proxy (C.Peano n))
     return $ MVec fp
   {-# INLINE new         #-}
   copy (MVec fp) (MVec fq)
     = unsafePrimToPrim
     $ withForeignPtr fp $ \p ->
       withForeignPtr fq $ \q ->
-      copyArray p q (arity (undefined :: n))
+      copyArray p q (arity (Proxy :: Proxy (C.Peano n)))
   {-# INLINE copy        #-}
   move (MVec fp) (MVec fq)
     = unsafePrimToPrim
     $ withForeignPtr fp $ \p ->
       withForeignPtr fq $ \q ->
-      moveArray p q (arity (undefined :: n))
+      moveArray p q (arity (Proxy :: Proxy (C.Peano n)))
   {-# INLINE move        #-}
   unsafeRead (MVec fp) i
     = unsafePrimToPrim
@@ -169,16 +171,17 @@ instance (Arity n, Storable a, Monoid a) => Monoid (Vec n a) where
   {-# INLINE mappend #-}
 
 instance (Arity n, Storable a) => Storable (Vec n a) where
-  sizeOf    _ = arity (undefined :: n) * sizeOf (undefined :: a)
+  sizeOf    _ = arity  (Proxy :: Proxy (C.Peano n))
+              * sizeOf (undefined :: a)
   alignment _ = alignment (undefined :: a)
   peek ptr = do
     arr@(MVec fp) <- new
     withForeignPtr fp $ \p ->
-      moveArray p (castPtr ptr) (arity (undefined :: n))
+      moveArray p (castPtr ptr) (arity (Proxy :: Proxy (C.Peano n)))
     unsafeFreeze arr
   poke ptr (Vec fp)
     = withForeignPtr fp $ \p ->
-      moveArray (castPtr ptr) p (arity (undefined :: n))
+      moveArray (castPtr ptr) p (arity (Proxy :: Proxy (C.Peano n)))
 
 instance (Typeable n, Arity n, Storable a, Data a) => Data (Vec n a) where
   gfoldl       = C.gfoldl
