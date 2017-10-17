@@ -257,13 +257,11 @@ class Arity n where
         -> (t Z -> b)                      -- ^ Extract result of fold
         -> t n                             -- ^ Initial value
         -> Fun n a b                       -- ^ Reduction function
-
   -- | Apply all parameters to the function.
   applyFun :: (forall k. t (S k) -> (a, t k)) -- ^ Get value to apply to function
            -> t n                             -- ^ Initial value
            -> Fn n a b                        -- ^ N-ary function
            -> (b, t Z)
-
   -- | Apply all parameters to the function using monadic
   --   actions. Note that for identity monad it's same as
   --   applyFun. Ignoring newtypes:
@@ -275,13 +273,8 @@ class Arity n where
               -> m (ContVec n a, t Z)
   -- | Arity of function.
   arity :: n -> Int
-
-
   -- | Reverse order of parameters.
   reverseF :: Fun n a b -> Fun n a b
-  -- | Uncurry /n/ first parameters of n-ary function
-  uncurryMany :: Fun (Add n k) a b -> Fun n a (Fun k a b)
-  
   -- | Worker function for 'gunfold'
   gunfoldF :: (Data a)
            => (forall b x. Data b => c (b -> x) -> c x)
@@ -320,10 +313,8 @@ instance Arity Z where
   {-# INLINE arity     #-}
   reverseF = id
   gunfoldF _ (T_gunfold c) = c
-  uncurryMany = coerce
   {-# INLINE reverseF    #-}
   {-# INLINE gunfoldF    #-}
-  {-# INLINE uncurryMany #-}
 
 instance Arity n => Arity (S n) where
   accum     f g t = Fun $ \a -> unFun $ accum f g (f t a)
@@ -338,14 +329,8 @@ instance Arity n => Arity (S n) where
   {-# INLINE arity     #-}
   reverseF f   = Fun $ \a -> unFun (reverseF $ apLast f a)
   gunfoldF f c = gunfoldF f (apGunfold f c)
-  
-  uncurryMany :: forall k a b. Fun (Add (S n) k) a b -> Fun (S n) a (Fun k a b)
-  uncurryMany f
-    = coerce
-     (fmap uncurryMany (curryFirst f) :: a -> Fun n a (Fun k a b))
   {-# INLINE reverseF    #-}
   {-# INLINE gunfoldF    #-}
-  {-# INLINE uncurryMany #-}
 
 apGunfold :: Data a
           => (forall b x. Data b => c (b -> x) -> c x)
@@ -1239,4 +1224,3 @@ type instance Dim Proxy = Z
 instance Vector Proxy a where
   construct = Fun Proxy
   inspect _ = unFun
-
