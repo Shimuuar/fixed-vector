@@ -134,7 +134,7 @@ module Data.Vector.Fixed.Cont (
   , gunfold
   ) where
 
-import Control.Applicative (Applicative(..),(<$>),(<|>))
+import Control.Applicative (Applicative(..),(<$>),(<|>),Const(..))
 import Control.Monad       (liftM)
 import Data.Coerce
 import Data.Complex        (Complex(..))
@@ -241,7 +241,7 @@ instance Arity n => Monad (Fun n a) where
   {-# INLINE (>>=)  #-}
 
 
-data    T_ap   a b c n = T_ap (Fn n a b) (Fn n a c)
+data T_ap a b c n = T_ap (Fn n a b) (Fn n a c)
 
 
 
@@ -355,8 +355,7 @@ apGunfold f (T_gunfold c) = T_gunfold $ f c
 {-# INLINE apGunfold #-}
 
 
-newtype T_Flip    a b n = T_Flip (Fun n a b)
-newtype T_Counter n     = T_Counter Int
+newtype T_Flip a b n = T_Flip (Fun n a b)
 
 
 
@@ -560,21 +559,21 @@ empty = ContVec (\(Fun r) -> r)
 fromList :: Arity n => [a] -> ContVec n a
 {-# INLINE fromList #-}
 fromList xs =
-  apply step (T_flist xs)
+  apply step (Const xs)
   where
-    step (T_flist []    ) = error "Data.Vector.Fixed.Cont.fromList: too few elements"
-    step (T_flist (a:as)) = (a, T_flist as)
+    step (Const []    ) = error "Data.Vector.Fixed.Cont.fromList: too few elements"
+    step (Const (a:as)) = (a, Const as)
 
 -- | Same as 'fromList' bu throws error is list doesn't have same
 --   length as vector.
 fromList' :: forall n a. Arity n => [a] -> ContVec n a
 {-# INLINE fromList' #-}
 fromList' xs = ContVec $ \(Fun fun) ->
-  let (r,rest) = applyFun step (T_flist xs :: T_flist a n) fun
-      step (T_flist []    ) = error "Data.Vector.Fixed.Cont.fromList': too few elements"
-      step (T_flist (a:as)) = (a, T_flist as)
+  let (r,rest) = applyFun step (Const xs :: Const [a] n) fun
+      step (Const []    ) = error "Data.Vector.Fixed.Cont.fromList': too few elements"
+      step (Const (a:as)) = (a, Const as)
   in case rest of
-       T_flist [] -> r
+       Const [] -> r
        _          -> error "Data.Vector.Fixed.Cont.fromList': too many elements"
 
 -- | Convert list to continuation-based vector. Will fail with
@@ -582,15 +581,12 @@ fromList' xs = ContVec $ \(Fun fun) ->
 fromListM :: forall n a. Arity n => [a] -> Maybe (ContVec n a)
 {-# INLINE fromListM #-}
 fromListM xs = do
-  (v,rest) <- applyFunM step (T_flist xs :: T_flist a n)
-  case rest of
-    T_flist [] -> return v
-    _          -> Nothing
+  (v,Const []) <- applyFunM step (Const xs :: Const [a] n)
+  return v
   where
-    step (T_flist []    ) = Nothing
-    step (T_flist (a:as)) = return (a, T_flist as)
+    step (Const []    ) = Nothing
+    step (Const (a:as)) = return (a, Const as)
 
-newtype T_flist a n = T_flist [a]
 
 
 -- | Convert vector to the list
@@ -615,34 +611,32 @@ replicateM act
 generate :: (Arity n) => (Int -> a) -> ContVec n a
 {-# INLINE generate #-}
 generate f =
-  apply (\(T_Counter n) -> (f n, T_Counter (n + 1)))
-        (T_Counter 0)
+  apply (\(Const n) -> (f n, Const (n + 1)))
+        (Const 0)
 
 -- | Generate vector from monadic function which maps element's index
 --   to its value.
 generateM :: (Monad m, Arity n) => (Int -> m a) -> m (ContVec n a)
 {-# INLINE generateM #-}
 generateM f =
-  applyM (\(T_Counter n) -> do { a <- f n; return (a, T_Counter (n + 1)) } )
-         (T_Counter 0)
+  applyM (\(Const n) -> do { a <- f n; return (a, Const (n + 1)) } )
+         (Const 0)
 
 
 -- | Unfold vector.
 unfoldr :: Arity n => (b -> (a,b)) -> b -> ContVec n a
 {-# INLINE unfoldr #-}
 unfoldr f b0 =
-  apply (\(T_unfoldr b) -> let (a,b') = f b in (a, T_unfoldr b'))
-        (T_unfoldr b0)
-
-newtype T_unfoldr b n = T_unfoldr b
+  apply (\(Const b) -> let (a,b') = f b in (a, Const b'))
+        (Const b0)
 
 
 -- | Unit vector along Nth axis.
 basis :: (Num a, Arity n) => Int -> ContVec n a
 {-# INLINE basis #-}
 basis n0 =
-  apply (\(T_Counter n) -> (if n == 0 then 1 else 0, T_Counter (n - 1)))
-        (T_Counter n0)
+  apply (\(Const n) -> (if n == 0 then 1 else 0, Const (n - 1)))
+        (Const n0)
 
 
 
@@ -782,9 +776,9 @@ distribute f0
   where
     -- It's not possible to use ContVec as accumulator type since `head'
     -- require Arity constraint on `k'. So we use plain lists
-    step (T_distribute f) = ( fmap (\(x:_) -> x) f
-                            , T_distribute $ fmap (\(_:x) -> x) f)
-    start = T_distribute (fmap toList f0)
+    step (Const f) = ( fmap (\(x:_) -> x) f
+                     , Const $ fmap (\(_:x) -> x) f)
+    start = Const (fmap toList f0)
 
 collect :: (Functor f, Arity n) => (a -> ContVec n b) -> f a -> ContVec n (f b)
 collect f = distribute . fmap f
@@ -796,15 +790,13 @@ distributeM :: (Monad m, Arity n) => m (ContVec n a) -> ContVec n (m a)
 distributeM f0
   = apply step start
   where
-    step (T_distribute f) = ( liftM (\(x:_) -> x) f
-                            , T_distribute $ liftM (\(_:x) -> x) f)
-    start = T_distribute (liftM toList f0)
+    step (Const f) = ( liftM (\(x:_) -> x) f
+                     , Const $ liftM (\(_:x) -> x) f)
+    start = Const (liftM toList f0)
 
 collectM :: (Monad m, Arity n) => (a -> ContVec n b) -> m a -> ContVec n (m b)
 collectM f = distributeM . liftM f
 {-# INLINE collectM #-}
-
-newtype T_distribute a f n = T_distribute (f [a])
 
 
 -- | /O(1)/ Tail of vector.
@@ -906,11 +898,9 @@ izipWithF f (Fun g0) =
 makeList :: Arity n => Fun n a [a]
 {-# INLINE makeList #-}
 makeList = accum
-    (\(T_mkList xs) x -> T_mkList (xs . (x:)))
-    (\(T_mkList xs) -> xs [])
-    (T_mkList id)
-
-newtype T_mkList a n = T_mkList ([a] -> [a])
+    (\(Const xs) x -> Const (xs . (x:)))
+    (\(Const xs) -> xs [])
+    (Const id)
 
 data T_izip a c r n = T_izip Int [a] (Fn n c r)
 
@@ -941,11 +931,9 @@ head :: Arity (S n) => ContVec (S n) a -> a
 {-# INLINE head #-}
 head
   = runContVec
-  $ accum (\(T_head m) a -> T_head $ case m of { Nothing -> Just a; x -> x })
-          (\(T_head (Just x)) -> x)
-          (T_head Nothing)
-
-data T_head a n = T_head (Maybe a)
+  $ accum (\(Const m) a -> Const $ case m of { Nothing -> Just a; x -> x })
+          (\(Const (Just x)) -> x)
+          (Const Nothing)
 
 
 -- | /O(n)/ Get value at specified index.
@@ -954,18 +942,16 @@ index :: Arity n => Int -> ContVec n a -> a
 index n
   | n < 0     = error "Data.Vector.Fixed.Cont.index: index out of range"
   | otherwise = runContVec $ accum
-     (\(T_Index x) a -> T_Index $ case x of
-                          Left  0 -> Right a
-                          Left  i -> Left (i - 1)
-                          r       -> r
+     (\(Const x) a -> Const $ case x of
+                        Left  0 -> Right a
+                        Left  i -> Left (i - 1)
+                        r       -> r
      )
-     (\(T_Index x) -> case x of
-                        Left  _ -> error "Data.Vector.Fixed.index: index out of range"
-                        Right a -> a
+     (\(Const x) -> case x of
+                      Left  _ -> error "Data.Vector.Fixed.index: index out of range"
+                      Right a -> a
      )
-     (T_Index (Left n))
-
-newtype T_Index a n = T_Index (Either Int a)
+     (Const (Left n))
 
 
 -- | Twan van Laarhoven lens for continuation based vector
@@ -1049,11 +1035,9 @@ foldl1 :: (Arity (S n)) => (a -> a -> a) -> ContVec (S n) a -> a
 {-# INLINE foldl1 #-}
 foldl1 f
   = runContVec
-  $ accum (\(T_foldl1 r       ) a -> T_foldl1 $ Just $ maybe a (flip f a) r)
-          (\(T_foldl1 (Just x))   -> x)
-          (T_foldl1 Nothing)
-
-newtype T_foldl1 a n = T_foldl1 (Maybe a)
+  $ accum (\(Const r       ) a -> Const $ Just $ maybe a (flip f a) r)
+          (\(Const (Just x))   -> x)
+          (Const Nothing)
 
 -- | Right fold over continuation vector
 foldr :: Arity n => (a -> b -> b) -> b -> ContVec n a -> b
