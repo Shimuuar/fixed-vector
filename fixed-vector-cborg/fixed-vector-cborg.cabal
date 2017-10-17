@@ -39,7 +39,7 @@ Test-Suite test
   Build-Depends:
     base >=3 && <5,
     fixed-vector,
-    fixed-vector-binary,
+    fixed-vector-cborg,
     serialise,
     tasty,
     tasty-quickcheck
