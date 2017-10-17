@@ -1,4 +1,4 @@
-Name:           fixed-vector-binary
+Name:           fixed-vector-cborg
 Version:        0.6.0.0
 Synopsis:       Binary instances for fixed-vector
 Description:

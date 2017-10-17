@@ -46,4 +46,4 @@ script:
  - sh test-package.sh fixed-vector
  - sh test-package.sh fixed-vector-cereal
  - sh test-package.sh fixed-vector-binary
- - sh test-package.sh fixed-vector-cbor
+ - sh test-package.sh fixed-vector-cborg
