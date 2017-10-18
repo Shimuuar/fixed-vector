@@ -36,8 +36,8 @@ import Control.Monad.ST
 import Control.Monad.Primitive
 import Data.Typeable  (Proxy(..))
 import GHC.TypeLits
-import Data.Vector.Fixed.Cont (Dim,PeanoNum(..),Peano,Arity,Fun(..),Vector(..),ContVec,arity,apply,accum)
-import Prelude hiding (read)
+import Data.Vector.Fixed.Cont (Dim,PeanoNum(..),Peano,Arity,Fun(..),Vector(..),ContVec,arity,apply,accum,length)
+import Prelude hiding (read,length)
 
 
 ----------------------------------------------------------------
@@ -76,7 +76,7 @@ class (Arity (DimM v)) => MVector v a where
 
 -- | Length of mutable vector. Function doesn't evaluate its argument.
 lengthM :: forall v s a. (Arity (DimM v)) => v s a -> Int
-lengthM _ = arity (Proxy :: Proxy (Peano (DimM v)))
+lengthM _ = arity (Proxy :: Proxy (DimM v))
 
 -- | Create copy of vector.
 clone :: (PrimMonad m, MVector v a) => v (PrimState m) a -> m (v (PrimState m) a)
@@ -114,10 +114,7 @@ class (Dim v ~ DimM (Mutable v), MVector (Mutable v) a) => IVector v a where
 
 -- | Length of immutable vector. Function doesn't evaluate its argument.
 lengthI :: IVector v a => v a -> Int
-lengthI = lengthM . cast
-  where
-    cast :: v a -> Mutable v () a
-    cast _ = undefined
+lengthI = length
 
 index :: IVector v a => v a -> Int -> a
 {-# INLINE index #-}

@@ -99,12 +99,12 @@ instance (Arity n) => MVector (MVec n) a where
   overlaps (MVec v) (MVec u) = sameMutableArray v u
   {-# INLINE overlaps    #-}
   new = do
-    v <- newArray (arity (Proxy :: Proxy (C.Peano n))) uninitialised
+    v <- newArray (arity (Proxy :: Proxy n)) uninitialised
     return $ MVec v
   {-# INLINE new         #-}
   copy = move
   {-# INLINE copy        #-}
-  move (MVec dst) (MVec src) = copyMutableArray dst 0 src 0 (arity (Proxy :: Proxy (C.Peano n)))
+  move (MVec dst) (MVec src) = copyMutableArray dst 0 src 0 (arity (Proxy :: Proxy n))
   {-# INLINE move        #-}
   unsafeRead  (MVec v) i   = readArray  v i
   {-# INLINE unsafeRead  #-}

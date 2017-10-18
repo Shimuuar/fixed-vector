@@ -106,23 +106,23 @@ instance (Arity n, Storable a) => MVector (MVec n) a where
       between x y z = x >= y && x < z
       p = getPtr fp
       q = getPtr fq
-      n = arity (Proxy :: Proxy (C.Peano n))
+      n = arity (Proxy :: Proxy n)
   {-# INLINE overlaps    #-}
   new = unsafePrimToPrim $ do
-    fp <- mallocVector $ arity (Proxy :: Proxy (C.Peano n))
+    fp <- mallocVector $ arity (Proxy :: Proxy n)
     return $ MVec fp
   {-# INLINE new         #-}
   copy (MVec fp) (MVec fq)
     = unsafePrimToPrim
     $ withForeignPtr fp $ \p ->
       withForeignPtr fq $ \q ->
-      copyArray p q (arity (Proxy :: Proxy (C.Peano n)))
+      copyArray p q (arity (Proxy :: Proxy n))
   {-# INLINE copy        #-}
   move (MVec fp) (MVec fq)
     = unsafePrimToPrim
     $ withForeignPtr fp $ \p ->
       withForeignPtr fq $ \q ->
-      moveArray p q (arity (Proxy :: Proxy (C.Peano n)))
+      moveArray p q (arity (Proxy :: Proxy n))
   {-# INLINE move        #-}
   unsafeRead (MVec fp) i
     = unsafePrimToPrim
@@ -171,17 +171,17 @@ instance (Arity n, Storable a, Monoid a) => Monoid (Vec n a) where
   {-# INLINE mappend #-}
 
 instance (Arity n, Storable a) => Storable (Vec n a) where
-  sizeOf    _ = arity  (Proxy :: Proxy (C.Peano n))
+  sizeOf    _ = arity  (Proxy :: Proxy n)
               * sizeOf (undefined :: a)
   alignment _ = alignment (undefined :: a)
   peek ptr = do
     arr@(MVec fp) <- new
     withForeignPtr fp $ \p ->
-      moveArray p (castPtr ptr) (arity (Proxy :: Proxy (C.Peano n)))
+      moveArray p (castPtr ptr) (arity (Proxy :: Proxy n))
     unsafeFreeze arr
   poke ptr (Vec fp)
     = withForeignPtr fp $ \p ->
-      moveArray (castPtr ptr) p (arity (Proxy :: Proxy (C.Peano n)))
+      moveArray (castPtr ptr) p (arity (Proxy :: Proxy n))
 
 instance (Typeable n, Arity n, Storable a, Data a) => Data (Vec n a) where
   gfoldl       = C.gfoldl

@@ -26,6 +26,7 @@ module Data.Vector.Fixed.Cont (
   , Fun(..)
   , Arity
   , ArityPeano(..)
+  , arity
   , apply
   , applyM
     -- ** Combinators
@@ -209,9 +210,11 @@ data T_ap a b c n = T_ap (Fn n a b) (Fn n a c)
 ----------------------------------------------------------------
 
 class ( ArityPeano (Peano n)
+      , KnownNat n
       , Peano (n+1) ~ 'S (Peano n)
       ) => Arity (n :: Nat)
 instance ( ArityPeano (Peano n)
+         , KnownNat n
          , Peano (n+1) ~ 'S (Peano n)
          ) => Arity n
 
@@ -237,8 +240,6 @@ class ArityPeano n where
               => (forall k. t ('S k) -> m (a, t k)) -- ^ Get value to apply to function
               -> t n                                -- ^ Initial value
               -> m (CVecPeano n a, t 'Z)
-  -- | Arity of function.
-  arity :: proxy n -> Int
   -- | Reverse order of parameters.
   reverseF :: Fun n a b -> Fun n a b
   -- | Worker function for 'gunfold'
@@ -273,15 +274,18 @@ applyM :: (Monad m, Arity n)
 applyM f t = do (CVecPeano v,_) <- applyFunM f t
                 return (ContVec v)
 
+-- | Arity of function.
+arity :: KnownNat n => proxy n -> Int
+{-# INLINE arity #-}
+arity = fromIntegral . natVal
+
 instance ArityPeano 'Z where
   accum     _ g t = Fun $ g t
   applyFun  _ t h = (h,t)
   applyFunM _ t   = return (CVecPeano unFun, t)
-  arity  _ = 0
   {-# INLINE accum     #-}
   {-# INLINE applyFun  #-}
   {-# INLINE applyFunM #-}
-  {-# INLINE arity     #-}
   reverseF = id
   gunfoldF _ (T_gunfold c) = c
   {-# INLINE reverseF    #-}
@@ -293,11 +297,9 @@ instance ArityPeano n => ArityPeano ('S n) where
   applyFunM f t   = do (a,t')   <- f t
                        (vec,tZ) <- applyFunM f t'
                        return (consPeano a vec , tZ)
-  arity    _ = 1 + arity (undefined :: Proxy n)
   {-# INLINE accum     #-}
   {-# INLINE applyFun  #-}
   {-# INLINE applyFunM #-}
-  {-# INLINE arity     #-}
   reverseF f   = Fun $ \a -> unFun (reverseF $ apLast f a)
   gunfoldF f c = gunfoldF f (apGunfold f c)
   {-# INLINE reverseF    #-}
@@ -410,7 +412,7 @@ class (Vector (v n) a, Dim (v n) ~ n) => VectorN v n a
 -- | Length of vector. Function doesn't evaluate its argument.
 length :: forall v a. Arity (Dim v) => v a -> Int
 {-# INLINE length #-}
-length _ = arity (Proxy :: Proxy (Peano (Dim v)))
+length _ = arity (Proxy :: Proxy (Dim v))
 
 
 ----------------------------------------------------------------

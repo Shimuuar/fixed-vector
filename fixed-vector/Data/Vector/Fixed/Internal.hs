@@ -616,7 +616,7 @@ defaultAlignemnt _ = alignment (undefined :: a)
 defaultSizeOf
   :: forall a v. (Storable a, Vector v a)
   => v a -> Int
-defaultSizeOf _ = sizeOf (undefined :: a) * C.arity (Proxy :: Proxy (C.Peano (Dim v)))
+defaultSizeOf _ = sizeOf (undefined :: a) * C.arity (Proxy :: Proxy (Dim v))
 {-# INLINE defaultSizeOf #-}
 
 -- | Default implementation of 'peek' for 'Storable' type class for
