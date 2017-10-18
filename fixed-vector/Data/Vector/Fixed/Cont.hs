@@ -167,7 +167,7 @@ type family Add (n :: PeanoNum) (m :: PeanoNum) :: PeanoNum where
 ----------------------------------------------------------------
 
 -- | Type family for n-ary functions.
-type family   Fn (n :: PeanoNum) (a :: *) (b :: *) where
+type family Fn (n :: PeanoNum) (a :: *) (b :: *) where
   Fn 'Z     a b = b
   Fn ('S n) a b = a -> Fn n a b
 
@@ -337,25 +337,20 @@ uncurryFirst = coerce
 -- | Curry last parameter of n-ary function
 curryLast :: ArityPeano n => Fun ('S n) a b -> Fun n a (a -> b)
 {-# INLINE curryLast #-}
--- FIXME: prove
+-- NOTE: This function is essentially rearrangement of newtypes. Since
+--       Fn is closed type family it couldn't be extended and it's
+--       quite straightforward to show that both types have same
+--       representation. Unfortunately GHC cannot infer it so we have
+--       to unsafe-coerce it.
 curryLast = unsafeCoerce
--- curryLast (Fun f0) = accum (\(T_fun f) a -> T_fun (f a))
---                            (\(T_fun f)   -> f)
---                            (T_fun f0)
--- newtype T_fun a b n = T_fun (Fn ('S n) a b)
+
 
 -- | Curry /n/ first parameters of n-ary function
 curryMany :: forall n k a b. ArityPeano n
           => Fun (Add n k) a b -> Fun n a (Fun k a b)
 {-# INLINE curryMany #-}
--- FIXME: prove
+-- NOTE: It's same as curryLast
 curryMany = unsafeCoerce
--- curryMany (Fun f0) = accum
---   (\(T_curry f) a -> T_curry (f a))
---   (\(T_curry f)   -> Fun f)
---   ( T_curry f0 :: T_curry a b k n)
--- newtype T_curry a b k n = T_curry (Fn (Add n k) a b)
-
 
 
 -- | Apply last parameter to function. Unlike 'apFun' we need to
