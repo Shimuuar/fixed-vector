@@ -1,12 +1,12 @@
-{-# LANGUAGE PolyKinds #-}
-{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeOperators         #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 -- |
 -- Generic API for vectors with fixed length.
@@ -150,6 +150,7 @@ module Data.Vector.Fixed (
   , fromFoldable
     -- * Data types
   , VecList(..)
+  , VecPeano(..)
   , Only(..)
   , Empty(..)
     -- ** Tuple synonyms
@@ -253,36 +254,35 @@ import Prelude (Char)
 
 -- | Vector based on the lists. Not very useful by itself but is
 --   necessary for implementation.
-data VecList n a where
-  Nil  :: VecList 0 a
-  Cons :: a -> VecList (n - 1) a -> VecList n a
+newtype VecList (n :: Nat) a = VecList (VecPeano (C.Peano n) a)
+
+data VecPeano (n :: PeanoNum) a where
+  Nil  :: VecPeano 'Z a
+  Cons :: a -> VecPeano n a -> VecPeano ('S n) a
   deriving (Typeable)
 
 instance (Arity n, NFData a) => NFData (VecList n a) where
   rnf = defaultRnf
   {-# INLINE rnf #-}
 
--- Vector instance
 type instance Dim (VecList n) = n
 
 instance Arity n => Vector (VecList n) a where
-  construct = undefined
-  inspect   = undefined
---   construct = accum
---     (\(T_List f) a -> T_List (f . Cons a))
---     (\(T_List f)   -> f Nil)
---     (T_List id :: T_List a n n)
---   inspect v = inspect $ apply step (Flip v)
---     where
---       step :: Flip VecList a ('S k)  -> (a, Flip VecList a k)
---       step (Flip (Cons a xs)) = (a, Flip xs)
---   {-# INLINE construct #-}
---   {-# INLINE inspect   #-}
--- instance Arity n => VectorN VecList n a
+  construct = fmap VecList $ accum
+    (\(T_List f) a -> T_List (f . Cons a))
+    (\(T_List f)   -> f Nil)
+    (T_List id :: T_List a (C.Peano n) (C.Peano n))
+  inspect (VecList v)
+    = inspect (apply step (Flip v) :: C.ContVec n a)
+    where
+      step :: Flip VecPeano a ('S k)  -> (a, Flip VecPeano a k)
+      step (Flip (Cons a xs)) = (a, Flip xs)
+  {-# INLINE construct #-}
+  {-# INLINE inspect   #-}
+instance Arity n => VectorN VecList n a
 
 newtype Flip f a n = Flip (f n a)
-
-newtype T_List a n k = T_List (VecList k a -> VecList n a)
+newtype T_List a n k = T_List (VecPeano k a -> VecPeano n a)
 
 
 -- Standard instances
