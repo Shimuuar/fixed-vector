@@ -29,7 +29,7 @@ import qualified Data.Traversable as T
 import Foreign.Storable (Storable(..))
 import GHC.TypeLits
 import Prelude ( Show(..),Eq(..),Ord(..),Functor(..),Monad(..)
-               , (++),($),($!),undefined,error,seq)
+               , (++),($),($!),error,seq)
 
 import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable
