@@ -8,6 +8,7 @@ import           Codec.Serialise
 import           Codec.CBOR.Encoding           (Encoding,encodeListLen,encodeNull)
 import           Codec.CBOR.Decoding           (Decoder,decodeListLenOf,decodeNull)
 import           Data.Monoid                   ((<>))
+import           Data.Typeable                 (Proxy(..))
 
 import           Data.Vector.Fixed             (Arity)
 import qualified Data.Vector.Fixed           as F
@@ -59,5 +60,5 @@ encodeFixedVector v = encodeListLen (fromIntegral $ F.length v)
 decodeFixedVector :: forall v s a. (F.Vector v a, Serialise a) => Decoder s (v a)
 {-# INLINE decodeFixedVector #-}
 decodeFixedVector = do
-  decodeListLenOf (fromIntegral $ arity (undefined :: Dim v))
+  decodeListLenOf (fromIntegral $ arity (Proxy :: Proxy (Dim v)))
   F.replicateM decode

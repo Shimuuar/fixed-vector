@@ -5,7 +5,6 @@ import Test.Tasty.QuickCheck as QC
 
 import Data.Typeable
 import Data.Binary
-import           Data.Vector.Fixed             (N2,N3,N4)
 import qualified Data.Vector.Fixed           as F
 import qualified Data.Vector.Fixed.Unboxed   as U
 import qualified Data.Vector.Fixed.Boxed     as B

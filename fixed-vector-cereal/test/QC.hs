@@ -5,7 +5,6 @@ import Test.Tasty.QuickCheck as QC
 
 import Data.Typeable
 import Data.Serialize
-import           Data.Vector.Fixed             (N2,N3,N4)
 import qualified Data.Vector.Fixed           as F
 import qualified Data.Vector.Fixed.Unboxed   as U
 import qualified Data.Vector.Fixed.Boxed     as B
@@ -17,25 +16,25 @@ import           Data.Vector.Fixed.Instances.Cereal ()
 
 tests = testGroup "cereal"
   [ testTagged p_serialize (T :: T (F.Only  Int))
-  , testTagged p_serialize (T :: T (F.VecList N2 Int))
-  , testTagged p_serialize (T :: T (F.VecList N3 Int))
-  , testTagged p_serialize (T :: T (F.VecList N4 Int))
+  , testTagged p_serialize (T :: T (F.VecList 2 Int))
+  , testTagged p_serialize (T :: T (F.VecList 3 Int))
+  , testTagged p_serialize (T :: T (F.VecList 4 Int))
     --
-  , testTagged p_serialize (T :: T (U.Vec N2 Int))
-  , testTagged p_serialize (T :: T (U.Vec N3 Int))
-  , testTagged p_serialize (T :: T (U.Vec N4 Int))
+  , testTagged p_serialize (T :: T (U.Vec 2 Int))
+  , testTagged p_serialize (T :: T (U.Vec 3 Int))
+  , testTagged p_serialize (T :: T (U.Vec 4 Int))
     --
-  , testTagged p_serialize (T :: T (B.Vec N2 Int))
-  , testTagged p_serialize (T :: T (B.Vec N3 Int))
-  , testTagged p_serialize (T :: T (B.Vec N4 Int))
+  , testTagged p_serialize (T :: T (B.Vec 2 Int))
+  , testTagged p_serialize (T :: T (B.Vec 3 Int))
+  , testTagged p_serialize (T :: T (B.Vec 4 Int))
     --
-  , testTagged p_serialize (T :: T (S.Vec N2 Int))
-  , testTagged p_serialize (T :: T (S.Vec N3 Int))
-  , testTagged p_serialize (T :: T (S.Vec N4 Int))
+  , testTagged p_serialize (T :: T (S.Vec 2 Int))
+  , testTagged p_serialize (T :: T (S.Vec 3 Int))
+  , testTagged p_serialize (T :: T (S.Vec 4 Int))
     --
-  , testTagged p_serialize (T :: T (P.Vec N2 Int))
-  , testTagged p_serialize (T :: T (P.Vec N3 Int))
-  , testTagged p_serialize (T :: T (P.Vec N4 Int))
+  , testTagged p_serialize (T :: T (P.Vec 2 Int))
+  , testTagged p_serialize (T :: T (P.Vec 3 Int))
+  , testTagged p_serialize (T :: T (P.Vec 4 Int))
   ]
 
 p_serialize :: (Serialize a, Arbitrary a, Eq a) => T a -> a -> Bool
