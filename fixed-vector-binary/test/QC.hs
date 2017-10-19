@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 import Test.Tasty
 import Test.Tasty.QuickCheck as QC
@@ -16,25 +17,25 @@ import           Data.Vector.Fixed.Instances.Binary ()
 
 tests = testGroup "cereal"
   [ testTagged p_serialize (T :: T (F.Only  Int))
-  , testTagged p_serialize (T :: T (F.VecList N2 Int))
-  , testTagged p_serialize (T :: T (F.VecList N3 Int))
-  , testTagged p_serialize (T :: T (F.VecList N4 Int))
+  , testTagged p_serialize (T :: T (F.VecList 2 Int))
+  , testTagged p_serialize (T :: T (F.VecList 3 Int))
+  , testTagged p_serialize (T :: T (F.VecList 4 Int))
     --
-  , testTagged p_serialize (T :: T (U.Vec N2 Int))
-  , testTagged p_serialize (T :: T (U.Vec N3 Int))
-  , testTagged p_serialize (T :: T (U.Vec N4 Int))
+  , testTagged p_serialize (T :: T (U.Vec 2 Int))
+  , testTagged p_serialize (T :: T (U.Vec 3 Int))
+  , testTagged p_serialize (T :: T (U.Vec 4 Int))
     --
-  , testTagged p_serialize (T :: T (B.Vec N2 Int))
-  , testTagged p_serialize (T :: T (B.Vec N3 Int))
-  , testTagged p_serialize (T :: T (B.Vec N4 Int))
+  , testTagged p_serialize (T :: T (B.Vec 2 Int))
+  , testTagged p_serialize (T :: T (B.Vec 3 Int))
+  , testTagged p_serialize (T :: T (B.Vec 4 Int))
     --
-  , testTagged p_serialize (T :: T (S.Vec N2 Int))
-  , testTagged p_serialize (T :: T (S.Vec N3 Int))
-  , testTagged p_serialize (T :: T (S.Vec N4 Int))
+  , testTagged p_serialize (T :: T (S.Vec 2 Int))
+  , testTagged p_serialize (T :: T (S.Vec 3 Int))
+  , testTagged p_serialize (T :: T (S.Vec 4 Int))
     --
-  , testTagged p_serialize (T :: T (P.Vec N2 Int))
-  , testTagged p_serialize (T :: T (P.Vec N3 Int))
-  , testTagged p_serialize (T :: T (P.Vec N4 Int))
+  , testTagged p_serialize (T :: T (P.Vec 2 Int))
+  , testTagged p_serialize (T :: T (P.Vec 3 Int))
+  , testTagged p_serialize (T :: T (P.Vec 4 Int))
   ]
 
 p_serialize :: (Binary a, Arbitrary a, Eq a) => T a -> a -> Bool

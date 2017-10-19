@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 import Test.Tasty
 import Test.Tasty.QuickCheck as QC
