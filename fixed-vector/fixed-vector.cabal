@@ -71,7 +71,6 @@ Library
     Data.Vector.Fixed.Cont
     Data.Vector.Fixed
     Data.Vector.Fixed.Generic
---    Data.Vector.Fixed.Monomorphic
     -- Arrays
     Data.Vector.Fixed.Mutable
     Data.Vector.Fixed.Boxed
