@@ -36,42 +36,6 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
 -- Constructors
 ----------------------------------------------------------------
 
--- -- | Variadic vector constructor. Resulting vector should be converted
--- --   from 'ContVec' using 'vector' function.  For example:
--- --
--- -- >>> vector $ mkN 'a' 'b' 'c' :: (Char,Char,Char)
--- -- ('a','b','c')
--- mkN :: Make (S Z) a r => a -> r
--- mkN = unGo $ make id
--- {-# INLINE mkN #-}
-
-
--- -- | Type class for variadic vector constructors.
--- class Make n a r where
---   make :: (ContVec Z a -> ContVec n a) -> r
-
--- instance (a'~a, Make (S n) a r) => Make n a' (a -> r) where
---   make f a = make (C.cons a . f)
---   {-# INLINE make #-}
-
--- instance Arity n =>  Make n a (ContVec n a) where
---   make f = C.reverse $ f C.empty
---   {-# INLINE make #-}
-
--- newtype Go r = Go { unGo :: r }
-
--- instance Make Z a r => Make Z a (Go r) where
---   make f = Go $ make f
---   {-# INLINE make #-}
-
--- -- | Cons value to continuation based vector.
--- (<|) :: a -> ContVec n a -> ContVec (S n) a
--- (<|) = C.cons
--- {-# INLINE (<|) #-}
-
--- infixr 1 <|
-
-
 mk0 :: (Vector v a, Dim v ~ 0) => v a
 mk0 = vector C.empty
 {-# INLINE mk0 #-}

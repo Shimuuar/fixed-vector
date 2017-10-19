@@ -59,10 +59,6 @@ module Data.Vector.Fixed (
   , ContVec
   , empty
   , vector
-  -- , (<|)
-    -- ** Variadic function
-  -- , Make
-  -- , mkN
     -- ** Functions
   , replicate
   , replicateM
