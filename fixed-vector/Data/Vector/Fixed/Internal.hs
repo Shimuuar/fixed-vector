@@ -24,7 +24,8 @@ import GHC.TypeLits
 
 import           Data.Vector.Fixed.Cont     (Vector(..),Dim,Arity,vector,Add)
 import qualified Data.Vector.Fixed.Cont as C
-
+-- Needed for doctest
+import           Data.Vector.Fixed.Cont     (ContVec)
 
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
                       , foldl,foldr,foldl1,length,sum,reverse,scanl,scanl1
@@ -35,6 +36,14 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
 ----------------------------------------------------------------
 -- Constructors
 ----------------------------------------------------------------
+
+-- | Cons value to continuation based vector.
+(<|) :: Arity n => a -> ContVec n a -> ContVec (n + 1) a
+(<|) = C.cons
+{-# INLINE (<|) #-}
+
+infixr 5 <|
+
 
 mk0 :: (Vector v a, Dim v ~ 0) => v a
 mk0 = vector C.empty
