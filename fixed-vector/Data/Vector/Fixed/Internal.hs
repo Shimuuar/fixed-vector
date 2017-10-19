@@ -11,6 +11,7 @@ module Data.Vector.Fixed.Internal where
 
 import Control.Applicative (Applicative)
 import Control.Monad       (liftM)
+import Control.DeepSeq     (NFData(..))
 import Data.Monoid         (Monoid(..))
 import qualified Data.Foldable    as T
 import qualified Data.Traversable as T
@@ -623,6 +624,9 @@ defaultPoke :: (Storable a, Vector v a) => Ptr (v a) -> v a -> IO ()
 defaultPoke ptr
   = imapM_ (pokeElemOff (castPtr ptr))
 
+-- | Default implementation of 'rnf' from `NFData' type class
+defaultRnf :: (NFData a, Vector v a) => v a -> ()
+defaultRnf = foldl (\() a -> rnf a) ()
 
 ----------------------------------------------------------------
 

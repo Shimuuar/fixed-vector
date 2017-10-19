@@ -145,6 +145,8 @@ module Data.Vector.Fixed (
   , defaultSizeOf
   , defaultPeek
   , defaultPoke
+    -- * NFData
+  , defaultRnf
     -- * Conversion
   , convert
   , toList
@@ -263,7 +265,7 @@ data VecList n a where
   deriving (Typeable)
 
 instance (Arity n, NFData a) => NFData (VecList n a) where
-  rnf = foldl (\r a -> r `seq` rnf a) ()
+  rnf = defaultRnf
   {-# INLINE rnf #-}
 
 -- Vector instance
