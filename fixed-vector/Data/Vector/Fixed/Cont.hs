@@ -1,3 +1,4 @@
+{-# LANGUAGE ConstraintKinds       #-}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE EmptyDataDecls        #-}
@@ -209,14 +210,10 @@ data T_ap a b c n = T_ap (Fn n a b) (Fn n a c)
 -- Generic operations of N-ary functions
 ----------------------------------------------------------------
 
-class ( ArityPeano (Peano n)
-      , KnownNat n
-      , Peano (n+1) ~ 'S (Peano n)
-      ) => Arity (n :: Nat)
-instance ( ArityPeano (Peano n)
-         , KnownNat n
-         , Peano (n+1) ~ 'S (Peano n)
-         ) => Arity n
+type Arity n = ( ArityPeano (Peano n)
+               , KnownNat n
+               , Peano (n+1) ~ 'S (Peano n)
+               )
 
 -- | Type class for handling /n/-ary functions.
 class ArityPeano n where

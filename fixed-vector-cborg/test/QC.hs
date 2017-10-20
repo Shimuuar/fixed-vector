@@ -1,5 +1,7 @@
 {-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies        #-}
 import Test.Tasty
 import Test.Tasty.QuickCheck as QC
 
