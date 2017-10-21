@@ -6,6 +6,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE StandaloneDeriving    #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE UndecidableInstances  #-}
@@ -350,7 +351,12 @@ instance (Storable a) => Storable (Only a) where
 
 
 -- | Empty tuple.
-data Empty a = Empty deriving (Typeable, Data)
+data Empty a = Empty
+  deriving (Show,Eq,Ord, Data)
+-- GHC7.10 wants standalone deriving for some reason:
+-- >    No instance for (Typeable a)
+-- >      arising from the 'deriving' clause of a data type declaration
+deriving instance Typeable a => Typeable (Empty a)
 
 instance Functor Empty where
   fmap _ Empty = Empty
