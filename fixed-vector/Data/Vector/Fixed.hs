@@ -175,7 +175,7 @@ import Data.Vector.Fixed.Cont     (Vector(..),VectorN,Dim,length,ContVec,PeanoNu
 import qualified Data.Vector.Fixed.Cont as C
 import Data.Vector.Fixed.Internal
 
-import Prelude (Show(..),Eq(..),Ord(..),Functor(..),id,(.),($),seq,undefined)
+import Prelude (Show(..),Eq(..),Ord(..),Functor(..),id,(.),($),undefined)
 -- Needed for doctest
 import Prelude (Char)
 

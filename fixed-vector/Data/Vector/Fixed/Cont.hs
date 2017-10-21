@@ -126,7 +126,7 @@ module Data.Vector.Fixed.Cont (
   , gunfold
   ) where
 
-import Control.Applicative (Applicative(..),(<|>))
+import Control.Applicative ((<|>))
 import Control.Monad       (liftM)
 import Data.Coerce
 import Data.Complex        (Complex(..))

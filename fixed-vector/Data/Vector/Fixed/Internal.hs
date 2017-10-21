@@ -11,10 +11,8 @@
 -- Implementation of fixed-vectors
 module Data.Vector.Fixed.Internal where
 
-import Control.Applicative (Applicative)
 import Control.Monad       (liftM)
 import Control.DeepSeq     (NFData(..))
-import Data.Monoid         (Monoid(..))
 import Data.Typeable       (Proxy(..))
 import qualified Data.Foldable    as T
 import qualified Data.Traversable as T
