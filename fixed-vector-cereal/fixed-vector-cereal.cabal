@@ -1,5 +1,5 @@
 Name:           fixed-vector-cereal
-Version:        0.6.0.0
+Version:        1.0.0.0
 Synopsis:       Cereal instances for fixed-vector
 Description:
   Cereal instances for fixed-vector
@@ -24,10 +24,9 @@ source-repository head
 
 Library
   Ghc-options:          -Wall
-  Build-Depends:
-    base         >=3 && <5,
-    fixed-vector >= 0.6,
-    cereal
+  Build-Depends:        base         >=4.8 && <5
+                      , fixed-vector >=1.0
+                      , cereal
   Exposed-modules:
     Data.Vector.Fixed.Instances.Cereal
 

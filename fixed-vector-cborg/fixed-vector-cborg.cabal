@@ -1,5 +1,5 @@
 Name:           fixed-vector-cborg
-Version:        0.6.0.0
+Version:        1.0.0.0
 Synopsis:       Binary instances for fixed-vector
 Description:
   CBOR serialization instances for fixed-vector's types. Generic
@@ -25,8 +25,8 @@ source-repository head
 
 Library
   Ghc-options:          -Wall
-  Build-Depends: base         >=3 && <5
-               , fixed-vector >=0.6
+  Build-Depends: base         >=4.8 && <5
+               , fixed-vector >=1.0
                , cborg
                , serialise
   Exposed-modules:
