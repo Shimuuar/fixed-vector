@@ -82,8 +82,6 @@ module Data.Vector.Fixed.Cont (
   , sequence_
   , distribute
   , collect
-  , distributeM
-  , collectM
   , tail
   , reverse
     -- ** Zips
@@ -125,12 +123,12 @@ module Data.Vector.Fixed.Cont (
   , gunfold
   ) where
 
-import Control.Applicative ((<|>))
-import Control.Monad       (liftM)
+import Control.Applicative   ((<|>))
 import Data.Coerce
-import Data.Complex        (Complex(..))
-import Data.Data           (Data)
-import Data.Typeable       (Proxy(..))
+import Data.Complex          (Complex(..))
+import Data.Data             (Data)
+import Data.Functor.Identity (Identity(..))
+import Data.Typeable         (Proxy(..))
 import qualified Data.Foldable    as F
 import qualified Data.Traversable as F
 import Unsafe.Coerce       (unsafeCoerce)
@@ -709,21 +707,6 @@ distribute f0
 collect :: (Functor f, Arity n) => (a -> ContVec n b) -> f a -> ContVec n (f b)
 collect f = distribute . fmap f
 {-# INLINE collect #-}
-
--- | The dual of sequence
-distributeM :: (Monad m, Arity n) => m (ContVec n a) -> ContVec n (m a)
-{-# INLINE distributeM #-}
-distributeM f0
-  = apply step start
-  where
-    step (Const f) = ( liftM (\(x:_) -> x) f
-                     , Const $ liftM (\(_:x) -> x) f)
-    start = Const (liftM toList f0)
-
-collectM :: (Monad m, Arity n) => (a -> ContVec n b) -> m a -> ContVec n (m b)
-collectM f = distributeM . liftM f
-{-# INLINE collectM #-}
-
 
 -- | /O(1)/ Tail of vector.
 tail :: {-FIXME-} Arity n => ContVec (n+1) a -> ContVec n a

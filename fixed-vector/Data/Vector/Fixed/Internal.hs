@@ -476,16 +476,6 @@ collect :: (Vector v a, Vector v b, Vector v (f b), Functor f)
 {-# INLINE collect #-}
 collect f = vector . C.collect (C.cvec . f)
 
-distributeM :: (Vector v a, Vector v (m a), Monad m)
-           => m (v a) -> v (m a)
-{-# INLINE distributeM #-}
-distributeM = vector . C.distributeM . liftM C.cvec
-
-collectM :: (Vector v a, Vector v b, Vector v (m b), Monad m)
-         => (a -> v b) -> m a -> v (m b)
-{-# INLINE collectM #-}
-collectM f = vector . C.collectM (C.cvec . f)
-
 
 
 ----------------------------------------------------------------
