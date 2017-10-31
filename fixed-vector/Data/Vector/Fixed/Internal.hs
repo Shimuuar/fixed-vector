@@ -11,7 +11,6 @@
 -- Implementation of fixed-vectors
 module Data.Vector.Fixed.Internal where
 
-import Control.Monad         (liftM)
 import Control.DeepSeq       (NFData(..))
 import Data.Typeable         (Proxy(..))
 import Data.Functor.Identity (Identity(..))
@@ -105,10 +104,10 @@ replicate
 --   Hi!
 --   Hi!
 --   fromList [(),()]
-replicateM :: (Vector v a, Monad m) => m a -> m (v a)
+replicateM :: (Vector v a, Applicative f) => f a -> f (v a)
 {-# INLINE replicateM #-}
 replicateM
-  = liftM vector . C.replicateM
+  = fmap vector . C.replicateM
 
 
 -- | Unit vector along Nth axis. If index is larger than vector
@@ -149,9 +148,9 @@ generate = vector . C.generate
 
 -- | Generate vector from monadic function which maps element's index
 --   to its value.
-generateM :: (Monad m, Vector v a) => (Int -> m a) -> m (v a)
+generateM :: (Applicative f, Vector v a) => (Int -> f a) -> f (v a)
 {-# INLINE generateM #-}
-generateM = liftM vector . C.generateM
+generateM = fmap vector . C.generateM
 
 
 
@@ -397,27 +396,28 @@ map f = vector
       . C.cvec
 
 -- | Evaluate every action in the vector from left to right.
-sequence :: (Vector v a, Vector v (m a), Monad m) => v (m a) -> m (v a)
+sequence :: (Vector v a, Vector v (f a), Applicative f) => v (f a) -> f (v a)
 {-# INLINE sequence #-}
 sequence = mapM id
 
 -- | Evaluate every action in the vector from left to right and ignore result
-sequence_ :: (Vector v (m a), Monad m) => v (m a) -> m ()
+sequence_ :: (Vector v (f a), Applicative f) => v (f a) -> f ()
 {-# INLINE sequence_ #-}
 sequence_ = mapM_ id
 
 
 -- | Monadic map over vector.
-mapM :: (Vector v a, Vector v b, Monad m) => (a -> m b) -> v a -> m (v b)
+mapM :: (Vector v a, Vector v b, Applicative f) => (a -> f b) -> v a -> f (v b)
 {-# INLINE mapM #-}
-mapM f = liftM vector
+mapM f = fmap vector
        . C.mapM f
        . C.cvec
 
 -- | Apply monadic action to each element of vector and ignore result.
-mapM_ :: (Vector v a, Monad m) => (a -> m b) -> v a -> m ()
+mapM_ :: (Vector v a, Applicative f) => (a -> f b) -> v a -> f ()
 {-# INLINE mapM_ #-}
-mapM_ f = foldl (\m a -> m >> f a >> return ()) (return ())
+mapM_ f = C.mapM_ f
+        . C.cvec
 
 
 -- | Apply function to every element of the vector and its index.
@@ -429,18 +429,19 @@ imap f = vector
        . C.cvec
 
 -- | Apply monadic function to every element of the vector and its index.
-imapM :: (Vector v a, Vector v b, Monad m)
-      => (Int -> a -> m b) -> v a -> m (v b)
+imapM :: (Vector v a, Vector v b, Applicative f)
+      => (Int -> a -> f b) -> v a -> f (v b)
 {-# INLINE imapM #-}
-imapM f = liftM vector
+imapM f = fmap vector
         . C.imapM f
         . C.cvec
 
 -- | Apply monadic function to every element of the vector and its
 --   index and discard result.
-imapM_ :: (Vector v a, Monad m) => (Int -> a -> m b) -> v a -> m ()
+imapM_ :: (Vector v a, Applicative f) => (Int -> a -> f b) -> v a -> f ()
 {-# INLINE imapM_ #-}
-imapM_ f = ifoldl (\m i a -> m >> f i a >> return ()) (return ())
+imapM_ f = C.imapM_ f
+         . C.cvec
 
 -- | Left scan over vector
 scanl :: (Vector v a, Vector w b, Dim w ~ (Dim v + 1))
@@ -513,17 +514,17 @@ zipWith3 f v1 v2 v3
   $ C.zipWith3 f (C.cvec v1) (C.cvec v2) (C.cvec v3)
 
 -- | Zip two vector together using monadic function.
-zipWithM :: (Vector v a, Vector v b, Vector v c, Monad m)
-         => (a -> b -> m c) -> v a -> v b -> m (v c)
+zipWithM :: (Vector v a, Vector v b, Vector v c, Applicative f)
+         => (a -> b -> f c) -> v a -> v b -> f (v c)
 {-# INLINE zipWithM #-}
-zipWithM f v u = liftM vector
+zipWithM f v u = fmap vector
                $ C.zipWithM f (C.cvec v) (C.cvec u)
 
 -- | Zip two vector elementwise using monadic function and discard
 --   result
 zipWithM_
-  :: (Vector v a, Vector v b, Monad m)
-  => (a -> b -> m c) -> v a -> v b -> m ()
+  :: (Vector v a, Vector v b, Applicative f)
+  => (a -> b -> f c) -> v a -> v b -> f ()
 {-# INLINE zipWithM_ #-}
 zipWithM_ f xs ys = C.zipWithM_ f (C.cvec xs) (C.cvec ys)
 
@@ -548,17 +549,17 @@ izipWith3 f v1 v2 v3
 
 -- | Zip two vector together using monadic function which takes element
 --   index as well..
-izipWithM :: (Vector v a, Vector v b, Vector v c, Monad m)
-          => (Int -> a -> b -> m c) -> v a -> v b -> m (v c)
+izipWithM :: (Vector v a, Vector v b, Vector v c, Applicative f)
+          => (Int -> a -> b -> f c) -> v a -> v b -> f (v c)
 {-# INLINE izipWithM #-}
-izipWithM f v u = liftM vector
+izipWithM f v u = fmap vector
                 $ C.izipWithM f (C.cvec v) (C.cvec u)
 
 -- | Zip two vector elementwise using monadic function and discard
 --   result
 izipWithM_
-  :: (Vector v a, Vector v b, Vector v c, Monad m, Vector v (m c))
-  => (Int -> a -> b -> m c) -> v a -> v b -> m ()
+  :: (Vector v a, Vector v b, Vector v c, Applicative f, Vector v (f c))
+  => (Int -> a -> b -> f c) -> v a -> v b -> f ()
 {-# INLINE izipWithM_ #-}
 izipWithM_ f xs ys = C.izipWithM_ f (C.cvec xs) (C.cvec ys)
 
@@ -625,7 +626,7 @@ fromList' = vector . C.fromList'
 --   length from resulting vector.
 fromListM :: (Vector v a) => [a] -> Maybe (v a)
 {-# INLINE fromListM #-}
-fromListM = liftM vector . C.fromListM
+fromListM = fmap vector . C.fromListM
 
 -- | Create vector from 'Foldable' data type. Will return @Nothing@ if
 --   data type different number of elements that resulting vector.

@@ -230,10 +230,10 @@ class ArityPeano n where
   --   applyFun. Ignoring newtypes:
   --
   -- > forall b. Fn n a b -> b  ~ ContVec n a
-  applyFunM :: Monad m
-              => (forall k. t ('S k) -> m (a, t k)) -- ^ Get value to apply to function
-              -> t n                                -- ^ Initial value
-              -> m (CVecPeano n a, t 'Z)
+  applyFunM :: Applicative f
+            => (forall k. t ('S k) -> (f a, t k)) -- ^ Get value to apply to function
+            -> t n                                -- ^ Initial value
+            -> (f (CVecPeano n a), t 'Z)
   -- | Reverse order of parameters.
   reverseF :: Fun n a b -> Fun n a b
   -- | Worker function for 'gunfold'
@@ -260,13 +260,12 @@ apply :: Arity n
 apply step z = ContVec $ \(Fun f) -> fst $ applyFun step z f
 
 -- | Apply all parameters to the function using monadic actions.
-applyM :: (Monad m, Arity n)
-       => (forall k. t ('S k) -> m (a, t k)) -- ^ Get value to apply to function
+applyM :: (Applicative f, Arity n)
+       => (forall k. t ('S k) -> (f a, t k)) -- ^ Get value to apply to function
        -> t (Peano n)                        -- ^ Initial value
-       -> m (ContVec n a)
+       -> f (ContVec n a)
 {-# INLINE applyM #-}
-applyM f t = do (CVecPeano v,_) <- applyFunM f t
-                return (ContVec v)
+applyM f t = fmap (\(CVecPeano v) -> ContVec v) $ fst $ applyFunM f t
 
 -- | Arity of function.
 arity :: KnownNat n => proxy n -> Int
@@ -276,7 +275,7 @@ arity = fromIntegral . natVal
 instance ArityPeano 'Z where
   accum     _ g t = Fun $ g t
   applyFun  _ t h = (h,t)
-  applyFunM _ t   = return (CVecPeano unFun, t)
+  applyFunM _ t   = (pure (CVecPeano unFun), t)
   {-# INLINE accum     #-}
   {-# INLINE applyFun  #-}
   {-# INLINE applyFunM #-}
@@ -287,10 +286,11 @@ instance ArityPeano 'Z where
 
 instance ArityPeano n => ArityPeano ('S n) where
   accum     f g t = Fun $ \a -> unFun $ accum f g (f t a)
-  applyFun  f t h = case f t of (a,u) -> applyFun f u (h a)
-  applyFunM f t   = do (a,t')   <- f t
-                       (vec,tZ) <- applyFunM f t'
-                       return (consPeano a vec , tZ)
+  applyFun  f t h = let (a,t') = f t
+                    in  applyFun f t' (h a)
+  applyFunM f t   = let (a,t')   = f t
+                        (vec,t0) = applyFunM f t'
+                    in  (consPeano <$> a <*> vec, t0)
   {-# INLINE accum     #-}
   {-# INLINE applyFun  #-}
   {-# INLINE applyFunM #-}
@@ -506,12 +506,12 @@ fromList' xs = ContVec $ \(Fun fun) ->
 --   'Nothing' if list doesn't have right length.
 fromListM :: forall n a. Arity n => [a] -> Maybe (ContVec n a)
 {-# INLINE fromListM #-}
-fromListM xs = do
-  (CVecPeano v,Const []) <- applyFunM step (Const xs :: Const [a] (Peano n))
-  return (ContVec v)
+fromListM xs = case applyFunM step (Const xs :: Const [a] (Peano n)) of
+  (Just (CVecPeano v), Const []) -> Just (ContVec v)
+  _                              -> Nothing
   where
-    step (Const []    ) = Nothing
-    step (Const (a:as)) = return (a, Const as)
+    step (Const []    ) = (Nothing, Const [])
+    step (Const (a:as)) = (Just a , Const as)
 
 
 -- | Convert vector to the list
@@ -526,26 +526,24 @@ replicate :: (Arity n) => a -> ContVec n a
 replicate a = apply (\Proxy -> (a, Proxy)) Proxy
 
 -- | Execute monadic action for every element of vector.
-replicateM :: (Arity n, Monad m) => m a -> m (ContVec n a)
+replicateM :: (Arity n, Applicative f) => f a -> f (ContVec n a)
 {-# INLINE replicateM #-}
 replicateM act
-  = applyM (\Proxy -> do { a <- act; return (a, Proxy)}) Proxy
+  = applyM (\Proxy -> (act, Proxy)) Proxy
 
 
 -- | Generate vector from function which maps element's index to its value.
 generate :: (Arity n) => (Int -> a) -> ContVec n a
 {-# INLINE generate #-}
 generate f =
-  apply (\(Const n) -> (f n, Const (n + 1)))
-        (Const 0)
+  apply (\(Const n) -> (f n, Const (n + 1))) (Const 0)
 
 -- | Generate vector from monadic function which maps element's index
 --   to its value.
-generateM :: (Monad m, Arity n) => (Int -> m a) -> m (ContVec n a)
+generateM :: (Applicative f, Arity n) => (Int -> f a) -> f (ContVec n a)
 {-# INLINE generateM #-}
 generateM f =
-  applyM (\(Const n) -> do { a <- f n; return (a, Const (n + 1)) } )
-         (Const 0)
+  applyM (\(Const n) -> (f n, Const (n + 1))) (Const 0)
 
 
 -- | Unfold vector.
@@ -602,39 +600,37 @@ imap f (ContVec contA) = ContVec $
   contA . imapF f
 
 -- | Monadic map over vector.
-mapM :: (Arity n, Monad m) => (a -> m b) -> ContVec n a -> m (ContVec n b)
+mapM :: (Arity n, Applicative f) => (a -> f b) -> ContVec n a -> f (ContVec n b)
 {-# INLINE mapM #-}
 mapM = imapM . const
 
 -- | Apply monadic function to every element of the vector and its index.
-imapM :: (Arity n, Monad m) => (Int -> a -> m b) -> ContVec n a -> m (ContVec n b)
+imapM :: (Arity n, Applicative f)
+      => (Int -> a -> f b) -> ContVec n a -> f (ContVec n b)
 {-# INLINE imapM #-}
 imapM f v
   = inspect v
   $ imapMF f construct
 
 -- | Apply monadic action to each element of vector and ignore result.
-mapM_ :: (Arity n, Monad m) => (a -> m b) -> ContVec n a -> m ()
+mapM_ :: (Arity n, Applicative f) => (a -> f b) -> ContVec n a -> f ()
 {-# INLINE mapM_ #-}
-mapM_ f = foldl (\m a -> m >> f a >> return ()) (return ())
+mapM_ f = foldl (\m a -> m *> f a *> pure ()) (pure ())
 
 -- | Apply monadic action to each element of vector and its index and
 --   ignore result.
-imapM_ :: (Arity n, Monad m) => (Int -> a -> m b) -> ContVec n a -> m ()
+imapM_ :: (Arity n, Applicative f) => (Int -> a -> f b) -> ContVec n a -> f ()
 {-# INLINE imapM_ #-}
-imapM_ f = ifoldl (\m i a -> m >> f i a >> return ()) (return ())
+imapM_ f = ifoldl (\m i a -> m *> f i a *> pure ()) (pure ())
 
 
-imapMF :: (ArityPeano n, Monad m)
-       => (Int -> a -> m b) -> Fun n b r -> Fun n a (m r)
+imapMF :: (ArityPeano n, Applicative f)
+       => (Int -> a -> f b) -> Fun n b r -> Fun n a (f r)
 {-# INLINE imapMF #-}
 imapMF f (Fun funB) =
-  accum (\(T_mapM i m) a -> T_mapM (i+1) $ do b   <- f i a
-                                              fun <- m
-                                              return $ fun b
-                           )
+  accum (\(T_mapM i m) a -> T_mapM (i+1) $ ($) <$> m <*> f i a)
         (\(T_mapM _ m) -> m)
-        (T_mapM 0 (return funB))
+        (T_mapM 0 (pure funB))
 
 data T_mapM a m r n = T_mapM Int (m (Fn n a r))
 
@@ -683,12 +679,12 @@ data T_scanl1 r a n = T_scanl1 (Maybe a) (Fn n a r)
 
 
 -- | Evaluate every action in the vector from left to right.
-sequence :: (Arity n, Monad m) => ContVec n (m a) -> m (ContVec n a)
+sequence :: (Arity n, Applicative f) => ContVec n (f a) -> f (ContVec n a)
 sequence = mapM id
 {-# INLINE sequence #-}
 
 -- | Evaluate every action in the vector from left to right and ignore result.
-sequence_ :: (Arity n, Monad m) => ContVec n (m a) -> m ()
+sequence_ :: (Arity n, Applicative f) => ContVec n (f a) -> f ()
 sequence_ = mapM_ id
 {-# INLINE sequence_ #-}
 
@@ -776,25 +772,25 @@ izipWith3 :: (Arity n) => (Int -> a -> b -> c -> d)
 izipWith3 f v1 v2 v3 = izipWith (\i a (b, c) -> f i a b c) v1 (zipWith (,) v2 v3)
 
 -- | Zip two vector together using monadic function.
-zipWithM :: (Arity n, Monad m) => (a -> b -> m c)
-         -> ContVec n a -> ContVec n b -> m (ContVec n c)
+zipWithM :: (Arity n, Applicative f) => (a -> b -> f c)
+         -> ContVec n a -> ContVec n b -> f (ContVec n c)
 {-# INLINE zipWithM #-}
 zipWithM f v w = sequence $ zipWith f v w
 
-zipWithM_ :: (Arity n, Monad m)
-          => (a -> b -> m c) -> ContVec n a -> ContVec n b -> m ()
+zipWithM_ :: (Arity n, Applicative f)
+          => (a -> b -> f c) -> ContVec n a -> ContVec n b -> f ()
 {-# INLINE zipWithM_ #-}
 zipWithM_ f xs ys = sequence_ (zipWith f xs ys)
 
 -- | Zip two vector together using monadic function which takes element
 --   index as well..
-izipWithM :: (Arity n, Monad m) => (Int -> a -> b -> m c)
-          -> ContVec n a -> ContVec n b -> m (ContVec n c)
+izipWithM :: (Arity n, Applicative f) => (Int -> a -> b -> f c)
+          -> ContVec n a -> ContVec n b -> f (ContVec n c)
 {-# INLINE izipWithM #-}
 izipWithM f v w = sequence $ izipWith f v w
 
-izipWithM_ :: (Arity n, Monad m)
-           => (Int -> a -> b -> m c) -> ContVec n a -> ContVec n b -> m ()
+izipWithM_ :: (Arity n, Applicative f)
+           => (Int -> a -> b -> f c) -> ContVec n a -> ContVec n b -> f ()
 {-# INLINE izipWithM_ #-}
 izipWithM_ f xs ys = sequence_ (izipWith f xs ys)
 
