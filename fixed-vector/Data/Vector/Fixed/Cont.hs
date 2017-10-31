@@ -101,7 +101,6 @@ module Data.Vector.Fixed.Cont (
   , head
   , index
   , element
-  , elementTy
     -- ** Vector construction
   , vector
     -- ** Folds
@@ -889,15 +888,6 @@ element :: (Arity n, Functor f)
 {-# INLINE element #-}
 element i f v = inspect v
               $ elementF i f construct
-
--- | Twan van Laarhoven lens for element of vector with statically
---   known index.
-elementTy :: (Arity n, KnownNat k, k + 1 <= n, Functor f)
-          => proxy k -> (a -> f a) -> ContVec n a -> f (ContVec n a)
-{-# INLINE elementTy #-}
-elementTy p f v = inspect v
-                $ elementF (fromIntegral (natVal p)) f construct
-
 
 -- | Helper for implementation of Twan van Laarhoven lens.
 elementF :: forall a n f r. (ArityPeano n, Functor f)

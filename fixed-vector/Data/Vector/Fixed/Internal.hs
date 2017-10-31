@@ -11,9 +11,10 @@
 -- Implementation of fixed-vectors
 module Data.Vector.Fixed.Internal where
 
-import Control.Monad       (liftM)
-import Control.DeepSeq     (NFData(..))
-import Data.Typeable       (Proxy(..))
+import Control.Monad         (liftM)
+import Control.DeepSeq       (NFData(..))
+import Data.Typeable         (Proxy(..))
+import Data.Functor.Identity (Identity(..))
 import qualified Data.Foldable    as T
 import qualified Data.Traversable as T
 import Foreign.Storable (Storable(..))
@@ -218,17 +219,17 @@ runIndex :: Arity n => Int -> C.ContVec n r -> r
 runIndex = C.index
 {-# INLINE[0] runIndex #-}
 
--- -- | Get element from vector at statically known index
--- index :: (Vector v a, C.Index k (Dim v)) => v a -> k -> a
--- {-# INLINE index #-}
--- index v k = C.runContVec (C.getF k)
---           $ C.cvec v  
+-- | Get element from vector at statically known index
+index :: (Vector v a, KnownNat k, k + 1 <= Dim v)
+      => v a -> proxy k -> a
+{-# INLINE index #-}
+index v k = v ! fromIntegral (natVal k)
 
--- -- | Set n'th element in the vector
--- set :: (Vector v a, C.Index k (Dim v)) => k -> a -> v a -> v a
--- {-# INLINE set #-}
--- set k a v = inspect v
---           $ C.putF k a construct 
+-- | Set n'th element in the vector
+set :: (Vector v a, KnownNat k, k + 1 <= Dim v) => proxy k -> a -> v a -> v a
+{-# INLINE set #-}
+set k a = runIdentity . element (fromIntegral (natVal k))
+                                (const (Identity a))
 
 -- | Twan van Laarhoven's lens for element of vector
 element :: (Vector v a, Functor f) => Int -> (a -> f a) -> (v a -> f (v a))
@@ -240,9 +241,7 @@ element i f v = vector `fmap` C.element i f (C.cvec v)
 elementTy :: (Vector v a, KnownNat k, k + 1 <= Dim v, Functor f)
           => proxy k -> (a -> f a) -> (v a -> f (v a))
 {-# INLINE elementTy #-}
-elementTy k f v = vector `fmap` C.elementTy k f (C.cvec v)
-
-
+elementTy k = element (fromIntegral (natVal k))
 
 -- | Left fold over vector
 foldl :: Vector v a => (b -> a -> b) -> b -> v a -> b
