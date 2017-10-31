@@ -1081,6 +1081,15 @@ instance Vector Complex a where
   {-# INLINE inspect #-}
 
 
+type instance Dim Identity = 1
+
+instance Vector Identity a where
+  construct = Fun Identity
+  inspect (Identity x) (Fun f) = f x
+  {-# INLINE construct #-}
+  {-# INLINE inspect #-}
+
+
 type instance Dim ((,) a) = 2
 
 -- | Note this instance (and other instances for tuples) is
