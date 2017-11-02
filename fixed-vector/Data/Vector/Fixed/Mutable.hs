@@ -23,7 +23,6 @@ module Data.Vector.Fixed.Mutable (
     -- * Immutable vectors
   , IVector(..)
   , index
-  , lengthI
   , freeze
   , thaw
     -- * Vector API
@@ -109,14 +108,10 @@ class (Dim v ~ DimM (Mutable v), MVector (Mutable v) a) => IVector v a where
   -- | Get element at specified index without bounds check.
   unsafeIndex :: v a -> Int -> a
 
--- | Length of immutable vector. Function doesn't evaluate its argument.
-lengthI :: IVector v a => v a -> Int
-lengthI = length
-
 index :: IVector v a => v a -> Int -> a
 {-# INLINE index #-}
-index v i | i < 0 || i >= lengthI v = error "Data.Vector.Fixed.Mutable.!: index out of bounds"
-          | otherwise               = unsafeIndex v i
+index v i | i < 0 || i >= length v = error "Data.Vector.Fixed.Mutable.!: index out of bounds"
+          | otherwise              = unsafeIndex v i
 
 
 -- | Safely convert mutable vector to immutable.
