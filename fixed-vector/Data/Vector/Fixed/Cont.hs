@@ -46,6 +46,8 @@ module Data.Vector.Fixed.Cont (
   , length
     -- * Vector as continuation
   , ContVec(..)
+  , CVecPeano(..)
+  , consPeano
     -- * Construction of ContVec
   , cvec
   , fromList
