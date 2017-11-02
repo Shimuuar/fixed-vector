@@ -1,3 +1,23 @@
+Changes in 1.0.0.0
+
+  * Vector length now expressed as GHC's type level literals. Underlying
+    implementation still uses Peano numbers to perform induction. This doesn't
+    change user facing API much. Notably `FlexibleInstances` and
+    `GADTs`/`TypeFamiles` are now required to write `Arity` constraint.
+
+  * `Monad` constraint is relaxed to `Applicative` where applicable. Duplicate
+    functions are removed (`sequence` & `sequenceA` → `sequence`, etc)
+
+  * Module `Data.Vector.Fixed.Monomorphic` is dropped.
+
+  * Boxed arrays now use SmallArrays internally.
+
+  * `overlaps` is removed from API for mutable vectors.
+
+  * `Data.Vector.Fixed.defaultRnf` is added.
+
+  * `Data.Vector.Fixed.Mutable.lengthI` is dropped.
+
 Changes in 0.9.0.0
 
   * Simplification of `Arity` type class. This change shouldn't affect client
