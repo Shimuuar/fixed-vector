@@ -143,8 +143,6 @@ data instance Vec  n   () = V_Unit
 instance Arity n => Unbox n ()
 
 instance Arity n => MVector (MVec n) () where
-  overlaps _ _ = False
-  {-# INLINE overlaps    #-}
   new          = return MV_Unit
   {-# INLINE new         #-}
   copy _ _     = return ()
@@ -175,8 +173,6 @@ newtype instance Vec  n   Bool = V_Bool  (P.Vec  n   Word8)
 instance Arity n => Unbox n Bool
 
 instance Arity n => MVector (MVec n) Bool where
-  overlaps (MV_Bool v) (MV_Bool w) = overlaps v w
-  {-# INLINE overlaps    #-}
   new          = MV_Bool `liftM` new
   {-# INLINE new         #-}
   copy (MV_Bool v) (MV_Bool w) = copy v w
@@ -212,13 +208,11 @@ toBool _ = True
 -- Primitive wrappers
 #define primMV(ty,con)                              \
 instance Arity n => MVector (MVec n) ty where {     \
-; overlaps (con v) (con w) = overlaps v w           \
 ; new = con `liftM` new                             \
 ; copy (con v) (con w) = copy v w                   \
 ; move (con v) (con w) = move v w                   \
 ; unsafeRead  (con v) i = unsafeRead v i            \
 ; unsafeWrite (con v) i x = unsafeWrite v i x       \
-; {-# INLINE overlaps    #-}                        \
 ; {-# INLINE new         #-}                        \
 ; {-# INLINE move        #-}                        \
 ; {-# INLINE copy        #-}                        \
@@ -271,8 +265,6 @@ newtype instance Vec  n   (Complex a) = V_Complex  (Vec  n   (a,a))
 instance (Unbox n a) => Unbox n (Complex a)
 
 instance (Arity n, MVector (MVec n) a) => MVector (MVec n) (Complex a) where
-  overlaps (MV_Complex v) (MV_Complex w) = overlaps v w
-  {-# INLINE overlaps    #-}
   new = MV_Complex `liftM` new
   {-# INLINE new #-}
   copy (MV_Complex v) (MV_Complex w) = copy v w
@@ -304,8 +296,6 @@ data instance Vec  n   (a,b) = V_2  !(Vec  n   a) !(Vec  n   b)
 instance (Unbox n a, Unbox n b) => Unbox n (a,b)
 
 instance (Arity n, MVector (MVec n) a, MVector (MVec n) b) => MVector (MVec n) (a,b) where
-  overlaps (MV_2 va vb) (MV_2 wa wb) = overlaps va wa || overlaps vb wb
-  {-# INLINE overlaps    #-}
   new = do as <- new
            bs <- new
            return $ MV_2 as bs
@@ -346,9 +336,6 @@ instance (Unbox n a, Unbox n b, Unbox n c) => Unbox n (a,b,c)
 
 instance (Arity n, MVector (MVec n) a, MVector (MVec n) b, MVector (MVec n) c
          ) => MVector (MVec n) (a,b,c) where
-  overlaps (MV_3 va vb vc) (MV_3 wa wb wc)
-    = overlaps va wa || overlaps vb wb || overlaps vc wc
-  {-# INLINE overlaps    #-}
   new = do as <- new
            bs <- new
            cs <- new
@@ -396,13 +383,11 @@ newtype instance Vec  n   (Const a b) = V_Const  (Vec  n   a)
 instance Unbox n a => Unbox n (Const a b)
 
 instance (Unbox n a) => MVector (MVec n) (Const a b) where
-  overlaps (MV_Const v) (MV_Const w)   = overlaps v w
   new                                  = MV_Const `liftM` new
   copy (MV_Const v) (MV_Const w)       = copy v w
   move (MV_Const v) (MV_Const w)       = move v w
   unsafeRead  (MV_Const v) i           = Const `liftM` unsafeRead v i
   unsafeWrite (MV_Const v) i (Const x) = unsafeWrite v i x
-  {-# INLINE overlaps    #-}
   {-# INLINE new         #-}
   {-# INLINE move        #-}
   {-# INLINE copy        #-}
@@ -423,13 +408,11 @@ instance (Unbox n a) => IVector (Vec n) (Const a b) where
 
 #define primNewMV(ty,con)                         \
 instance Unbox n a => MVector (MVec n) (ty a) where {     \
-; overlaps (con v) (con w) = overlaps v w           \
 ; new = con `liftM` new                             \
 ; copy (con v) (con w) = copy v w                   \
 ; move (con v) (con w) = move v w                   \
 ; unsafeRead  (con v) i = ty `liftM` unsafeRead v i            \
 ; unsafeWrite (con v) i (ty x) = unsafeWrite v i x       \
-; {-# INLINE overlaps    #-}                        \
 ; {-# INLINE new         #-}                        \
 ; {-# INLINE move        #-}                        \
 ; {-# INLINE copy        #-}                        \
@@ -467,13 +450,11 @@ primNewWrap(Product, V_Product, MV_Product)
 
 #define primNewMonoMV(ty,con)                         \
 instance Arity n => MVector (MVec n) ty where {     \
-; overlaps (con v) (con w) = overlaps v w           \
 ; new = con `liftM` new                             \
 ; copy (con v) (con w) = copy v w                   \
 ; move (con v) (con w) = move v w                   \
 ; unsafeRead  (con v) i = ty `liftM` unsafeRead v i            \
 ; unsafeWrite (con v) i (ty x) = unsafeWrite v i x       \
-; {-# INLINE overlaps    #-}                        \
 ; {-# INLINE new         #-}                        \
 ; {-# INLINE move        #-}                        \
 ; {-# INLINE copy        #-}                        \

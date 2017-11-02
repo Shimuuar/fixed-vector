@@ -33,12 +33,12 @@ import Data.Data
 import Foreign.Ptr           (castPtr)
 import Foreign.Storable
 import Foreign.ForeignPtr
-import Foreign.Marshal.Array ( advancePtr, copyArray, moveArray )
+import Foreign.Marshal.Array ( copyArray, moveArray )
 import GHC.ForeignPtr        ( ForeignPtr(..), mallocPlainForeignPtrBytes )
 import GHC.Ptr               ( Ptr(..) )
 import GHC.TypeLits
-import Prelude (Show(..),Eq(..),Ord(..),Num(..),Monad(..),IO,Int)
-import Prelude ((++),(&&),(||),($),undefined,seq)
+import Prelude ( Show(..),Eq(..),Ord(..),Num(..),Monad(..),IO,Int
+               , (++),($),undefined,seq)
 
 import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable
@@ -101,14 +101,6 @@ instance (Arity n, Storable a, NFData a) => NFData (Vec n a) where
 type instance Mutable (Vec n) = MVec n
 
 instance (Arity n, Storable a) => MVector (MVec n) a where
-  overlaps (MVec fp) (MVec fq)
-    = between p q (q `advancePtr` n) || between q p (p `advancePtr` n)
-    where
-      between x y z = x >= y && x < z
-      p = getPtr fp
-      q = getPtr fq
-      n = arity (Proxy :: Proxy n)
-  {-# INLINE overlaps    #-}
   new = unsafePrimToPrim $ do
     fp <- mallocVector $ arity (Proxy :: Proxy n)
     return $ MVec fp

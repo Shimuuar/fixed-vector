@@ -62,10 +62,9 @@ source-repository head
 
 Library
   Ghc-options:          -Wall
-  Build-Depends:
-    base >=4.8 && <5,
-    deepseq,
-    primitive
+  Build-Depends: base      >=4.8 && <5
+               , primitive >=0.6.2
+               , deepseq
   Exposed-modules:
     -- API
     Data.Vector.Fixed.Cont
@@ -84,9 +83,8 @@ Test-Suite doctests
   Type:           exitcode-stdio-1.0
   Hs-source-dirs: test
   Main-is:        Doctests.hs
-  Build-Depends:
-    base >=3 && <5,
-    primitive,
-    -- Additional test dependencies.
-    doctest   >= 0.9,
-    filemanip == 0.3.6.*
+  Build-Depends: base >=4.8 && <5
+               , primitive >=0.6.2
+                 -- Additional test dependencies.
+               , doctest   >= 0.9
+               , filemanip == 0.3.6.*

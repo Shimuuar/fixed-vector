@@ -23,7 +23,7 @@ module Data.Vector.Fixed.Boxed (
 
 import Control.Applicative  (Applicative(..))
 import Control.DeepSeq      (NFData(..))
-import Data.Primitive.Array
+import Data.Primitive.SmallArray
 import Data.Monoid          (Monoid(..))
 import Data.Data
 import qualified Data.Foldable    as F
@@ -44,10 +44,10 @@ import qualified Data.Vector.Fixed.Cont as C
 ----------------------------------------------------------------
 
 -- | Vector with fixed length which can hold any value.
-newtype Vec (n :: Nat) a = Vec (Array a)
+newtype Vec (n :: Nat) a = Vec (SmallArray a)
 
 -- | Mutable unboxed vector with fixed length
-newtype MVec (n :: Nat) s a = MVec (MutableArray s a)
+newtype MVec (n :: Nat) s a = MVec (SmallMutableArray s a)
 
 deriving instance Typeable Vec
 deriving instance Typeable MVec
@@ -98,25 +98,23 @@ instance (Arity n, NFData a) => NFData (Vec n a) where
 type instance Mutable (Vec n) = MVec n
 
 instance (Arity n) => MVector (MVec n) a where
-  overlaps (MVec v) (MVec u) = sameMutableArray v u
-  {-# INLINE overlaps    #-}
   new = do
-    v <- newArray (arity (Proxy :: Proxy n)) uninitialised
+    v <- newSmallArray (arity (Proxy :: Proxy n)) uninitialised
     return $ MVec v
   {-# INLINE new         #-}
   copy = move
   {-# INLINE copy        #-}
-  move (MVec dst) (MVec src) = copyMutableArray dst 0 src 0 (arity (Proxy :: Proxy n))
+  move (MVec dst) (MVec src) = copySmallMutableArray dst 0 src 0 (arity (Proxy :: Proxy n))
   {-# INLINE move        #-}
-  unsafeRead  (MVec v) i   = readArray  v i
+  unsafeRead  (MVec v) i   = readSmallArray  v i
   {-# INLINE unsafeRead  #-}
-  unsafeWrite (MVec v) i x = writeArray v i x
+  unsafeWrite (MVec v) i x = writeSmallArray v i x
   {-# INLINE unsafeWrite #-}
 
 instance (Arity n) => IVector (Vec n) a where
-  unsafeFreeze (MVec v)   = do { a <- unsafeFreezeArray v; return $! Vec  a }
-  unsafeThaw   (Vec  v)   = do { a <- unsafeThawArray   v; return $! MVec a }
-  unsafeIndex  (Vec  v) i = indexArray v i
+  unsafeFreeze (MVec v)   = do { a <- unsafeFreezeSmallArray v; return $! Vec  a }
+  unsafeThaw   (Vec  v)   = do { a <- unsafeThawSmallArray   v; return $! MVec a }
+  unsafeIndex  (Vec  v) i = indexSmallArray v i
   {-# INLINE unsafeFreeze #-}
   {-# INLINE unsafeThaw   #-}
   {-# INLINE unsafeIndex  #-}

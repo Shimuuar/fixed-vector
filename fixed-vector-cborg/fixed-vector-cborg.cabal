@@ -17,9 +17,6 @@ extra-source-files:
   ChangeLog
 
 source-repository head
-  type:     hg
-  location: http://bitbucket.org/Shimuuar/fixed-vector
-source-repository head
   type:     git
   location: http://github.com/Shimuuar/fixed-vector
 

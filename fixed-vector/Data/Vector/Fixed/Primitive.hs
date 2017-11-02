@@ -77,8 +77,6 @@ instance (Arity n, Prim a, NFData a) => NFData (Vec n a) where
 type instance Mutable (Vec n) = MVec n
 
 instance (Arity n, Prim a) => MVector (MVec n) a where
-  overlaps (MVec v) (MVec u) = sameMutableByteArray v u
-  {-# INLINE overlaps    #-}
   new = do
     v <- newByteArray $! arity (Proxy :: Proxy n)
                        * sizeOf (undefined :: a)

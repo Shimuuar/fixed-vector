@@ -51,8 +51,6 @@ type family DimM (v :: * -> * -> *) :: Nat
 
 -- | Type class for mutable vectors.
 class (Arity (DimM v)) => MVector v a where
-  -- | Checks whether vectors' buffers overlaps
-  overlaps  :: v s a -> v s a -> Bool
   -- | Copy vector. The two vectors may not overlap. Since vectors'
   --   length is encoded in the type there is no need in runtime checks.
   copy :: PrimMonad m
