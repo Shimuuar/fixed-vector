@@ -20,7 +20,7 @@ before_cache:
 matrix:
   include:
     - compiler: ": #GHC 7.10.3"
-      addons: {apt: {packages: [ghc-ppa-tools,cabal-install-head,ghc-7.8.4], sources: [hvr-ghc]}}
+      addons: {apt: {packages: [ghc-ppa-tools,cabal-install-head,ghc-7.10.3], sources: [hvr-ghc]}}
     - compiler: ": #GHC 8.0.2"
       addons: {apt: {packages: [ghc-ppa-tools,cabal-install-head,ghc-8.0.2], sources: [hvr-ghc]}}
     - compiler: ": #GHC 8.2.1"
