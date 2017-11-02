@@ -10,6 +10,8 @@ Changes in 1.0.0.0
 
   * Module `Data.Vector.Fixed.Monomorphic` is dropped.
 
+  * Construction of N-ary vectors reworked. `Make` type class is gone.
+
   * Boxed arrays now use SmallArrays internally.
 
   * `overlaps` is removed from API for mutable vectors.

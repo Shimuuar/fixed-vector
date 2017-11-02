@@ -58,11 +58,12 @@ module Data.Vector.Fixed (
   , mk3
   , mk4
   , mk5
-    -- ** Consing
+  , mkN
+    -- ** Continuation-based vectors
   , ContVec
   , empty
   , vector
-  , (<|)
+  , C.cvec
     -- ** Functions
   , replicate
   , replicateM

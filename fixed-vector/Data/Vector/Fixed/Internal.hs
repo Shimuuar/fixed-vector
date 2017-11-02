@@ -35,14 +35,6 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
 -- Constructors
 ----------------------------------------------------------------
 
--- | Cons value to continuation based vector.
-(<|) :: Arity n => a -> ContVec n a -> ContVec (n + 1) a
-(<|) = C.cons
-{-# INLINE (<|) #-}
-
-infixr 5 <|
-
-
 mk0 :: (Vector v a, Dim v ~ 0) => v a
 mk0 = vector C.empty
 {-# INLINE mk0 #-}
@@ -67,7 +59,18 @@ mk5 :: (Vector v a, Dim v ~ 5) => a -> a -> a -> a -> a -> v a
 mk5 a1 a2 a3 a4 a5 = vector $ C.mk5 a1 a2 a3 a4 a5
 {-# INLINE mk5 #-}
 
-
+-- | N-ary constructor. Despite scary signature it's just N-ary
+--   function with additional type parameter which is used to fix type
+--   of vector being constructed. It could be used as:
+--
+--   > v = mkN (Proxy @ (Int,Int,Int)) 1 2 3
+--
+--   Or if type of @r@ is fixed elsewhere
+--
+--   > v = mkN [r] 1 2 3
+mkN :: forall proxy v a. (Vector v a)
+    => proxy (v a) -> C.Fn (C.Peano (Dim v)) a (v a)
+mkN _ = C.unFun (construct :: C.Fun (C.Peano (Dim v)) a (v a))
 
 ----------------------------------------------------------------
 -- Generic functions
