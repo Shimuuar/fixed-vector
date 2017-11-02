@@ -188,6 +188,9 @@ import Prelude (Char)
 -- >>> mk3 'a' 'b' 'c' :: (Char,Char,Char)
 -- ('a','b','c')
 --
+-- Alternatively one could use 'mkN'. See its documentation for
+-- examples
+--
 -- Another option is to create tuple and 'convert' it to desired
 -- vector type. For example:
 --
@@ -200,12 +203,6 @@ import Prelude (Char)
 -- > function :: Vec N3 Double -> ...
 -- > function (convert -> (x,y,z)) = ...
 --
--- Probably most generic way is to cons values to the @ContVec@ and
--- convert it vector of desired type using 'vector':
---
--- >>> vector $ 'a' <| 'b' <| 'c' <| empty :: (Char,Char,Char)
--- ('a','b','c')
-
 
 
 -- $smallDim
