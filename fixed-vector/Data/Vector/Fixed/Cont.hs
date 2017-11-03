@@ -419,7 +419,7 @@ class Arity (Dim v) => Vector v a where
 class (Vector (v n) a, Dim (v n) ~ n) => VectorN v n a
 
 -- | Length of vector. Function doesn't evaluate its argument.
-length :: forall v a. Arity (Dim v) => v a -> Int
+length :: forall v a. KnownNat (Dim v) => v a -> Int
 {-# INLINE length #-}
 length _ = arity (Proxy :: Proxy (Dim v))
 
