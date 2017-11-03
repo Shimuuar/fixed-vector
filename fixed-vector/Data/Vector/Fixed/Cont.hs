@@ -167,7 +167,8 @@ type family Add (n :: PeanoNum) (m :: PeanoNum) :: PeanoNum where
 -- N-ary functions
 ----------------------------------------------------------------
 
--- | Type family for n-ary functions.
+-- | Type family for n-ary functions. @n@ is number of parameters of
+--   type @a@ and @b@ is result type.
 type family Fn (n :: PeanoNum) (a :: *) (b :: *) where
   Fn 'Z     a b = b
   Fn ('S n) a b = a -> Fn n a b
@@ -222,11 +223,16 @@ class ArityPeano n where
         -> (t 'Z -> b)                      -- ^ Extract result of fold
         -> t n                              -- ^ Initial value
         -> Fun n a b                        -- ^ Reduction function
+
   -- | Apply all parameters to the function.
-  applyFun :: (forall k. t ('S k) -> (a, t k)) -- ^ Get value to apply to function
-           -> t n                              -- ^ Initial value
-           -> Fn n a b                         -- ^ N-ary function
+  applyFun :: (forall k. t ('S k) -> (a, t k))
+              -- ^ Get value to apply to function
+           -> t n
+              -- ^ Initial value
+           -> Fn n a b
+              -- ^ N-ary function
            -> (b, t 'Z)
+
   -- | Apply all parameters to the function using monadic
   --   actions. Note that for identity monad it's same as
   --   applyFun. Ignoring newtypes:
@@ -236,18 +242,14 @@ class ArityPeano n where
             => (forall k. t ('S k) -> (f a, t k)) -- ^ Get value to apply to function
             -> t n                                -- ^ Initial value
             -> (f (CVecPeano n a), t 'Z)
+
   -- | Reverse order of parameters.
   reverseF :: Fun n a b -> Fun n a b
+
   -- | Worker function for 'gunfold'
   gunfoldF :: (Data a)
            => (forall b x. Data b => c (b -> x) -> c x)
            -> T_gunfold c r a n -> c r
-
-newtype CVecPeano n a = CVecPeano (forall r. Fun n a r -> r)
-
-consPeano :: a -> CVecPeano n a -> CVecPeano ('S n) a
-consPeano a (CVecPeano cont) = CVecPeano $ \f -> cont $ curryFirst f a
-{-# INLINE consPeano #-}
 
 newtype T_gunfold c r a n = T_gunfold (c (Fn n a r))
 
@@ -261,7 +263,7 @@ apply :: Arity n
 {-# INLINE apply #-}
 apply step z = ContVec $ \(Fun f) -> fst $ applyFun step z f
 
--- | Apply all parameters to the function using monadic actions.
+-- | Apply all parameters to the function using applicative actions.
 applyM :: (Applicative f, Arity n)
        => (forall k. t ('S k) -> (f a, t k)) -- ^ Get value to apply to function
        -> t (Peano n)                        -- ^ Initial value
@@ -383,10 +385,19 @@ newtype T_shuffle x a r n = T_shuffle (x -> Fn n a r)
 type family Dim (v :: * -> *) :: Nat
 
 -- | Type class for vectors with fixed length. Instance should provide
--- two functions: one to create vector and another for vector
--- deconstruction. They must obey following law:
+--   two functions: one to create vector and another for vector
+--   deconstruction. They must obey following law:
 --
--- > inspect v construct = v
+--   > inspect v construct = v
+--
+--   For example instance for 2D vectors could be written as:
+--
+--   > data V2 a = V2 a a
+--   >
+--   > type instance V2 = 2
+--   > instance Vector V2 a where
+--   >   construct                = Fun V2
+--   >   inspect (V2 a b) (Fun f) = f a b
 class Arity (Dim v) => Vector v a where
   -- | N-ary function for creation of vectors.
   construct :: Fun (Peano (Dim v)) a (v a)
@@ -420,6 +431,14 @@ length _ = arity (Proxy :: Proxy (Dim v))
 newtype ContVec n a = ContVec (forall r. Fun (Peano n) a r -> r)
 
 type instance Dim (ContVec n) = n
+
+-- | Same as 'ContVec' but its length is expressed as Peano number.
+newtype CVecPeano n a = CVecPeano (forall r. Fun n a r -> r)
+
+consPeano :: a -> CVecPeano n a -> CVecPeano ('S n) a
+consPeano a (CVecPeano cont) = CVecPeano $ \f -> cont $ curryFirst f a
+{-# INLINE consPeano #-}
+
 
 instance Arity n => Vector (ContVec n) a where
   construct = accum

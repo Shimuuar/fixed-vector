@@ -241,10 +241,12 @@ import Prelude (Char)
  #-}
 
 
--- | Vector based on the lists. Not very useful by itself but is
---   necessary for implementation.
+-- | Type-based vector with statically known length parametrized by
+--   GHC's type naturals
 newtype VecList (n :: Nat) a = VecList (VecPeano (C.Peano n) a)
 
+-- | Standard GADT-based vector with statically known length
+--   parametrized by Peano numbers.
 data VecPeano (n :: PeanoNum) a where
   Nil  :: VecPeano 'Z a
   Cons :: a -> VecPeano n a -> VecPeano ('S n) a

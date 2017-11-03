@@ -41,9 +41,6 @@ Description:
   .
   * Data.Vector.Fixed.Primitive
   Unboxed vectors based on pritimive package.
-  .
-  * Data.Vector.Fixed.Monomorphic
-  Wrappers for monomorphic vectors
 
 Cabal-Version:  >= 1.8
 License:        BSD3
