@@ -48,6 +48,8 @@ module Data.Vector.Fixed.Cont (
   , ContVec(..)
   , CVecPeano(..)
   , consPeano
+  , toContVec
+  , runContVec
     -- * Construction of ContVec
   , cvec
   , fromList
@@ -95,8 +97,6 @@ module Data.Vector.Fixed.Cont (
   , zipWithM_
   , izipWithM
   , izipWithM_
-    -- * Running ContVec
-  , runContVec
     -- ** Getters
   , head
   , index
@@ -229,9 +229,7 @@ class ArityPeano n where
               -- ^ Get value to apply to function
            -> t n
               -- ^ Initial value
-           -> Fn n a b
-              -- ^ N-ary function
-           -> (b, t 'Z)
+           -> (CVecPeano n a, t 'Z)
 
   -- | Apply all parameters to the function using monadic
   --   actions. Note that for identity monad it's same as
@@ -263,7 +261,7 @@ apply :: Arity n
       -> t (Peano n)                      -- ^ Initial value
       -> ContVec n a                      -- ^ N-ary function
 {-# INLINE apply #-}
-apply step z = ContVec $ \(Fun f) -> fst $ applyFun step z f
+apply step z = toContVec $ fst (applyFun step z)
 
 -- | Apply all parameters to the function using applicative actions.
 applyM :: (Applicative f, Arity n)
@@ -271,7 +269,7 @@ applyM :: (Applicative f, Arity n)
        -> t (Peano n)                        -- ^ Initial value
        -> f (ContVec n a)
 {-# INLINE applyM #-}
-applyM f t = fmap (\(CVecPeano v) -> ContVec v) $ fst $ applyFunM f t
+applyM f t = fmap toContVec $ fst $ applyFunM f t
 
 -- | Arity of function.
 arity :: KnownNat n => proxy n -> Int
@@ -280,7 +278,7 @@ arity = fromIntegral . natVal
 
 instance ArityPeano 'Z where
   accum     _ g t = Fun $ g t
-  applyFun  _ t h = (h,t)
+  applyFun  _ t   = (CVecPeano unFun, t)
   applyFunM _ t   = (pure (CVecPeano unFun), t)
   {-# INLINE accum     #-}
   {-# INLINE applyFun  #-}
@@ -292,8 +290,9 @@ instance ArityPeano 'Z where
 
 instance ArityPeano n => ArityPeano ('S n) where
   accum     f g t = Fun $ \a -> unFun $ accum f g (f t a)
-  applyFun  f t h = let (a,t') = f t
-                    in  applyFun f t' (h a)
+  applyFun  f t   = let (a,t') = f t
+                        (v,tZ) = applyFun f t'
+                    in  (consPeano a v, tZ)
   applyFunM f t   = let (a,t')   = f t
                         (vec,t0) = applyFunM f t'
                     in  (consPeano <$> a <*> vec, t0)
@@ -437,17 +436,18 @@ type instance Dim (ContVec n) = n
 -- | Same as 'ContVec' but its length is expressed as Peano number.
 newtype CVecPeano n a = CVecPeano (forall r. Fun n a r -> r)
 
+-- | Cons values to the @CVecPeano@.
 consPeano :: a -> CVecPeano n a -> CVecPeano ('S n) a
 consPeano a (CVecPeano cont) = CVecPeano $ \f -> cont $ curryFirst f a
 {-# INLINE consPeano #-}
 
+toContVec :: CVecPeano (Peano n) a -> ContVec n a
+toContVec = coerce
 
 instance Arity n => Vector (ContVec n) a where
   construct = accum
     (\(T_mkN f) a -> T_mkN (f . consPeano a))
-    (\(T_mkN f)   -> case f (CVecPeano (\(Fun r) -> r)) of
-                       CVecPeano x -> ContVec x
-    )
+    (\(T_mkN f)   -> toContVec $ f (CVecPeano unFun))
     (T_mkN id)
   inspect (ContVec c) f = c f
   {-# INLINE construct #-}
@@ -517,21 +517,21 @@ fromList xs =
 --   length as vector.
 fromList' :: forall n a. Arity n => [a] -> ContVec n a
 {-# INLINE fromList' #-}
-fromList' xs = ContVec $ \(Fun fun) ->
-  let (r,rest) = applyFun step (Const xs :: Const [a] (Peano n)) fun
-      step (Const []    ) = error "Data.Vector.Fixed.Cont.fromList': too few elements"
+fromList' xs =
+  let step (Const []    ) = error "Data.Vector.Fixed.Cont.fromList': too few elements"
       step (Const (a:as)) = (a, Const as)
-  in case rest of
-       Const [] -> r
-       _        -> error "Data.Vector.Fixed.Cont.fromList': too many elements"
+  in case applyFun step (Const xs :: Const [a] (Peano n)) of
+    (v,Const []) -> toContVec v
+    _            -> error "Data.Vector.Fixed.Cont.fromList': too many elements"
+
 
 -- | Convert list to continuation-based vector. Will fail with
 --   'Nothing' if list doesn't have right length.
 fromListM :: forall n a. Arity n => [a] -> Maybe (ContVec n a)
 {-# INLINE fromListM #-}
 fromListM xs = case applyFunM step (Const xs :: Const [a] (Peano n)) of
-  (Just (CVecPeano v), Const []) -> Just (ContVec v)
-  _                              -> Nothing
+  (Just v, Const []) -> Just (toContVec v)
+  _                  -> Nothing
   where
     step (Const []    ) = (Nothing, Const [])
     step (Const (a:as)) = (Just a , Const as)

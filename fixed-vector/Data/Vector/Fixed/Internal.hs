@@ -22,8 +22,6 @@ import GHC.TypeLits
 
 import           Data.Vector.Fixed.Cont     (Vector(..),Dim,Arity,vector,Add)
 import qualified Data.Vector.Fixed.Cont as C
--- Needed for doctest
-import           Data.Vector.Fixed.Cont     (ContVec)
 
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
                       , foldl,foldr,foldl1,length,sum,reverse,scanl,scanl1
