@@ -243,7 +243,9 @@ class ArityPeano n where
             -> t n                                -- ^ Initial value
             -> (f (CVecPeano n a), t 'Z)
 
-  -- | Reverse order of parameters.
+  -- | Reverse order of parameters. It's implemented directly in type
+  --   class since expressing it in terms of @accum@ will require
+  --   putting ArityPeano constraint on step funcion
   reverseF :: Fun n a b -> Fun n a b
 
   -- | Worker function for 'gunfold'
