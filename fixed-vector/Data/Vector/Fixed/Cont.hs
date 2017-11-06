@@ -210,6 +210,8 @@ data T_ap a b c n = T_ap (Fn n a b) (Fn n a c)
 -- Generic operations of N-ary functions
 ----------------------------------------------------------------
 
+-- | Type class for type level number for which we can defined
+--   operations over N-ary functions.
 type Arity n = ( ArityPeano (Peano n)
                , KnownNat n
                , Peano (n+1) ~ 'S (Peano n)
@@ -622,7 +624,7 @@ imap :: (Arity n) => (Int -> a -> b) -> ContVec n a -> ContVec n b
 imap f (ContVec contA) = ContVec $
   contA . imapF f
 
--- | Monadic map over vector.
+-- | Effectful map over vector.
 mapM :: (Arity n, Applicative f) => (a -> f b) -> ContVec n a -> f (ContVec n b)
 {-# INLINE mapM #-}
 mapM = imapM . const

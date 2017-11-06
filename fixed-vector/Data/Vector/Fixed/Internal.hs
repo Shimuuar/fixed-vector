@@ -65,7 +65,7 @@ mk5 a1 a2 a3 a4 a5 = vector $ C.mk5 a1 a2 a3 a4 a5
 --
 --   Or if type of @r@ is fixed elsewhere
 --
---   > v = mkN [r] 1 2 3
+--   > v = mkN [v] 1 2 3
 mkN :: forall proxy v a. (Vector v a)
     => proxy (v a) -> C.Fn (C.Peano (Dim v)) a (v a)
 mkN _ = C.unFun (construct :: C.Fun (C.Peano (Dim v)) a (v a))
@@ -430,7 +430,7 @@ sequence_ :: (Vector v (f a), Applicative f) => v (f a) -> f ()
 sequence_ = mapM_ id
 
 
--- | Monadic map over vector.
+-- | Effectful map over vector.
 mapM :: (Vector v a, Vector v b, Applicative f) => (a -> f b) -> v a -> f (v b)
 {-# INLINE mapM #-}
 mapM f = fmap vector
