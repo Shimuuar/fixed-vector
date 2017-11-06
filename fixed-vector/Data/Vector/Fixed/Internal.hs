@@ -1,8 +1,8 @@
-{-# LANGUAGE PolyKinds #-}
-{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE Rank2Types            #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TypeFamilies          #-}
@@ -218,6 +218,29 @@ v ! n = runIndex n (C.cvec v)
 runIndex :: Arity n => Int -> C.ContVec n r -> r
 runIndex = C.index
 {-# INLINE[0] runIndex #-}
+
+-- We are trying to be clever with indexing here. It's not possible to
+-- write generic indexing function. For example it's necessary O(n)
+-- for VecList. It's however possible to write O(1) indexing for some
+-- vectors and we trying to use such functions where possible.
+--
+-- We try to use presumable more efficient basicIndex
+--
+--  1. It should not interfere with deforestation. So we should
+--     rewrite only when deforestation rule already fired.
+--     (starting from phase 1).
+--
+--  2. Creation of vector is costlier than generic indexing so we should
+--     apply rule only when vector is created anyway
+--
+-- In order to avoid firing this rule on implementation of (!) it has
+-- been necessary to move definition of all functions to internal module.
+
+{-# RULES
+"fixed-vector:index/basicIndex"[1] forall vv i.
+  runIndex i (C.cvec vv) = C.basicIndex vv i
+ #-}
+
 
 -- | Get element from vector at statically known index
 index :: (Vector v a, KnownNat k, k + 1 <= Dim v)
