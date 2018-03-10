@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP                   #-}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE FlexibleContexts      #-}
@@ -6,6 +7,7 @@
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE StandaloneDeriving    #-}
 {-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE UndecidableInstances  #-}
 -- |
 -- Unboxed vectors with fixed length. Vectors from
 -- "Data.Vector.Fixed.Unboxed" provide more flexibility at no
@@ -28,6 +30,9 @@ import Control.Monad
 import Control.DeepSeq (NFData(..))
 import Data.Data
 import Data.Monoid              (Monoid(..))
+#if MIN_VERSION_base(4,11,0)
+import Data.Semigroup
+#endif
 import Data.Primitive.ByteArray
 import Data.Primitive
 import qualified Foreign.Storable as Foreign (Storable(..))
@@ -125,6 +130,12 @@ instance (Arity n, Prim a, Monoid a) => Monoid (Vec n a) where
   mappend = zipWith mappend
   {-# INLINE mempty  #-}
   {-# INLINE mappend #-}
+
+#if MIN_VERSION_base(4,11,0)
+instance (Monoid (Vec n a)) => Semigroup (Vec n a) where
+  (<>) = mappend
+  {-# INLINE (<>) #-}
+#endif
 
 instance (Typeable n, Arity n, Prim a, Data a) => Data (Vec n a) where
   gfoldl       = C.gfoldl

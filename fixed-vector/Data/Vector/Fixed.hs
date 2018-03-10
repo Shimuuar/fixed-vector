@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP                   #-}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE FlexibleContexts      #-}
@@ -162,6 +163,9 @@ import Control.Applicative (Applicative(..),(<$>))
 import Control.DeepSeq     (NFData(..))
 import Data.Data           (Typeable,Data)
 import Data.Monoid         (Monoid(..))
+#if MIN_VERSION_base(4,11,0)
+import Data.Semigroup
+#endif
 import qualified Data.Foldable    as F
 import qualified Data.Traversable as T
 import Foreign.Storable (Storable(..))
@@ -183,7 +187,7 @@ import Prelude (Char)
 -- There are several ways to construct fixed vectors except using
 -- their constructor if it's available. For small ones it's possible
 -- to use functions 'mk1', 'mk2', etc.
--- 
+--
 -- >>> mk3 'a' 'b' 'c' :: (Char,Char,Char)
 -- ('a','b','c')
 --
@@ -273,6 +277,11 @@ instance (Arity n, Monoid a) => Monoid (VecList n a) where
   mappend = zipWith mappend
   {-# INLINE mempty  #-}
   {-# INLINE mappend #-}
+#if MIN_VERSION_base(4,11,0)
+instance (Monoid (VecList n a)) => Semigroup (VecList n a) where
+  (<>) = mappend
+  {-# INLINE (<>) #-}
+#endif
 
 instance (Storable a, Arity n) => Storable (VecList n a) where
   alignment = defaultAlignemnt
@@ -300,6 +309,11 @@ instance T.Traversable Only where
 instance Monoid a => Monoid (Only a) where
   mempty = Only mempty
   Only a `mappend` Only b = Only $ mappend a b
+#if MIN_VERSION_base(4,11,0)
+instance (Monoid (Only a)) => Semigroup (Only a) where
+  (<>) = mappend
+  {-# INLINE (<>) #-}
+#endif
 
 instance NFData a => NFData (Only a) where
   rnf (Only a) = rnf a

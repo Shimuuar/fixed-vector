@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP                   #-}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE FlexibleContexts      #-}
@@ -6,6 +7,7 @@
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE StandaloneDeriving    #-}
 {-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE UndecidableInstances  #-}
 -- |
 -- Storable-based unboxed vectors.
 module Data.Vector.Fixed.Storable (
@@ -29,6 +31,9 @@ module Data.Vector.Fixed.Storable (
 import Control.Monad.Primitive
 import Control.DeepSeq (NFData(..))
 import Data.Monoid           (Monoid(..))
+#if MIN_VERSION_base(4,11,0)
+import Data.Semigroup
+#endif
 import Data.Data
 import Foreign.Ptr           (castPtr)
 import Foreign.Storable
@@ -162,6 +167,12 @@ instance (Arity n, Storable a, Monoid a) => Monoid (Vec n a) where
   mappend = zipWith mappend
   {-# INLINE mempty  #-}
   {-# INLINE mappend #-}
+
+#if MIN_VERSION_base(4,11,0)
+instance (Monoid (Vec n a)) => Semigroup (Vec n a) where
+  (<>) = mappend
+  {-# INLINE (<>) #-}
+#endif
 
 instance (Arity n, Storable a) => Storable (Vec n a) where
   sizeOf    _ = arity  (Proxy :: Proxy n)

@@ -33,6 +33,9 @@ import Data.Data
 import Data.Functor.Identity (Identity(..))
 import Data.Int              (Int8, Int16, Int32, Int64 )
 import Data.Monoid           (Monoid(..),Dual(..),Sum(..),Product(..),All(..),Any(..))
+#if MIN_VERSION_base(4,11,0)
+import Data.Semigroup
+#endif
 import Data.Ord              (Down(..))
 import Data.Word             (Word,Word8,Word16,Word32,Word64)
 import Foreign.Storable      (Storable(..))
@@ -107,6 +110,12 @@ instance (Unbox n a, Monoid a) => Monoid (Vec n a) where
   mappend = zipWith mappend
   {-# INLINE mempty  #-}
   {-# INLINE mappend #-}
+
+#if MIN_VERSION_base(4,11,0)
+instance (Monoid (Vec n a)) => Semigroup (Vec n a) where
+  (<>) = mappend
+  {-# INLINE (<>) #-}
+#endif
 
 instance (Typeable n, Unbox n a, Data a) => Data (Vec n a) where
   gfoldl       = C.gfoldl
