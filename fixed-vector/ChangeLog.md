@@ -1,4 +1,4 @@
-Changes in 1.0.0.0
+Changes in 1.1.0.0
 
   * GHC8.4 compatibility release. Semigroup instances added and
     semigroup dependency added for GHC7.10
