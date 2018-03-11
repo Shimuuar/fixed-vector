@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP                   #-}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE FlexibleContexts      #-}
@@ -31,9 +30,7 @@ module Data.Vector.Fixed.Storable (
 import Control.Monad.Primitive
 import Control.DeepSeq (NFData(..))
 import Data.Monoid           (Monoid(..))
-#if MIN_VERSION_base(4,11,0)
-import Data.Semigroup
-#endif
+import Data.Semigroup        (Semigroup(..))
 import Data.Data
 import Foreign.Ptr           (castPtr)
 import Foreign.Storable
@@ -168,11 +165,9 @@ instance (Arity n, Storable a, Monoid a) => Monoid (Vec n a) where
   {-# INLINE mempty  #-}
   {-# INLINE mappend #-}
 
-#if MIN_VERSION_base(4,11,0)
-instance (Monoid (Vec n a)) => Semigroup (Vec n a) where
-  (<>) = mappend
+instance (Arity n, Storable a, Semigroup a) => Semigroup (Vec n a) where
+  (<>) = zipWith (<>)
   {-# INLINE (<>) #-}
-#endif
 
 instance (Arity n, Storable a) => Storable (Vec n a) where
   sizeOf    _ = arity  (Proxy :: Proxy n)

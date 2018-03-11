@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP                   #-}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE FlexibleContexts      #-}
@@ -30,9 +29,7 @@ import Control.Monad
 import Control.DeepSeq (NFData(..))
 import Data.Data
 import Data.Monoid              (Monoid(..))
-#if MIN_VERSION_base(4,11,0)
-import Data.Semigroup
-#endif
+import Data.Semigroup           (Semigroup(..))
 import Data.Primitive.ByteArray
 import Data.Primitive
 import qualified Foreign.Storable as Foreign (Storable(..))
@@ -131,11 +128,10 @@ instance (Arity n, Prim a, Monoid a) => Monoid (Vec n a) where
   {-# INLINE mempty  #-}
   {-# INLINE mappend #-}
 
-#if MIN_VERSION_base(4,11,0)
-instance (Monoid (Vec n a)) => Semigroup (Vec n a) where
-  (<>) = mappend
+instance (Arity n, Prim a, Semigroup a) => Semigroup (Vec n a) where
+  (<>) = zipWith (<>)
   {-# INLINE (<>) #-}
-#endif
+
 
 instance (Typeable n, Arity n, Prim a, Data a) => Data (Vec n a) where
   gfoldl       = C.gfoldl

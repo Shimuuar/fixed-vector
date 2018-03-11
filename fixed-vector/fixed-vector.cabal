@@ -62,6 +62,8 @@ Library
   Build-Depends: base      >=4.8 && <5
                , primitive >=0.6.2
                , deepseq
+  if impl(ghc < 8.0)
+    Build-Depends: semigroups >= 0.18
   Exposed-modules:
     -- API
     Data.Vector.Fixed.Cont
