@@ -61,9 +61,13 @@ mk5 a1 a2 a3 a4 a5 = vector $ C.mk5 a1 a2 a3 a4 a5
 --   function with additional type parameter which is used to fix type
 --   of vector being constructed. It could be used as:
 --
+--   > v = mkN (Proxy :: Proxy (Int,Int,Int)) 1 2 3
+--
+--   or using @TypeApplications@ syntax:
+--
 --   > v = mkN (Proxy @ (Int,Int,Int)) 1 2 3
 --
---   Or if type of @r@ is fixed elsewhere
+--   or if type of @v@ is fixed elsewhere
 --
 --   > v = mkN [v] 1 2 3
 mkN :: forall proxy v a. (Vector v a)
