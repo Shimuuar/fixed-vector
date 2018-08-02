@@ -41,12 +41,13 @@ import GHC.TypeLits
 import Prelude               ( Show(..),Eq(..),Ord(..),Int,Double,Float,Char,Bool(..)
                              , (++),($),(.),seq)
 
-import Data.Vector.Fixed (Dim,Vector(..),VectorN,toList,eq,ord,replicate,zipWith,foldl,
+import Data.Vector.Fixed (Dim,Vector(..),VectorN,eq,ord,replicate,zipWith,foldl,
                           defaultSizeOf,defaultAlignemnt,defaultPeek,defaultPoke
                          )
 import Data.Vector.Fixed.Mutable
 import qualified Data.Vector.Fixed.Cont      as C
 import qualified Data.Vector.Fixed.Primitive as P
+import qualified Data.Vector.Fixed.Internal  as I
 
 
 
@@ -74,7 +75,7 @@ class (Arity n, IVector (Vec n) a, MVector (MVec n) a) => Unbox n a
 ----------------------------------------------------------------
 
 instance (Arity n, Show a, Unbox n a) => Show (Vec n a) where
-  show v = "fromList " ++ show (toList v)
+  showsPrec = I.showsPrec
 
 instance (Arity n, Unbox n a, NFData a) => NFData (Vec n a) where
   rnf = foldl (\r a -> r `seq` rnf a) ()

@@ -104,7 +104,7 @@ replicate
 --
 --   >>> import Data.Vector.Fixed.Boxed (Vec2,Vec3)
 --   >>> replicateM (Just 3) :: Maybe (Vec3 Int)
---   Just fromList [3,3,3]
+--   Just (fromList [3,3,3])
 --   >>> replicateM (putStrLn "Hi!") :: IO (Vec2 ())
 --   Hi!
 --   Hi!
@@ -661,3 +661,8 @@ fromListM = fmap vector . C.fromListM
 fromFoldable :: (Vector v a, T.Foldable f) => f a -> Maybe (v a)
 {-# INLINE fromFoldable #-}
 fromFoldable = fromListM . T.toList
+
+-- | Generic definition of 'Prelude.showsPrec'
+showsPrec :: (Vector v a, Show a) => Int -> v a -> ShowS
+showsPrec d v = showParen (d > 10) $ showString "fromList " . Prelude.showsPrec 11 (toList v)
+{-# INLINE showsPrec #-}

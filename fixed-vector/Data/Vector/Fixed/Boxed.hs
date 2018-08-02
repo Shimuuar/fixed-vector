@@ -36,7 +36,8 @@ import Prelude ( Show(..),Eq(..),Ord(..),Functor(..),Monad(..)
 
 import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable
-import qualified Data.Vector.Fixed.Cont as C
+import qualified Data.Vector.Fixed.Cont     as C
+import qualified Data.Vector.Fixed.Internal as I
 
 
 
@@ -90,7 +91,7 @@ instance (Storable a, Arity n) => Storable (Vec n a) where
 ----------------------------------------------------------------
 
 instance (Arity n, Show a) => Show (Vec n a) where
-  show v = "fromList " ++ show (toList v)
+  showsPrec = I.showsPrec
 
 instance (Arity n, NFData a) => NFData (Vec n a) where
   rnf = foldl (\r a -> r `seq` rnf a) ()

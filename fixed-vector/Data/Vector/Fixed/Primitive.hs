@@ -40,7 +40,8 @@ import Prelude ((++),($),($!),undefined,seq)
 
 import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable
-import qualified Data.Vector.Fixed.Cont as C
+import qualified Data.Vector.Fixed.Cont     as C
+import qualified Data.Vector.Fixed.Internal as I
 
 
 
@@ -70,7 +71,7 @@ type Vec5 = Vec 5
 ----------------------------------------------------------------
 
 instance (Arity n, Prim a, Show a) => Show (Vec n a) where
-  show v = "fromList " ++ show (toList v)
+  showsPrec = I.showsPrec
 
 instance (Arity n, Prim a, NFData a) => NFData (Vec n a) where
   rnf = foldl (\r a -> r `seq` rnf a) ()
