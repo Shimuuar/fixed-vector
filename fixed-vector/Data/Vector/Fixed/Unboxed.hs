@@ -39,7 +39,7 @@ import Data.Word             (Word,Word8,Word16,Word32,Word64)
 import Foreign.Storable      (Storable(..))
 import GHC.TypeLits
 import Prelude               ( Show(..),Eq(..),Ord(..),Int,Double,Float,Char,Bool(..)
-                             , (++),($),(.),seq)
+                             , ($),(.),seq)
 
 import Data.Vector.Fixed (Dim,Vector(..),VectorN,eq,ord,replicate,zipWith,foldl,
                           defaultSizeOf,defaultAlignemnt,defaultPeek,defaultPoke

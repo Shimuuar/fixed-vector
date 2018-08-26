@@ -40,7 +40,7 @@ import GHC.ForeignPtr        ( ForeignPtr(..), mallocPlainForeignPtrBytes )
 import GHC.Ptr               ( Ptr(..) )
 import GHC.TypeLits
 import Prelude ( Show(..),Eq(..),Ord(..),Num(..),Monad(..),IO,Int
-               , (++),($),undefined,seq)
+               , ($),undefined,seq)
 
 import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable

@@ -35,7 +35,7 @@ import Data.Primitive
 import qualified Foreign.Storable as Foreign (Storable(..))
 import GHC.TypeLits
 import Prelude (Show(..),Eq(..),Ord(..),Num(..))
-import Prelude ((++),($),($!),undefined,seq)
+import Prelude (($),($!),undefined,seq)
 
 
 import Data.Vector.Fixed hiding (index)
