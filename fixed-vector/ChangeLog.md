@@ -1,3 +1,7 @@
+Changes in 1.2.0.0
+
+  * `Show` instance for data type now respect precedence.
+
 Changes in 1.1.0.0
 
   * GHC8.4 compatibility release. Semigroup instances added and
