@@ -20,6 +20,8 @@ before_cache:
 matrix:
   include:
     - compiler: ": #GHC 7.10.3"
+      # Some weird doctest failure
+      env: TEST=--disable-tests
       addons: {apt: {packages: [ghc-ppa-tools,cabal-install-head,ghc-7.10.3], sources: [hvr-ghc]}}
     - compiler: ": #GHC 8.0.2"
       addons: {apt: {packages: [ghc-ppa-tools,cabal-install-head,ghc-8.0.2], sources: [hvr-ghc]}}
@@ -28,6 +30,8 @@ matrix:
     - compiler: ": #GHC 8.4.3"
       addons: {apt: {packages: [ghc-ppa-tools,cabal-install-head,ghc-8.4.3], sources: [hvr-ghc]}}
     - compiler: ": #GHC 8.6.1"
+      # Doctest doesn't support GHC8.6 yet
+      env: TEST=--disable-tests
       addons: {apt: {packages: [ghc-ppa-tools,cabal-install-head,ghc-8.6.1], sources: [hvr-ghc]}}
 
 before_install:
@@ -36,6 +40,7 @@ before_install:
   - PATH=/opt/ghc/bin:/opt/ghc-ppa-tools/bin:$PATH
 
 install:
+  - TEST=${TEST---enable-tests}
   - cabal --version
   - echo "$(${HC} --version) [$(${HC} --print-project-git-commit-id 2> /dev/null || echo '?')]"
   # Update
@@ -44,7 +49,7 @@ install:
   - "[ -f cabal.project.local  ] && exit 1 || :"
   - "[ -f cabal.project.freeze ] && exit 1 || :"
   # Build dependencies
-  - cabal new-build -w ${HC} --enable-tests  --project-file="cabal.project" --dep -j2 all
+  - cabal new-build -w ${HC} ${TEST}         --project-file="cabal.project" --dep -j2 all
   - cabal new-build -w ${HC} --disable-tests --project-file="cabal.project" --dep -j2 all
   - rm -rf "."/.ghc.environment.* "."/dist
   - DISTDIR=$(mktemp -d /tmp/dist-test.XXXX)
@@ -61,11 +66,6 @@ script:
   # this builds all libraries and executables (without tests/benchmarks)
   - cabal new-build -w ${HC} --disable-tests --disable-benchmarks all
   # build & run tests.
-  #
-  # For some reason doctests fails to build tests for GHC 7.10. Let ignore that
-  - if [ "$(${HC} --numeric-version)" != 7.10.3 ]; then
-      cabal new-build -w ${HC} --enable-tests all;
-    fi
-  - if [ "$(${HC} --numeric-version)" != 7.10.3 ]; then
-      cabal new-test  -w ${HC} --enable-tests all;
-    fi
+  - cabal new-build -w ${HC} ${TEST} all
+  - cabal new-build -w ${HC} ${TEST} all;
+  - "[ x--enable-tests = x$TEST ] && cabal new-test  -w ${HC} --enable-tests all || :"
