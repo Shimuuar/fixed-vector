@@ -1,5 +1,5 @@
 Name:           fixed-vector-cereal
-Version:        1.0.0.0
+Version:        1.0.0.1
 Synopsis:       Cereal instances for fixed-vector
 Description:
   Cereal instances for fixed-vector
