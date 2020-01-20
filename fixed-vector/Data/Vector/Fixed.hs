@@ -57,6 +57,9 @@ module Data.Vector.Fixed (
   , mk3
   , mk4
   , mk5
+  , mk6
+  , mk7
+  , mk8
   , mkN
     -- ** Continuation-based vectors
   , ContVec

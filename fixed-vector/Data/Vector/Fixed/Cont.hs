@@ -73,6 +73,9 @@ module Data.Vector.Fixed.Cont (
   , mk3
   , mk4
   , mk5
+  , mk6
+  , mk7
+  , mk8
     -- * Transformations
   , map
   , imap
@@ -607,6 +610,17 @@ mk5 :: a -> a -> a -> a -> a -> ContVec 5 a
 mk5 a1 a2 a3 a4 a5 = ContVec $ \(Fun f) -> f a1 a2 a3 a4 a5
 {-# INLINE mk5 #-}
 
+mk6 :: a -> a -> a -> a -> a -> a -> ContVec 6 a
+mk6 a1 a2 a3 a4 a5 a6 = ContVec $ \(Fun f) -> f a1 a2 a3 a4 a5 a6
+{-# INLINE mk6 #-}
+
+mk7 :: a -> a -> a -> a -> a -> a -> a -> ContVec 7 a
+mk7 a1 a2 a3 a4 a5 a6 a7 = ContVec $ \(Fun f) -> f a1 a2 a3 a4 a5 a6 a7
+{-# INLINE mk7 #-}
+
+mk8 :: a -> a -> a -> a -> a -> a -> a -> a -> ContVec 8 a
+mk8 a1 a2 a3 a4 a5 a6 a7 a8 = ContVec $ \(Fun f) -> f a1 a2 a3 a4 a5 a6 a7 a8
+{-# INLINE mk8 #-}
 
 
 ----------------------------------------------------------------
