@@ -57,6 +57,18 @@ mk5 :: (Vector v a, Dim v ~ 5) => a -> a -> a -> a -> a -> v a
 mk5 a1 a2 a3 a4 a5 = vector $ C.mk5 a1 a2 a3 a4 a5
 {-# INLINE mk5 #-}
 
+mk6 :: (Vector v a, Dim v ~ 6) => a -> a -> a -> a -> a -> a -> v a
+mk6 a1 a2 a3 a4 a5 a6 = vector $ C.mk5 a1 a2 a3 a4 a5 a6
+{-# INLINE mk6 #-}
+
+mk7 :: (Vector v a, Dim v ~ 7) => a -> a -> a -> a -> a -> a -> a -> v a
+mk7 a1 a2 a3 a4 a5 a6 a7 = vector $ C.mk5 a1 a2 a3 a4 a5 a6 a7
+{-# INLINE mk7 #-}
+
+mk8 :: (Vector v a, Dim v ~ 8) => a -> a -> a -> a -> a -> a -> a -> a -> v a
+mk8 a1 a2 a3 a4 a5 a6 a7 a8 = vector $ C.mk5 a1 a2 a3 a4 a5 a6 a7 a8
+{-# INLINE mk8 #-}
+
 -- | N-ary constructor. Despite scary signature it's just N-ary
 --   function with additional type parameter which is used to fix type
 --   of vector being constructed. It could be used as:
