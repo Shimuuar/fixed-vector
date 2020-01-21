@@ -2,7 +2,8 @@ Name:           fixed-vector-cereal
 Version:        1.0.0.1
 Synopsis:       Cereal instances for fixed-vector
 Description:
-  Cereal instances for fixed-vector
+  This package contains Cereal instances for data types defined in
+  fixed-vector package.
   
 Cabal-Version:  >= 1.8
 License:        BSD3
