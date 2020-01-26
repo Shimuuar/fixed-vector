@@ -1,3 +1,7 @@
+Changes in 1.0.0.2
+
+  * GHC 8.6+ compatibility for tests as well
+
 Changes in 1.0.0.1
 
   * GHC 8.6 compatibility

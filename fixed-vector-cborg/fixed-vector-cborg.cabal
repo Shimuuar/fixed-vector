@@ -1,5 +1,5 @@
 Name:           fixed-vector-cborg
-Version:        1.0.0.1
+Version:        1.0.0.2
 Synopsis:       Binary instances for fixed-vector
 Description:
   CBOR serialization instances for fixed-vector's types. Generic
