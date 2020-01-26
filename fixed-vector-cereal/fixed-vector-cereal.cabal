@@ -14,7 +14,7 @@ Bug-reports:    https://github.com/Shimuuar/fixed-vector/issues
 Category:       Data
 Build-Type:     Simple
 extra-source-files:
-  ChangeLog
+  ChangeLog.md
 
 tested-with:
     GHC ==7.10.3
