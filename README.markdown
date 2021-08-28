@@ -26,7 +26,7 @@ vectors and allows to implement deforestation.
 
 Downside of this approach is inability to work with vectors larger than tens of
 elements. If you need larger
-vectors [vector-sized](https://hackage.haskell.org/package/vector) could provide
+vectors [vector-sized](https://hackage.haskell.org/package/vector-sized) could provide
 similar functionality.
 
 
