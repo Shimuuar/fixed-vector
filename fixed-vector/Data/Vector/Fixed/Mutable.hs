@@ -75,11 +75,24 @@ lengthM :: forall v s a. (Arity (DimM v)) => v s a -> Int
 lengthM _ = arity (Proxy :: Proxy (DimM v))
 
 -- | Create copy of vector.
+--
+--   Examples:
+--
+--   >>> import Control.Monad.ST (runST)
+--   >>> import Data.Vector.Fixed (mk3)
+--   >>> import Data.Vector.Fixed.Boxed (Vec3)
+--   >>> import Data.Vector.Fixed.Mutable (unsafeThaw, clone, unsafeFreeze, unsafeWrite)
+--   >>> let x = mk3 0 1 2 :: Vec3 Int
+--   >>> let y = runST (do { xm <- unsafeThaw x; ym <- clone xm; unsafeWrite ym 0 2; unsafeFreeze ym }) `asTypeOf` x
+--   >>> x
+--   fromList [0,1,2]
+--   >>> y
+--   fromList [2,1,2]
 clone :: (PrimMonad m, MVector v a) => v (PrimState m) a -> m (v (PrimState m) a)
 {-# INLINE clone #-}
 clone v = do
   u <- new
-  move v u
+  move u v
   return u
 
 -- | Read value at index with bound checks.
