@@ -4,6 +4,8 @@ Changes in 1.2.2.0
 
   * Pattern synonyms `V2`,`V3`,`V4` added.
 
+  * `replicate{,M}` and `generate{,M}` added.
+
 Changes in 1.2.1.0
 
   * Functions `mk6`, `mk7`, `mk8` added.
