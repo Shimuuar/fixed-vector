@@ -1,5 +1,8 @@
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
+{-# LANGUAGE DeriveFoldable        #-}
+{-# LANGUAGE DeriveFunctor         #-}
+{-# LANGUAGE DeriveTraversable     #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE GADTs                 #-}
@@ -297,15 +300,8 @@ instance (Storable a, Arity n) => Storable (VecList n a) where
 
 -- | Single-element tuple.
 newtype Only a = Only a
-                 deriving (Show,Eq,Ord,Typeable,Data)
+                 deriving (Show,Eq,Ord,Typeable,Data,Functor,F.Foldable,T.Traversable)
 
-instance Functor Only where
-  fmap f (Only a) = Only (f a)
-instance F.Foldable Only where
-  foldr = foldr
-instance T.Traversable Only where
-  sequenceA  (Only f) = Only <$> f
-  traverse f (Only a) = Only <$> f a
 instance Monoid a => Monoid (Only a) where
   mempty = Only mempty
   Only a `mappend` Only b = Only $ mappend a b
@@ -338,15 +334,7 @@ instance (Storable a) => Storable (Only a) where
 
 -- | Empty tuple.
 data Empty a = Empty
-  deriving (Show,Eq,Ord,Typeable,Data)
-
-instance Functor Empty where
-  fmap _ Empty = Empty
-instance F.Foldable Empty where
-  foldr = foldr
-instance T.Traversable Empty where
-  sequenceA Empty = pure Empty
-  traverse _ Empty = pure Empty
+  deriving (Show,Eq,Ord,Typeable,Data,Functor,F.Foldable,T.Traversable)
 
 instance NFData (Empty a) where
   rnf Empty = ()
