@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP                   #-}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE DeriveFoldable        #-}
@@ -7,12 +8,14 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PatternSynonyms       #-}
 {-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE StandaloneDeriving    #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE UndecidableInstances  #-}
+{-# LANGUAGE ViewPatterns          #-}
 -- |
 -- Generic API for vectors with fixed length.
 --
@@ -64,6 +67,10 @@ module Data.Vector.Fixed (
   , mk7
   , mk8
   , mkN
+    -- ** Pattern for low-dimension vectors
+  , pattern V2
+  , pattern V3
+  , pattern V4
     -- ** Continuation-based vectors
   , ContVec
   , empty
@@ -193,7 +200,7 @@ import Prelude (Show(..),Eq(..),Ord(..),Functor(..),id,(.),($),undefined)
 -- ('a','b','c')
 --
 -- Alternatively one could use 'mkN'. See its documentation for
--- examples
+-- examples.
 --
 -- Another option is to create tuple and 'convert' it to desired
 -- vector type. For example:
@@ -207,6 +214,8 @@ import Prelude (Show(..),Eq(..),Ord(..),Functor(..),id,(.),($),undefined)
 -- > function :: Vec N3 Double -> ...
 -- > function (convert -> (x,y,z)) = ...
 --
+-- For small vectors pattern synonyms @V2@, @V3$, @V4@ are provided
+-- that use same trick internally.
 
 
 -- $smallDim
@@ -349,6 +358,32 @@ type Tuple2 a = (a,a)
 type Tuple3 a = (a,a,a)
 type Tuple4 a = (a,a,a,a)
 type Tuple5 a = (a,a,a,a,a)
+
+
+----------------------------------------------------------------
+-- Patterns
+----------------------------------------------------------------
+
+pattern V2 :: (Vector v a, Dim v ~ 2) => a -> a -> v a
+pattern V2 x y <- (convert -> (x,y)) where
+  V2 x y = mk2 x y
+#if MIN_VERSION_base(4,16,0)
+{-# INLINE V2 #-}
+#endif
+
+pattern V3 :: (Vector v a, Dim v ~ 3) => a -> a -> a -> v a
+pattern V3 x y z <- (convert -> (x,y,z)) where
+  V3 x y z = mk3 x y z
+#if MIN_VERSION_base(4,16,0)
+{-# INLINE V3 #-}
+#endif
+
+pattern V4 :: (Vector v a, Dim v ~ 4) => a -> a -> a -> a -> v a
+pattern V4 t x y z <- (convert -> (t,x,y,z)) where
+  V4 t x y z = mk4 t x y z
+#if MIN_VERSION_base(4,16,0)
+{-# INLINE V4 #-}
+#endif
 
 
 -- $setup

@@ -1,6 +1,12 @@
+Changes in 1.2.2.0
+
+  * Support for GHC7.10 dropped.
+
+  * Pattern synonyms `V2`,`V3`,`V4` added.
+
 Changes in 1.2.1.0
 
-  * Functions `mk6`, `mk7`, `mk8` added
+  * Functions `mk6`, `mk7`, `mk8` added.
 
 Changes in 1.2.0.0
 
