@@ -5,7 +5,7 @@ Description:
   CBOR serialization instances for fixed-vector's types. Generic
   serialization functions are proviede as well
   
-Cabal-Version:  >= 1.8
+Cabal-Version:  >= 1.10
 License:        BSD3
 License-File:   LICENSE
 Author:         Aleksey Khudyakov <alexey.skladnoy@gmail.com>
@@ -30,6 +30,7 @@ source-repository head
 
 Library
   Ghc-options:          -Wall
+  Default-Language:     Haskell2010
   Build-Depends: base         >=4.8 && <5
                , fixed-vector >=1.0
                , cborg
@@ -38,6 +39,8 @@ Library
     Data.Vector.Fixed.Instances.CBOR
 
 Test-Suite test
+  Ghc-options:      -Wall
+  Default-Language: Haskell2010
   Type:           exitcode-stdio-1.0
   Hs-source-dirs: test
   Main-is:        QC.hs

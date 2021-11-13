@@ -3,6 +3,7 @@
 {-# LANGUAGE ScopedTypeVariables  #-}
 {-# LANGUAGE TypeFamilies         #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 import Test.Tasty
 import Test.Tasty.QuickCheck as QC
 
@@ -16,7 +17,7 @@ import qualified Data.Vector.Fixed.Primitive as P
 import           Data.Vector.Fixed.Instances.Cereal ()
 
 
-
+tests :: TestTree
 tests = testGroup "cereal"
   [ testTagged p_serialize (T :: T (F.Only  Int))
   , testTagged p_serialize (T :: T (F.VecList 2 Int))
