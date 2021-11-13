@@ -58,16 +58,18 @@ jobs:
     - name: Make sdist
       run: |
         mkdir sdist
-        cabal sdist -o sdist
+        for nm in fixed-vector*; do cabal sdist $nm -o sdist; done
     - name: Unpack
       run: |
         mkdir unpacked
-        tar -C unpacked -xzf sdist/mwc-random*tar.gz
+        for nm in sdist/*; do tar -C unpacked -xf $nm; done
         cd unpacked
+        echo "packages:      */*.cabal" >  cabal.project
+        echo "tests:         true"      >> cabal.project
     # ----------------
     - name: cabal check
       run: |
-        cabal -vnormal check
+        for nm in fixed-vector-*; do (cd $nm; cabal check); done
     # ----------------
     - name: Build
       run: |
