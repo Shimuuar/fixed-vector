@@ -30,6 +30,7 @@ module Data.Vector.Fixed.Mutable (
   , inspectVec
   ) where
 
+import Control.Applicative  (Const(..))
 import Control.Monad.ST
 import Control.Monad.Primitive
 import Data.Typeable  (Proxy(..))
@@ -139,9 +140,6 @@ inspectVec v
     cv :: ContVec (Dim v) a
     cv = apply (\(Const i) -> (unsafeIndex v i, Const (i+1)))
                (Const 0 :: Const Int (Peano (Dim v)))
-
--- Const in GHC7.10 is not polykinded
-newtype Const a n = Const a
 
 -- | Generic construct implementation for array-based vectors.
 constructVec :: forall v a. (Arity (Dim v), IVector v a) => Fun (Peano (Dim v)) a (v a)

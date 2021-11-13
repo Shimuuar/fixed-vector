@@ -128,7 +128,7 @@ module Data.Vector.Fixed.Cont (
   , gunfold
   ) where
 
-import Control.Applicative   ((<|>))
+import Control.Applicative   ((<|>), Const(..))
 import Data.Coerce
 import Data.Complex          (Complex(..))
 import Data.Data             (Data)
@@ -1067,9 +1067,6 @@ gfoldlF f c0 = accum
 
 newtype T_gfoldl c r a n = T_gfoldl (c (Fn n a r))
 
-
--- Const in GHC7.10 is not polykinded
-newtype Const a n = Const a
 
 ----------------------------------------------------------------
 -- Deforestation
