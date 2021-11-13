@@ -89,13 +89,10 @@ lengthM _ = arity (Proxy :: Proxy (DimM v))
 --   >>> import Control.Monad.ST (runST)
 --   >>> import Data.Vector.Fixed (mk3)
 --   >>> import Data.Vector.Fixed.Boxed (Vec3)
---   >>> import Data.Vector.Fixed.Mutable (unsafeThaw, clone, unsafeFreeze, unsafeWrite)
---   >>> let x = mk3 0 1 2 :: Vec3 Int
---   >>> let y = runST (do { xm <- unsafeThaw x; ym <- clone xm; unsafeWrite ym 0 2; unsafeFreeze ym }) `asTypeOf` x
+--   >>> import qualified Data.Vector.Fixed.Mutable as M
+--   >>> let x = runST (do { v <- M.replicate 100; v' <- clone v; M.write v' 0 2; M.unsafeFreeze v' }) :: Vec3 Int
 --   >>> x
---   fromList [0,1,2]
---   >>> y
---   fromList [2,1,2]
+--   fromList [2,100,100]
 clone :: (PrimMonad m, MVector v a) => v (PrimState m) a -> m (v (PrimState m) a)
 {-# INLINE clone #-}
 clone v = do
