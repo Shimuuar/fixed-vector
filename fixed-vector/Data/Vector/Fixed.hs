@@ -338,12 +338,7 @@ instance (Storable a) => Storable (Only a) where
 
 -- | Empty tuple.
 data Empty a = Empty
-  deriving (Show,Eq,Ord)
--- GHC7.10 wants standalone deriving for some reason:
--- >    No instance for (Typeable a)
--- >      arising from the 'deriving' clause of a data type declaration
-deriving instance Typeable a => Typeable (Empty a)
-deriving instance Data     a => Data     (Empty a)
+  deriving (Show,Eq,Ord,Typeable,Data)
 
 instance Functor Empty where
   fmap _ Empty = Empty
