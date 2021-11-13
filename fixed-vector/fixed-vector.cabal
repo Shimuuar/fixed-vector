@@ -95,5 +95,5 @@ Test-Suite fixed-vector-doctests
   Build-Depends: base >=4.8 && <5
                , primitive >=0.6.2
                  -- Additional test dependencies.
-               , doctest   >= 0.9
+               , doctest   >= 0.18
                , filemanip == 0.3.6.*
