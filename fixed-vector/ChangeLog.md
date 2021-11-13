@@ -1,4 +1,4 @@
-Changes in 1.2.2.0
+Changes in 1.2.1.0
 
   * Support for GHC7.10 dropped.
 
@@ -6,9 +6,8 @@ Changes in 1.2.2.0
 
   * `replicate{,M}` and `generate{,M}` added.
 
-Changes in 1.2.1.0
-
   * Functions `mk6`, `mk7`, `mk8` added.
+
 
 Changes in 1.2.0.0
 
