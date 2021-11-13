@@ -44,7 +44,7 @@ import Prelude               ( Show(..),Eq(..),Ord(..),Int,Double,Float,Char,Boo
 import Data.Vector.Fixed (Dim,Vector(..),VectorN,eq,ord,replicate,zipWith,foldl,
                           defaultSizeOf,defaultAlignemnt,defaultPeek,defaultPoke
                          )
-import Data.Vector.Fixed.Mutable
+import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, Arity(..), index)
 import qualified Data.Vector.Fixed.Cont      as C
 import qualified Data.Vector.Fixed.Primitive as P
 import qualified Data.Vector.Fixed.Internal  as I
