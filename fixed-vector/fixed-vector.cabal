@@ -42,7 +42,7 @@ Description:
   * Data.Vector.Fixed.Primitive
   Unboxed vectors based on pritimive package.
 
-Cabal-Version:  >= 1.8
+Cabal-Version:  >= 1.10
 License:        BSD3
 License-File:   LICENSE
 Author:         Aleksey Khudyakov <alexey.skladnoy@gmail.com>
