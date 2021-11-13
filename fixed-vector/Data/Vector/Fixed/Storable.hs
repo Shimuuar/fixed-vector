@@ -43,7 +43,7 @@ import Prelude ( Show(..),Eq(..),Ord(..),Num(..),Monad(..),IO,Int
                , ($),undefined,seq)
 
 import Data.Vector.Fixed hiding (index)
-import Data.Vector.Fixed.Mutable
+import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, arity, index)
 import qualified Data.Vector.Fixed.Cont     as C
 import qualified Data.Vector.Fixed.Internal as I
 
