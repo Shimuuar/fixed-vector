@@ -54,12 +54,14 @@ extra-source-files:
   ChangeLog.md
 
 tested-with:
-    GHC ==7.10.3
-     || ==8.0.2
+    GHC ==8.0.2
      || ==8.2.2
      || ==8.4.4
      || ==8.6.5
-     || ==8.8.1
+     || ==8.8.4
+     || ==8.10.7
+     || ==9.0.1
+     || ==9.2.1
 
 source-repository head
   type:     git
@@ -67,11 +69,9 @@ source-repository head
 
 Library
   Ghc-options:          -Wall
-  Build-Depends: base      >=4.8 && <5
+  Build-Depends: base      >=4.9 && <5
                , primitive >=0.6.2
                , deepseq
-  if impl(ghc < 8.0)
-    Build-Depends: semigroups >= 0.18
   Exposed-modules:
     -- API
     Data.Vector.Fixed.Cont
@@ -95,5 +95,5 @@ Test-Suite fixed-vector-doctests
   Build-Depends: base >=4.8 && <5
                , primitive >=0.6.2
                  -- Additional test dependencies.
-               , doctest   >= 0.9
+               , doctest   >= 0.18
                , filemanip == 0.3.6.*

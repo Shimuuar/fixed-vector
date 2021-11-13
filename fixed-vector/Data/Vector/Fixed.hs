@@ -1,15 +1,21 @@
+{-# LANGUAGE CPP                   #-}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
+{-# LANGUAGE DeriveFoldable        #-}
+{-# LANGUAGE DeriveFunctor         #-}
+{-# LANGUAGE DeriveTraversable     #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PatternSynonyms       #-}
 {-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE StandaloneDeriving    #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE UndecidableInstances  #-}
+{-# LANGUAGE ViewPatterns          #-}
 -- |
 -- Generic API for vectors with fixed length.
 --
@@ -61,6 +67,10 @@ module Data.Vector.Fixed (
   , mk7
   , mk8
   , mkN
+    -- ** Pattern for low-dimension vectors
+  , pattern V2
+  , pattern V3
+  , pattern V4
     -- ** Continuation-based vectors
   , ContVec
   , empty
@@ -178,8 +188,6 @@ import qualified Data.Vector.Fixed.Cont as C
 import Data.Vector.Fixed.Internal
 
 import Prelude (Show(..),Eq(..),Ord(..),Functor(..),id,(.),($),undefined)
--- Needed for doctest
-import Prelude (Char)
 
 
 -- $construction
@@ -192,7 +200,7 @@ import Prelude (Char)
 -- ('a','b','c')
 --
 -- Alternatively one could use 'mkN'. See its documentation for
--- examples
+-- examples.
 --
 -- Another option is to create tuple and 'convert' it to desired
 -- vector type. For example:
@@ -206,6 +214,8 @@ import Prelude (Char)
 -- > function :: Vec N3 Double -> ...
 -- > function (convert -> (x,y,z)) = ...
 --
+-- For small vectors pattern synonyms @V2@, @V3$, @V4@ are provided
+-- that use same trick internally.
 
 
 -- $smallDim
@@ -297,15 +307,8 @@ instance (Storable a, Arity n) => Storable (VecList n a) where
 
 -- | Single-element tuple.
 newtype Only a = Only a
-                 deriving (Show,Eq,Ord,Typeable,Data)
+                 deriving (Show,Eq,Ord,Typeable,Data,Functor,F.Foldable,T.Traversable)
 
-instance Functor Only where
-  fmap f (Only a) = Only (f a)
-instance F.Foldable Only where
-  foldr = foldr
-instance T.Traversable Only where
-  sequenceA  (Only f) = Only <$> f
-  traverse f (Only a) = Only <$> f a
 instance Monoid a => Monoid (Only a) where
   mempty = Only mempty
   Only a `mappend` Only b = Only $ mappend a b
@@ -338,20 +341,7 @@ instance (Storable a) => Storable (Only a) where
 
 -- | Empty tuple.
 data Empty a = Empty
-  deriving (Show,Eq,Ord)
--- GHC7.10 wants standalone deriving for some reason:
--- >    No instance for (Typeable a)
--- >      arising from the 'deriving' clause of a data type declaration
-deriving instance Typeable a => Typeable (Empty a)
-deriving instance Data     a => Data     (Empty a)
-
-instance Functor Empty where
-  fmap _ Empty = Empty
-instance F.Foldable Empty where
-  foldr = foldr
-instance T.Traversable Empty where
-  sequenceA Empty = pure Empty
-  traverse _ Empty = pure Empty
+  deriving (Show,Eq,Ord,Typeable,Data,Functor,F.Foldable,T.Traversable)
 
 instance NFData (Empty a) where
   rnf Empty = ()
@@ -368,3 +358,34 @@ type Tuple2 a = (a,a)
 type Tuple3 a = (a,a,a)
 type Tuple4 a = (a,a,a,a)
 type Tuple5 a = (a,a,a,a,a)
+
+
+----------------------------------------------------------------
+-- Patterns
+----------------------------------------------------------------
+
+pattern V2 :: (Vector v a, Dim v ~ 2) => a -> a -> v a
+pattern V2 x y <- (convert -> (x,y)) where
+  V2 x y = mk2 x y
+#if MIN_VERSION_base(4,16,0)
+{-# INLINE V2 #-}
+#endif
+
+pattern V3 :: (Vector v a, Dim v ~ 3) => a -> a -> a -> v a
+pattern V3 x y z <- (convert -> (x,y,z)) where
+  V3 x y z = mk3 x y z
+#if MIN_VERSION_base(4,16,0)
+{-# INLINE V3 #-}
+#endif
+
+pattern V4 :: (Vector v a, Dim v ~ 4) => a -> a -> a -> a -> v a
+pattern V4 t x y z <- (convert -> (t,x,y,z)) where
+  V4 t x y z = mk4 t x y z
+#if MIN_VERSION_base(4,16,0)
+{-# INLINE V4 #-}
+#endif
+
+
+-- $setup
+--
+-- >>> import Data.Char
