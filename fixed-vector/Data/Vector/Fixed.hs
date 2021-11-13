@@ -181,8 +181,6 @@ import qualified Data.Vector.Fixed.Cont as C
 import Data.Vector.Fixed.Internal
 
 import Prelude (Show(..),Eq(..),Ord(..),Functor(..),id,(.),($),undefined)
--- Needed for doctest
-import Prelude (Char)
 
 
 -- $construction
@@ -351,3 +349,8 @@ type Tuple2 a = (a,a)
 type Tuple3 a = (a,a,a)
 type Tuple4 a = (a,a,a,a)
 type Tuple5 a = (a,a,a,a,a)
+
+
+-- $setup
+--
+-- >>> import Data.Char
