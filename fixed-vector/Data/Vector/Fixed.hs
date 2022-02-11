@@ -284,7 +284,7 @@ instance Arity n => T.Traversable (VecList n) where
   traverse  = traverse
 instance (Arity n, Monoid a) => Monoid (VecList n a) where
   mempty  = replicate mempty
-  mappend = zipWith mappend
+  mappend = (<>)
   {-# INLINE mempty  #-}
   {-# INLINE mappend #-}
 
