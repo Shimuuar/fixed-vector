@@ -1024,7 +1024,7 @@ all f = foldr (\x b -> f x && b) True
 
 -- | Determines whether any of element of vector satisfy predicate.
 any :: Arity n => (a -> Bool) -> ContVec n a -> Bool
-any f = foldr (\x b -> f x || b) True
+any f = foldr (\x b -> f x || b) False
 {-# INLINE any #-}
 
 -- | The 'find' function takes a predicate and a vector and returns
