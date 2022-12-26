@@ -1,3 +1,8 @@
+Changes in 1.2.1.1
+
+  * Fixed bug in `any` (#18)
+
+
 Changes in 1.2.1.0
 
   * Support for GHC7.10 dropped.
