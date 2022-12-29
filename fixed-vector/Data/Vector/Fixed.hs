@@ -12,6 +12,7 @@
 {-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE StandaloneDeriving    #-}
+{-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE UndecidableInstances  #-}
@@ -146,6 +147,7 @@ module Data.Vector.Fixed (
   , izipWithM_
     -- * Storable methods
     -- $storable
+  , StorableViaFixed(..)
   , defaultAlignemnt
   , defaultSizeOf
   , defaultPeek
@@ -173,6 +175,7 @@ module Data.Vector.Fixed (
 
 import Control.Applicative (Applicative(..),(<$>))
 import Control.DeepSeq     (NFData(..))
+import Data.Coerce
 import Data.Data           (Typeable,Data)
 import Data.Monoid         (Monoid(..))
 import Data.Semigroup      (Semigroup(..))
@@ -303,6 +306,19 @@ instance (Storable a, Arity n) => Storable (VecList n a) where
   {-# INLINE peek      #-}
   {-# INLINE poke      #-}
 
+-- | Newtype for deriving 'Storable' instance for data types which has
+--   instance of 'Vector'
+newtype StorableViaFixed v a = StorableViaFixed (v a)
+
+instance (Vector v a, Storable a) => Storable (StorableViaFixed v a) where
+  alignment = coerce (defaultAlignemnt @a @v)
+  sizeOf    = coerce (defaultSizeOf    @a @v)
+  peek      = coerce (defaultPeek      @a @v)
+  poke      = coerce (defaultPoke      @a @v)
+  {-# INLINE alignment #-}
+  {-# INLINE sizeOf    #-}
+  {-# INLINE peek      #-}
+  {-# INLINE poke      #-}
 
 
 -- | Single-element tuple.
