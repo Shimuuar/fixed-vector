@@ -1,3 +1,8 @@
+Changes in 1.2.2.1
+
+  * Newtype `StorableViaFixed` for deriving `Storable` instances added.
+
+
 Changes in 1.2.1.1
 
   * Fixed bug in `any` (#18)
