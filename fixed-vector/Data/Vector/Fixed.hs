@@ -384,22 +384,27 @@ pattern V2 :: (Vector v a, Dim v ~ 2) => a -> a -> v a
 pattern V2 x y <- (convert -> (x,y)) where
   V2 x y = mk2 x y
 #if MIN_VERSION_base(4,16,0)
-{-# INLINE V2 #-}
+{-# INLINE   V2 #-}
+{-# COMPLETE V2 #-}
 #endif
 
 pattern V3 :: (Vector v a, Dim v ~ 3) => a -> a -> a -> v a
 pattern V3 x y z <- (convert -> (x,y,z)) where
   V3 x y z = mk3 x y z
 #if MIN_VERSION_base(4,16,0)
-{-# INLINE V3 #-}
+{-# INLINE   V3 #-}
+{-# COMPLETE V3 #-}
 #endif
 
 pattern V4 :: (Vector v a, Dim v ~ 4) => a -> a -> a -> a -> v a
 pattern V4 t x y z <- (convert -> (t,x,y,z)) where
   V4 t x y z = mk4 t x y z
 #if MIN_VERSION_base(4,16,0)
-{-# INLINE V4 #-}
+{-# INLINE   V4 #-}
+{-# COMPLETE V4 #-}
 #endif
+
+
 
 
 -- $setup
