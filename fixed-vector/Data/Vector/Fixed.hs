@@ -326,10 +326,10 @@ newtype Only a = Only a
                  deriving (Show,Eq,Ord,Typeable,Data,Functor,F.Foldable,T.Traversable)
 
 instance Monoid a => Monoid (Only a) where
-  mempty = Only mempty
-  Only a `mappend` Only b = Only $ mappend a b
+  mempty  = Only mempty
+  mappend = (<>)
 instance (Semigroup a) => Semigroup (Only a) where
-  Only a <> Only b = Only (a <> b)
+  (<>) = coerce ((<>) @a)
   {-# INLINE (<>) #-}
 
 

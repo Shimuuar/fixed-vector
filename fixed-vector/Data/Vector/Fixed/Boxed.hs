@@ -144,7 +144,7 @@ instance (Arity n, Ord a) => Ord (Vec n a) where
 
 instance (Arity n, Monoid a) => Monoid (Vec n a) where
   mempty  = replicate mempty
-  mappend = zipWith mappend
+  mappend = (<>)
   {-# INLINE mempty  #-}
   {-# INLINE mappend #-}
 
