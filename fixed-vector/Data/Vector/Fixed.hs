@@ -69,6 +69,7 @@ module Data.Vector.Fixed (
   , mk8
   , mkN
     -- ** Pattern for low-dimension vectors
+  , pattern V1
   , pattern V2
   , pattern V3
   , pattern V4
@@ -379,6 +380,14 @@ type Tuple5 a = (a,a,a,a,a)
 ----------------------------------------------------------------
 -- Patterns
 ----------------------------------------------------------------
+
+pattern V1 :: (Vector v a, Dim v ~ 1) => a -> v a
+pattern V1 x <- (convert -> (Only x)) where
+  V1 x = mk1 x
+#if MIN_VERSION_base(4,16,0)
+{-# INLINE   V1 #-}
+{-# COMPLETE V1 #-}
+#endif
 
 pattern V2 :: (Vector v a, Dim v ~ 2) => a -> a -> v a
 pattern V2 x y <- (convert -> (x,y)) where
