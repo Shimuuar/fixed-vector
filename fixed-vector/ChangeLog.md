@@ -1,3 +1,10 @@
+Changes in 1.2.3.0
+
+  * Pattern `V1` added
+
+  * `COMPLETE` pragmas added for patterns `V1`,`V2`,`V3`,`V4`
+
+
 Changes in 1.2.2.1
 
   * Newtype `StorableViaFixed` for deriving `Storable` instances added.
