@@ -132,6 +132,7 @@ import Control.Applicative   ((<|>), Const(..))
 import Data.Coerce
 import Data.Complex          (Complex(..))
 import Data.Data             (Data)
+import Data.Kind             (Type)
 import Data.Functor.Identity (Identity(..))
 import Data.Typeable         (Proxy(..))
 import qualified Data.Foldable    as F
@@ -172,7 +173,7 @@ type family Add (n :: PeanoNum) (m :: PeanoNum) :: PeanoNum where
 
 -- | Type family for n-ary functions. @n@ is number of parameters of
 --   type @a@ and @b@ is result type.
-type family Fn (n :: PeanoNum) (a :: *) (b :: *) where
+type family Fn (n :: PeanoNum) (a :: Type) (b :: Type) where
   Fn 'Z     a b = b
   Fn ('S n) a b = a -> Fn n a b
 
@@ -388,7 +389,7 @@ newtype T_shuffle x a r n = T_shuffle (x -> Fn n a r)
 ----------------------------------------------------------------
 
 -- | Size of vector expressed as type-level natural.
-type family Dim (v :: * -> *) :: Nat
+type family Dim (v :: Type -> Type) :: Nat
 
 -- | Type class for vectors with fixed length. Instance should provide
 --   two functions: one to create vector and another for vector
