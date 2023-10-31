@@ -68,7 +68,7 @@ source-repository head
   location: http://github.com/Shimuuar/fixed-vector
 
 Library
-  Ghc-options:          -Wall
+  Ghc-options:          -Wall -Wno-incomplete-uni-patterns
   Default-Language:     Haskell2010
   Build-Depends: base      >=4.11 && <5
                , primitive >=0.6.2
