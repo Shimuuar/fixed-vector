@@ -41,6 +41,7 @@ import Control.Applicative  (Const(..))
 import Control.Monad.ST
 import Control.Monad.Primitive
 import Data.Typeable  (Proxy(..))
+import Data.Kind      (Type)
 import GHC.TypeLits
 import Data.Vector.Fixed.Cont (Dim,PeanoNum(..),Peano,Arity,Fun(..),Vector(..),ContVec,arity,apply,accum,length)
 import Prelude hiding (read,length,replicate)
@@ -51,10 +52,10 @@ import Prelude hiding (read,length,replicate)
 ----------------------------------------------------------------
 
 -- | Mutable counterpart of fixed-length vector.
-type family Mutable (v :: * -> *) :: * -> * -> *
+type family Mutable (v :: Type -> Type) :: Type -> Type -> Type
 
 -- | Dimension for mutable vector.
-type family DimM (v :: * -> * -> *) :: Nat
+type family DimM (v :: Type -> Type -> Type) :: Nat
 
 -- | Type class for mutable vectors.
 class (Arity (DimM v)) => MVector v a where

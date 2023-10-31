@@ -1,5 +1,5 @@
 Name:           fixed-vector
-Version:        1.2.2.1
+Version:        1.2.3.0
 Synopsis:       Generic vectors with statically known size.
 Description:
   Generic library for vectors with statically known
@@ -59,15 +59,16 @@ tested-with:
      || ==8.8.4
      || ==8.10.7
      || ==9.0.1
-     || ==9.2.3
-     || ==9.4.1
+     || ==9.2.8
+     || ==9.4.7
+     || ==9.6.3
 
 source-repository head
   type:     git
   location: http://github.com/Shimuuar/fixed-vector
 
 Library
-  Ghc-options:          -Wall
+  Ghc-options:          -Wall -Wno-incomplete-uni-patterns
   Default-Language:     Haskell2010
   Build-Depends: base      >=4.11 && <5
                , primitive >=0.6.2

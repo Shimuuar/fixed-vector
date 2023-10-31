@@ -162,7 +162,7 @@ instance (Arity n, Storable a, Ord a) => Ord (Vec n a) where
 
 instance (Arity n, Storable a, Monoid a) => Monoid (Vec n a) where
   mempty  = replicate mempty
-  mappend = zipWith mappend
+  mappend = (<>)
   {-# INLINE mempty  #-}
   {-# INLINE mappend #-}
 
