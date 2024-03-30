@@ -70,6 +70,7 @@ source-repository head
 Library
   Ghc-options:          -Wall -Wno-incomplete-uni-patterns
   Default-Language:     Haskell2010
+  Default-Extensions:   TypeOperators
   Build-Depends: base      >=4.11 && <5
                , primitive >=0.6.2
                , deepseq
