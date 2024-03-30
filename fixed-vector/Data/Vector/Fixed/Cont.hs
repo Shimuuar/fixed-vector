@@ -1,3 +1,4 @@
+{-# LANGUAGE AllowAmbiguousTypes   #-}
 {-# LANGUAGE ConstraintKinds       #-}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
@@ -10,6 +11,7 @@
 {-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE Rank2Types            #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE UndecidableInstances  #-}
@@ -217,7 +219,6 @@ data T_ap a b c n = T_ap (Fn n a b) (Fn n a c)
 -- | Type class for type level number for which we can defined
 --   operations over N-ary functions.
 type Arity n = ( ArityPeano (Peano n)
-               , KnownNat n
                , Peano (n+1) ~ 'S (Peano n)
                )
 
@@ -257,6 +258,9 @@ class ArityPeano n where
            => (forall b x. Data b => c (b -> x) -> c x)
            -> T_gunfold c r a n -> c r
 
+  -- | Convert Peano number to int
+  arityPeano :: Int
+
 newtype T_gunfold c r a n = T_gunfold (c (Fn n a r))
 
 
@@ -278,9 +282,9 @@ applyM :: (Applicative f, Arity n)
 applyM f t = fmap toContVec $ fst $ applyFunM f t
 
 -- | Arity of function.
-arity :: KnownNat n => proxy n -> Int
+arity :: forall n proxy. Arity n => proxy n -> Int
 {-# INLINE arity #-}
-arity = fromIntegral . natVal
+arity _ = arityPeano @(Peano n)
 
 instance ArityPeano 'Z where
   accum     _ g t = Fun $ g t
@@ -293,6 +297,8 @@ instance ArityPeano 'Z where
   gunfoldF _ (T_gunfold c) = c
   {-# INLINE reverseF    #-}
   {-# INLINE gunfoldF    #-}
+  arityPeano = 0
+  {-# INLINE arityPeano #-}
 
 instance ArityPeano n => ArityPeano ('S n) where
   accum     f g t = Fun $ \a -> unFun $ accum f g (f t a)
@@ -309,6 +315,8 @@ instance ArityPeano n => ArityPeano ('S n) where
   gunfoldF f c = gunfoldF f (apGunfold f c)
   {-# INLINE reverseF    #-}
   {-# INLINE gunfoldF    #-}
+  arityPeano = 1 + arityPeano @n
+  {-# INLINE arityPeano #-}
 
 apGunfold :: Data a
           => (forall b x. Data b => c (b -> x) -> c x)
@@ -424,9 +432,9 @@ class Arity (Dim v) => Vector v a where
 class (Vector (v n) a, Dim (v n) ~ n) => VectorN v n a
 
 -- | Length of vector. Function doesn't evaluate its argument.
-length :: forall v a. KnownNat (Dim v) => v a -> Int
+length :: forall v a. Arity (Dim v) => v a -> Int
 {-# INLINE length #-}
-length _ = arity (Proxy :: Proxy (Dim v))
+length _ = arityPeano @(Peano (Dim v))
 
 
 ----------------------------------------------------------------
