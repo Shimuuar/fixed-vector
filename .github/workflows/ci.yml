@@ -23,15 +23,16 @@ jobs:
       matrix:
         include:
           # Linux
-          - { cabal: "3.10", os: ubuntu-latest,  ghc: "8.4.4"  }
-          - { cabal: "3.10", os: ubuntu-latest,  ghc: "8.6.5"  }
-          - { cabal: "3.10", os: ubuntu-latest,  ghc: "8.8.4"  }
-          - { cabal: "3.10", os: ubuntu-latest,  ghc: "8.10.7" }
-          - { cabal: "3.10", os: ubuntu-latest,  ghc: "9.0.1"  }
-          - { cabal: "3.10", os: ubuntu-latest,  ghc: "9.2.8"  }
-          - { cabal: "3.10", os: ubuntu-latest,  ghc: "9.4.7"  }
-          - { cabal: "3.10", os: ubuntu-latest,  ghc: "9.6.3"  }
-          - { cabal: "3.10", os: ubuntu-latest,  ghc: "9.8.1"  }
+          - { cabal: "3.12", os: ubuntu-latest,  ghc: "8.4.4"  }
+          - { cabal: "3.12", os: ubuntu-latest,  ghc: "8.6.5"  }
+          - { cabal: "3.12", os: ubuntu-latest,  ghc: "8.8.4"  }
+          - { cabal: "3.12", os: ubuntu-latest,  ghc: "8.10.7" }
+          - { cabal: "3.12", os: ubuntu-latest,  ghc: "9.0.1"  }
+          - { cabal: "3.12", os: ubuntu-latest,  ghc: "9.2.8"  }
+          - { cabal: "3.12", os: ubuntu-latest,  ghc: "9.4.8"  }
+          - { cabal: "3.12", os: ubuntu-latest,  ghc: "9.6.6"  }
+          - { cabal: "3.12", os: ubuntu-latest,  ghc: "9.8.2"  }
+          - { cabal: "3.12", os: ubuntu-latest,  ghc: "9.10.1" }
       fail-fast: false
 
     steps:
@@ -41,7 +42,7 @@ jobs:
         echo M1 ${{ matrix.ghc }}
         echo M2 ${{ matrix.skip-bench }}
     # ----------------
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     # ----------------
     - uses: haskell-actions/setup@v2
       id: setup-haskell-cabal
