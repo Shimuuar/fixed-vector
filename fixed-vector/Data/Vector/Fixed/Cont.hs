@@ -464,6 +464,23 @@ newtype T_mkN n_tot a n = T_mkN (CVecPeano n a -> CVecPeano n_tot a)
 instance Arity n => VectorN ContVec n a
 
 
+instance (Eq a, Arity n) => Eq (ContVec n a) where
+  a == b = and $ zipWith (==) a b
+  {-# INLINE (==) #-}
+
+instance (Ord a, Arity n) => Ord (ContVec n a) where
+  compare a b = foldl mappend mempty $ zipWith compare a b
+  {-# INLINE compare #-}
+
+instance (Arity n, Monoid a) => Monoid (ContVec n a) where
+  mempty = replicate mempty
+  {-# INLINE mempty  #-}
+
+instance (Arity n, Semigroup a) => Semigroup (ContVec n a) where
+  (<>) = zipWith (<>)
+  {-# INLINE (<>) #-}
+
+
 instance (Arity n) => Functor (ContVec n) where
   fmap = map
   {-# INLINE fmap #-}

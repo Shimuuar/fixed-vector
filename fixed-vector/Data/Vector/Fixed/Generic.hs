@@ -1,4 +1,5 @@
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeFamilies  #-}
+{-# LANGUAGE TypeOperators #-}
 -- |
 -- More generic version of function from "Data.Vector.Fixed"
 -- module. They do not require that all vector have same type, only

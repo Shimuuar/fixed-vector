@@ -5,6 +5,7 @@
 {-# LANGUAGE Rank2Types            #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeOperators         #-}
 -- |
 -- Type classes for vectors which are implemented on top of the arrays
 -- and support in-place mutation. API is similar to one used in the
