@@ -757,17 +757,17 @@ collect f = distribute . fmap f
 {-# INLINE collect #-}
 
 -- | /O(1)/ Tail of vector.
-tail :: {-FIXME-} Arity n => ContVec (S n) a -> ContVec n a
+tail :: ContVec (S n) a -> ContVec n a
 tail (ContVec cont) = ContVec $ \f -> cont $ constFun f
 {-# INLINE tail #-}
 
 -- | /O(1)/ Prepend element to vector
-cons :: {-FIXME-} Arity n => a -> ContVec n a -> ContVec ('S n) a
+cons :: a -> ContVec n a -> ContVec ('S n) a
 cons a (ContVec cont) = ContVec $ \f -> cont $ curryFirst f a
 {-# INLINE cons #-}
 
 -- | Prepend single element vector to another vector.
-consV :: {-FIXME-} Arity n => ContVec N1 a -> ContVec n a -> ContVec ('S n) a
+consV :: Arity n => ContVec N1 a -> ContVec n a -> ContVec ('S n) a
 {-# INLINE consV #-}
 consV (ContVec cont1) (ContVec cont)
   = ContVec $ \f -> cont $ curryFirst f $ cont1 $ Fun id
