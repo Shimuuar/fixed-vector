@@ -32,6 +32,7 @@ module Data.Vector.Fixed.Cont (
   , arity
   , apply
   , applyM
+  , Index(..)
     -- ** Combinators
   , constFun
   , curryFirst
@@ -67,7 +68,7 @@ module Data.Vector.Fixed.Cont (
   , cons
   , consV
   , snoc
-  -- , concat
+  , concat
   , mk1
   , mk2
   , mk3
@@ -263,9 +264,7 @@ class Arity n where
            => (forall b x. Data b => c (b -> x) -> c x)
            -> T_gunfold c r a n -> c r
 
-
 newtype T_gunfold c r a n = T_gunfold (c (Fn n a r))
-
 
 
 -- | Apply all parameters to the function.
@@ -289,11 +288,21 @@ arity :: KnownNat n => proxy n -> Int
 {-# INLINE arity #-}
 arity = fromIntegral . natVal
 
+
+-- | Type class for indexing of vector of length @n@ with statically
+--   known index @k@
+class Index (k :: PeanoNum) (n :: PeanoNum) where
+  getF  :: Proxy# k -> Fun n a a
+  putF  :: Proxy# k -> a -> Fun n a r -> Fun n a r
+  lensF :: Functor f => Proxy# k -> (a -> f a) -> Fun n a r -> Fun n a (f r)
+
+
+
 instance Arity 'Z where
   accum      _ g t = Fun $ g t
   applyFun   _ t   = (ContVec unFun, t)
   applyFunM  _ t   = (pure (ContVec unFun), t)
-  peanoToInt _    = 0       
+  peanoToInt _    = 0
   {-# INLINE accum      #-}
   {-# INLINE applyFun   #-}
   {-# INLINE applyFunM  #-}
@@ -320,6 +329,25 @@ instance Arity n => Arity ('S n) where
   gunfoldF f c = gunfoldF f (apGunfold f c)
   {-# INLINE reverseF    #-}
   {-# INLINE gunfoldF    #-}
+
+instance Arity n => Index 'Z ('S n) where
+  getF  _       = uncurryFirst pure
+  putF  _ a f   = Fun $ \_ -> unFun f a
+  lensF _ f fun = Fun $ \a -> unFun $
+    (\g -> g <$> f a) <$> shuffleFun (curryFirst fun)
+  {-# INLINE getF  #-}
+  {-# INLINE putF  #-}
+  {-# INLINE lensF #-}
+
+instance Index k n => Index (S k) (S n) where
+  getF  _       = uncurryFirst $ \_ -> getF (proxy# @k)
+  putF  _ a     = withFun (putF  (proxy# @k) a)
+  lensF _ f fun = withFun (lensF (proxy# @k) f) fun
+  {-# INLINE getF  #-}
+  {-# INLINE putF  #-}
+  {-# INLINE lensF #-}
+
+
 
 apGunfold :: Data a
           => (forall b x. Data b => c (b -> x) -> c x)
@@ -378,7 +406,7 @@ apLast f x = fmap ($ x) $ curryLast f
 {-# INLINE apLast #-}
 
 -- | Recursive step for the function
-withFun :: (Fun n a b -> Fun n a b) -> Fun ('S n) a b -> Fun ('S n) a b
+withFun :: (Fun n a b -> Fun n a c) -> Fun ('S n) a b -> Fun ('S n) a c
 withFun f fun = Fun $ \a -> unFun $ f $ curryFirst fun a
 {-# INLINE withFun #-}
 
@@ -787,19 +815,16 @@ snoc a (ContVec cont) = ContVec $ \f -> cont $ apLast f a
 {-# INLINE snoc #-}
 
 
--- FIXME
--- -- | Concatenate vector
--- concat :: ( Arity n
---           , Arity k
---           , Arity (n + k)
---           -- Tautology
---           , Peano (n + k) ~ Add (Peano n) (Peano k)
---           )
---        => ContVec n a -> ContVec k a -> ContVec (n + k) a
--- {-# INLINE concat #-}
--- concat v u = inspect u
---            $ inspect v
---            $ curryMany construct
+-- | Concatenate vector
+concat :: ( Arity n
+          , Arity k
+          , Arity (n `Add` k)
+          )
+       => ContVec n a -> ContVec k a -> ContVec (Add n k) a
+{-# INLINE concat #-}
+concat v u = inspect u
+           $ inspect v
+           $ curryMany construct
 
 -- | Reverse order of elements in the vector
 reverse :: Arity n => ContVec n a -> ContVec n a

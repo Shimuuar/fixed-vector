@@ -1,10 +1,12 @@
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MagicHash             #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE Rank2Types            #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
 -- |
@@ -12,15 +14,14 @@
 module Data.Vector.Fixed.Internal where
 
 import Control.DeepSeq       (NFData(..))
-import Data.Typeable         (Proxy(..))
-import Data.Functor.Identity (Identity(..))
 import qualified Data.Foldable    as T
 import qualified Data.Traversable as T
 import Foreign.Storable (Storable(..))
 import Foreign.Ptr      (Ptr,castPtr)
-import GHC.TypeLits
+import GHC.Exts         (proxy#)
 
-import           Data.Vector.Fixed.Cont     (Vector(..),Dim,Arity,vector,Add,PeanoNum(..))
+import           Data.Vector.Fixed.Cont (Vector(..),Dim,Arity,vector,Add,PeanoNum(..),
+                                         Peano,Index)
 import qualified Data.Vector.Fixed.Cont as C
 
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
@@ -210,14 +211,12 @@ snoc :: (Vector v a, Vector w a, Dim w ~ 'S (Dim v))
 {-# INLINE snoc #-}
 snoc a = vector . C.snoc a . C.cvec
 
--- concat :: ( Vector v a, Vector u a, Vector w a
---           , (Dim v + Dim u) ~ Dim w
---             -- Tautology
---           , C.Peano (Dim v + Dim u) ~ Add (C.Peano (Dim v)) (C.Peano (Dim u))
---           )
---        => v a -> u a -> w a
--- {-# INLINE concat #-}
--- concat v u = vector $ C.concat (C.cvec v) (C.cvec u)
+concat :: ( Vector v a, Vector u a, Vector w a
+          , (Dim v `Add` Dim u) ~ Dim w
+          )
+       => v a -> u a -> w a
+{-# INLINE concat #-}
+concat v u = vector $ C.concat (C.cvec v) (C.cvec u)
 
 -- | Reverse order of elements in the vector
 reverse :: Vector v a => v a -> v a
@@ -258,32 +257,34 @@ runIndex = C.index
  #-}
 
 
--- FIXME:
--- -- | Get element from vector at statically known index
--- index :: (Vector v a, KnownNat k, k + 1 <= Dim v)
---       => v a -> proxy k -> a
--- {-# INLINE index #-}
--- index v k = v ! fromIntegral (natVal k)
+-- | Get element from vector at statically known index
+index :: forall k v a proxy. (Vector v a, Index (Peano k) (Dim v))
+      => v a -> proxy k -> a
+{-# INLINE index #-}
+index v _ = inspect v (C.getF (proxy# @(Peano k)))
 
--- FIXME:
--- -- | Set n'th element in the vector
--- set :: (Vector v a, KnownNat k, k + 1 <= Dim v) => proxy k -> a -> v a -> v a
--- {-# INLINE set #-}
--- set k a = runIdentity . element (fromIntegral (natVal k))
---                                 (const (Identity a))
+-- | Set n'th element in the vector
+set :: forall k v a proxy. (Vector v a, Index (Peano k) (Dim v))
+    => proxy k -> a -> v a -> v a
+{-# INLINE set #-}
+set _ a v
+  = inspect v
+  $ C.putF (proxy# @(Peano k)) a construct
 
 -- | Twan van Laarhoven's lens for element of vector
 element :: (Vector v a, Functor f) => Int -> (a -> f a) -> (v a -> f (v a))
 {-# INLINE element #-}
 element i f v = vector `fmap` C.element i f (C.cvec v)
 
--- FIXME:
--- -- | Twan van Laarhoven's lens for element of vector with statically
--- --   known index.
--- elementTy :: (Vector v a, KnownNat k, k + 1 <= Dim v, Functor f)
---           => proxy k -> (a -> f a) -> (v a -> f (v a))
--- {-# INLINE elementTy #-}
--- elementTy k = element (fromIntegral (natVal k))
+-- | Twan van Laarhoven's lens for element of vector with statically
+--   known index.
+elementTy :: forall k v a f proxy. (Vector v a, Index (Peano k) (Dim v), Functor f)
+          => proxy k -> (a -> f a) -> (v a -> f (v a))
+{-# INLINE elementTy #-}
+elementTy _ f v
+  = fmap vector
+  $ inspect (C.cvec v) 
+    (C.lensF (proxy# @(Peano k)) f construct)
 
 -- | Left fold over vector
 foldl :: Vector v a => (b -> a -> b) -> b -> v a -> b
@@ -616,14 +617,12 @@ defaultAlignemnt _ = alignment (undefined :: a)
 {-# INLINE defaultAlignemnt #-}
 
 
--- FIXME:
-
 -- | Default implementation of 'sizeOf` for 'Storable' type class for
 --   fixed vectors
 defaultSizeOf
   :: forall a v. (Storable a, Vector v a)
   => v a -> Int
-defaultSizeOf _ = undefined -- sizeOf (undefined :: a) * C.arity (Proxy :: Proxy (Dim v))
+defaultSizeOf _ = sizeOf (undefined :: a) * C.peanoToInt (proxy# @(Dim v))
 {-# INLINE defaultSizeOf #-}
 
 -- | Default implementation of 'peek' for 'Storable' type class for
