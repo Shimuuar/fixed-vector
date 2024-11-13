@@ -20,7 +20,7 @@ import Foreign.Storable (Storable(..))
 import Foreign.Ptr      (Ptr,castPtr)
 import GHC.TypeLits
 
-import           Data.Vector.Fixed.Cont     (Vector(..),Dim,Arity,vector,Add)
+import           Data.Vector.Fixed.Cont     (Vector(..),Dim,Arity,vector,Add,PeanoNum(..))
 import qualified Data.Vector.Fixed.Cont as C
 
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
@@ -33,39 +33,39 @@ import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
 -- Constructors
 ----------------------------------------------------------------
 
-mk0 :: (Vector v a, Dim v ~ 0) => v a
+mk0 :: (Vector v a, Dim v ~ 'Z) => v a
 mk0 = vector C.empty
 {-# INLINE mk0 #-}
 
-mk1 :: (Vector v a, Dim v ~ 1) => a -> v a
+mk1 :: (Vector v a, Dim v ~ C.N1) => a -> v a
 mk1 a1 = vector $ C.mk1 a1
 {-# INLINE mk1 #-}
 
-mk2 :: (Vector v a, Dim v ~ 2) => a -> a -> v a
+mk2 :: (Vector v a, Dim v ~ C.N2) => a -> a -> v a
 mk2 a1 a2 = vector $ C.mk2 a1 a2
 {-# INLINE mk2 #-}
 
-mk3 :: (Vector v a, Dim v ~ 3) => a -> a -> a -> v a
+mk3 :: (Vector v a, Dim v ~ C.N3) => a -> a -> a -> v a
 mk3 a1 a2 a3 = vector $ C.mk3 a1 a2 a3
 {-# INLINE mk3 #-}
 
-mk4 :: (Vector v a, Dim v ~ 4) => a -> a -> a -> a -> v a
+mk4 :: (Vector v a, Dim v ~ C.N4) => a -> a -> a -> a -> v a
 mk4 a1 a2 a3 a4 = vector $ C.mk4 a1 a2 a3 a4
 {-# INLINE mk4 #-}
 
-mk5 :: (Vector v a, Dim v ~ 5) => a -> a -> a -> a -> a -> v a
+mk5 :: (Vector v a, Dim v ~ C.N5) => a -> a -> a -> a -> a -> v a
 mk5 a1 a2 a3 a4 a5 = vector $ C.mk5 a1 a2 a3 a4 a5
 {-# INLINE mk5 #-}
 
-mk6 :: (Vector v a, Dim v ~ 6) => a -> a -> a -> a -> a -> a -> v a
+mk6 :: (Vector v a, Dim v ~ C.N6) => a -> a -> a -> a -> a -> a -> v a
 mk6 a1 a2 a3 a4 a5 a6 = vector $ C.mk6 a1 a2 a3 a4 a5 a6
 {-# INLINE mk6 #-}
 
-mk7 :: (Vector v a, Dim v ~ 7) => a -> a -> a -> a -> a -> a -> a -> v a
+mk7 :: (Vector v a, Dim v ~ C.N7) => a -> a -> a -> a -> a -> a -> a -> v a
 mk7 a1 a2 a3 a4 a5 a6 a7 = vector $ C.mk7 a1 a2 a3 a4 a5 a6 a7
 {-# INLINE mk7 #-}
 
-mk8 :: (Vector v a, Dim v ~ 8) => a -> a -> a -> a -> a -> a -> a -> a -> v a
+mk8 :: (Vector v a, Dim v ~ C.N8) => a -> a -> a -> a -> a -> a -> a -> a -> v a
 mk8 a1 a2 a3 a4 a5 a6 a7 a8 = vector $ C.mk8 a1 a2 a3 a4 a5 a6 a7 a8
 {-# INLINE mk8 #-}
 
@@ -83,8 +83,8 @@ mk8 a1 a2 a3 a4 a5 a6 a7 a8 = vector $ C.mk8 a1 a2 a3 a4 a5 a6 a7 a8
 --
 --   > v = mkN [v] 1 2 3
 mkN :: forall proxy v a. (Vector v a)
-    => proxy (v a) -> C.Fn (C.Peano (Dim v)) a (v a)
-mkN _ = C.unFun (construct :: C.Fun (C.Peano (Dim v)) a (v a))
+    => proxy (v a) -> C.Fn (Dim v) a (v a)
+mkN _ = C.unFun (construct :: C.Fun (Dim v) a (v a))
 
 ----------------------------------------------------------------
 -- Generic functions
@@ -181,7 +181,7 @@ generateM = fmap vector . C.generateM
 --   >>> let x = mk3 1 2 3 :: Vec3 Int
 --   >>> head x
 --   1
-head :: (Vector v a, 1 <= Dim v) => v a -> a
+head :: (Vector v a, Dim v ~ 'S k) => v a -> a
 {-# INLINE head #-}
 head = C.head . C.cvec
 
@@ -193,31 +193,31 @@ head = C.head . C.cvec
 --   >>> import Data.Complex
 --   >>> tail (1,2,3) :: Complex Double
 --   2.0 :+ 3.0
-tail :: (Vector v a, Vector w a, Dim v ~ (Dim w + 1))
+tail :: (Vector v a, Vector w a, Dim v ~ 'S (Dim w))
      => v a -> w a
 {-# INLINE tail #-}
 tail = vector . C.tail . C.cvec
 
 -- | Cons element to the vector
-cons :: (Vector v a, Vector w a, Dim w ~ (Dim v + 1))
+cons :: (Vector v a, Vector w a, Dim w ~ 'S (Dim v))
      => a -> v a -> w a
 {-# INLINE cons #-}
 cons a = vector . C.cons a . C.cvec
 
 -- | Append element to the vector
-snoc :: (Vector v a, Vector w a, Dim w ~ (Dim v + 1))
+snoc :: (Vector v a, Vector w a, Dim w ~ 'S (Dim v))
      => a -> v a -> w a
 {-# INLINE snoc #-}
 snoc a = vector . C.snoc a . C.cvec
 
-concat :: ( Vector v a, Vector u a, Vector w a
-          , (Dim v + Dim u) ~ Dim w
-            -- Tautology
-          , C.Peano (Dim v + Dim u) ~ Add (C.Peano (Dim v)) (C.Peano (Dim u))
-          )
-       => v a -> u a -> w a
-{-# INLINE concat #-}
-concat v u = vector $ C.concat (C.cvec v) (C.cvec u)
+-- concat :: ( Vector v a, Vector u a, Vector w a
+--           , (Dim v + Dim u) ~ Dim w
+--             -- Tautology
+--           , C.Peano (Dim v + Dim u) ~ Add (C.Peano (Dim v)) (C.Peano (Dim u))
+--           )
+--        => v a -> u a -> w a
+-- {-# INLINE concat #-}
+-- concat v u = vector $ C.concat (C.cvec v) (C.cvec u)
 
 -- | Reverse order of elements in the vector
 reverse :: Vector v a => v a -> v a
@@ -258,29 +258,32 @@ runIndex = C.index
  #-}
 
 
--- | Get element from vector at statically known index
-index :: (Vector v a, KnownNat k, k + 1 <= Dim v)
-      => v a -> proxy k -> a
-{-# INLINE index #-}
-index v k = v ! fromIntegral (natVal k)
+-- FIXME:
+-- -- | Get element from vector at statically known index
+-- index :: (Vector v a, KnownNat k, k + 1 <= Dim v)
+--       => v a -> proxy k -> a
+-- {-# INLINE index #-}
+-- index v k = v ! fromIntegral (natVal k)
 
--- | Set n'th element in the vector
-set :: (Vector v a, KnownNat k, k + 1 <= Dim v) => proxy k -> a -> v a -> v a
-{-# INLINE set #-}
-set k a = runIdentity . element (fromIntegral (natVal k))
-                                (const (Identity a))
+-- FIXME:
+-- -- | Set n'th element in the vector
+-- set :: (Vector v a, KnownNat k, k + 1 <= Dim v) => proxy k -> a -> v a -> v a
+-- {-# INLINE set #-}
+-- set k a = runIdentity . element (fromIntegral (natVal k))
+--                                 (const (Identity a))
 
 -- | Twan van Laarhoven's lens for element of vector
 element :: (Vector v a, Functor f) => Int -> (a -> f a) -> (v a -> f (v a))
 {-# INLINE element #-}
 element i f v = vector `fmap` C.element i f (C.cvec v)
 
--- | Twan van Laarhoven's lens for element of vector with statically
---   known index.
-elementTy :: (Vector v a, KnownNat k, k + 1 <= Dim v, Functor f)
-          => proxy k -> (a -> f a) -> (v a -> f (v a))
-{-# INLINE elementTy #-}
-elementTy k = element (fromIntegral (natVal k))
+-- FIXME:
+-- -- | Twan van Laarhoven's lens for element of vector with statically
+-- --   known index.
+-- elementTy :: (Vector v a, KnownNat k, k + 1 <= Dim v, Functor f)
+--           => proxy k -> (a -> f a) -> (v a -> f (v a))
+-- {-# INLINE elementTy #-}
+-- elementTy k = element (fromIntegral (natVal k))
 
 -- | Left fold over vector
 foldl :: Vector v a => (b -> a -> b) -> b -> v a -> b
@@ -296,7 +299,7 @@ foldr f x = C.foldr f x
 
 
 -- | Left fold over vector
-foldl1 :: (Vector v a, 1 <= Dim v) => (a -> a -> a) -> v a -> a
+foldl1 :: (Vector v a, Dim v ~ 'S k) => (a -> a -> a) -> v a -> a
 {-# INLINE foldl1 #-}
 foldl1 f = C.foldl1 f
          . C.cvec
@@ -356,7 +359,7 @@ sum = C.sum . C.cvec
 --   >>> let x = mk3 1 2 3 :: Vec3 Int
 --   >>> maximum x
 --   3
-maximum :: (Vector v a, 1 <= Dim v, Ord a) => v a -> a
+maximum :: (Vector v a, Dim v ~ S k, Ord a) => v a -> a
 maximum = C.maximum . C.cvec
 {-# INLINE maximum #-}
 
@@ -368,7 +371,7 @@ maximum = C.maximum . C.cvec
 --   >>> let x = mk3 1 2 3 :: Vec3 Int
 --   >>> minimum x
 --   1
-minimum :: (Vector v a, 1 <= Dim v, Ord a) => v a -> a
+minimum :: (Vector v a, Dim v ~ S k, Ord a) => v a -> a
 minimum = C.minimum . C.cvec
 {-# INLINE minimum #-}
 
@@ -484,7 +487,7 @@ imapM_ f = C.imapM_ f
          . C.cvec
 
 -- | Left scan over vector
-scanl :: (Vector v a, Vector w b, Dim w ~ (Dim v + 1))
+scanl :: (Vector v a, Vector w b, Dim w ~ 'S (Dim v))
       => (b -> a -> b) -> b -> v a -> w b
 {-# INLINE scanl #-}
 scanl f x0 = vector . C.scanl f x0 . C.cvec
@@ -612,12 +615,15 @@ defaultAlignemnt :: forall a v. Storable a => v a -> Int
 defaultAlignemnt _ = alignment (undefined :: a)
 {-# INLINE defaultAlignemnt #-}
 
+
+-- FIXME:
+
 -- | Default implementation of 'sizeOf` for 'Storable' type class for
 --   fixed vectors
 defaultSizeOf
   :: forall a v. (Storable a, Vector v a)
   => v a -> Int
-defaultSizeOf _ = sizeOf (undefined :: a) * C.arity (Proxy :: Proxy (Dim v))
+defaultSizeOf _ = undefined -- sizeOf (undefined :: a) * C.arity (Proxy :: Proxy (Dim v))
 {-# INLINE defaultSizeOf #-}
 
 -- | Default implementation of 'peek' for 'Storable' type class for

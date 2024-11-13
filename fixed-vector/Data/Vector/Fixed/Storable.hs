@@ -45,6 +45,7 @@ import Prelude ( Show(..),Eq(..),Ord(..),Num(..),Monad(..),IO,Int
 import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, arity, index)
 import qualified Data.Vector.Fixed.Cont     as C
+import           Data.Vector.Fixed.Cont     (Peano)
 import qualified Data.Vector.Fixed.Internal as I
 
 
@@ -94,16 +95,16 @@ unsafeWith f (Vec fp) = f (getPtr fp)
 -- Instances
 ----------------------------------------------------------------
 
-instance (Arity n, Storable a, Show a) => Show (Vec n a) where
+instance (Arity (Peano n), Storable a, Show a) => Show (Vec n a) where
   showsPrec = I.showsPrec
 
-instance (Arity n, Storable a, NFData a) => NFData (Vec n a) where
+instance (Arity (Peano n), Storable a, NFData a) => NFData (Vec n a) where
   rnf = foldl (\r a -> r `seq` rnf a) ()
   {-# INLINE rnf #-}
 
 type instance Mutable (Vec n) = MVec n
 
-instance (Arity n, Storable a) => MVector (MVec n) a where
+instance (Arity (Peano n), Storable a) => MVector (MVec n) a where
   new = unsafePrimToPrim $ do
     fp <- mallocVector $ arity (Proxy :: Proxy n)
     return $ MVec fp
@@ -130,7 +131,7 @@ instance (Arity n, Storable a) => MVector (MVec n) a where
   {-# INLINE unsafeWrite #-}
 
 
-instance (Arity n, Storable a) => IVector (Vec n) a where
+instance (Arity (Peano n), Storable a) => IVector (Vec n) a where
   unsafeFreeze (MVec fp)   = return $ Vec  fp
   unsafeThaw   (Vec  fp)   = return $ MVec fp
   unsafeIndex  (Vec  fp) i
@@ -141,36 +142,36 @@ instance (Arity n, Storable a) => IVector (Vec n) a where
   {-# INLINE unsafeIndex  #-}
 
 
-type instance Dim  (Vec  n) = n
-type instance DimM (MVec n) = n
+type instance Dim  (Vec  n) = Peano n
+type instance DimM (MVec n) = Peano n
 
-instance (Arity n, Storable a) => Vector (Vec n) a where
+instance (Arity (Peano n), Storable a) => Vector (Vec n) a where
   construct  = constructVec
   inspect    = inspectVec
   basicIndex = index
   {-# INLINE construct  #-}
   {-# INLINE inspect    #-}
   {-# INLINE basicIndex #-}
-instance (Arity n, Storable a) => VectorN Vec n a
+instance (Arity (Peano n), Storable a) => VectorN Vec n a
 
-instance (Arity n, Storable a, Eq a) => Eq (Vec n a) where
+instance (Arity (Peano n), Storable a, Eq a) => Eq (Vec n a) where
   (==) = eq
   {-# INLINE (==) #-}
-instance (Arity n, Storable a, Ord a) => Ord (Vec n a) where
+instance (Arity (Peano n), Storable a, Ord a) => Ord (Vec n a) where
   compare = ord
   {-# INLINE compare #-}
 
-instance (Arity n, Storable a, Monoid a) => Monoid (Vec n a) where
+instance (Arity (Peano n), Storable a, Monoid a) => Monoid (Vec n a) where
   mempty  = replicate mempty
   mappend = (<>)
   {-# INLINE mempty  #-}
   {-# INLINE mappend #-}
 
-instance (Arity n, Storable a, Semigroup a) => Semigroup (Vec n a) where
+instance (Arity (Peano n), Storable a, Semigroup a) => Semigroup (Vec n a) where
   (<>) = zipWith (<>)
   {-# INLINE (<>) #-}
 
-instance (Arity n, Storable a) => Storable (Vec n a) where
+instance (Arity (Peano n), Storable a) => Storable (Vec n a) where
   sizeOf    _ = arity  (Proxy :: Proxy n)
               * sizeOf (undefined :: a)
   alignment _ = alignment (undefined :: a)
@@ -183,7 +184,7 @@ instance (Arity n, Storable a) => Storable (Vec n a) where
     = withForeignPtr fp $ \p ->
       moveArray (castPtr ptr) p (arity (Proxy :: Proxy n))
 
-instance (Typeable n, Arity n, Storable a, Data a) => Data (Vec n a) where
+instance (Typeable n, Arity (Peano n), Storable a, Data a) => Data (Vec n a) where
   gfoldl       = C.gfoldl
   gunfold      = C.gunfold
   toConstr   _ = con_Vec

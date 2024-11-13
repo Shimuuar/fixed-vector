@@ -91,15 +91,15 @@ module Data.Vector.Fixed (
   , tail
   , cons
   , snoc
-  , concat
+  -- , concat   FIXME
   , reverse
     -- ** Indexing & lenses
   -- , C.Index
   , (!)
-  , index
-  , set
+  -- , index FIXME
+  -- , set  FIXME
   , element
-  , elementTy
+  -- , elementTy FIXME
     -- ** Comparison
   , eq
   , ord
@@ -245,59 +245,61 @@ data VecPeano (n :: PeanoNum) a where
   Cons :: a -> VecPeano n a -> VecPeano ('S n) a
   deriving (Typeable)
 
-instance (Arity n, NFData a) => NFData (VecList n a) where
+instance (Arity (C.Peano n), NFData a) => NFData (VecList n a) where
   rnf = defaultRnf
   {-# INLINE rnf #-}
 
-type instance Dim (VecList n) = n
+type instance Dim (VecList n) = C.Peano n
 
-instance Arity n => Vector (VecList n) a where
+instance Arity (C.Peano n) => Vector (VecList n) a where
   construct = fmap VecList $ accum
     (\(T_List f) a -> T_List (f . Cons a))
     (\(T_List f)   -> f Nil)
     (T_List id :: T_List a (C.Peano n) (C.Peano n))
   inspect (VecList v)
-    = inspect (apply step (Flip v) :: C.ContVec n a)
+    = inspect (apply step (Flip v) :: C.ContVec (C.Peano n) a)
     where
       step :: Flip VecPeano a ('S k)  -> (a, Flip VecPeano a k)
       step (Flip (Cons a xs)) = (a, Flip xs)
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
-instance Arity n => VectorN VecList n a
+
+-- FIXME
+-- instance Arity n => VectorN VecList n a
 
 newtype Flip f a n = Flip (f n a)
 newtype T_List a n k = T_List (VecPeano k a -> VecPeano n a)
 
 
 -- Standard instances
-instance (Show a, Arity n) => Show (VecList n a) where
+instance (Show a, Arity (C.Peano n)) => Show (VecList n a) where
   show = show . foldr (:) []
-instance (Eq a, Arity n) => Eq (VecList n a) where
+instance (Eq a, Arity (C.Peano n)) => Eq (VecList n a) where
   (==) = eq
-instance (Ord a, Arity n) => Ord (VecList n a) where
+instance (Ord a, Arity (C.Peano n)) => Ord (VecList n a) where
   compare = ord
-instance Arity n => Functor (VecList n) where
+instance Arity (C.Peano n) => Functor (VecList n) where
   fmap = map
-instance Arity n => Applicative (VecList n) where
+instance Arity (C.Peano n) => Applicative (VecList n) where
   pure  = replicate
   (<*>) = zipWith ($)
-instance Arity n => F.Foldable (VecList n) where
+instance Arity (C.Peano n) => F.Foldable (VecList n) where
   foldr = foldr
-instance Arity n => T.Traversable (VecList n) where
+instance Arity (C.Peano n) => T.Traversable (VecList n) where
   sequenceA = sequenceA
   traverse  = traverse
-instance (Arity n, Monoid a) => Monoid (VecList n a) where
+instance (Arity (C.Peano n), Monoid a) => Monoid (VecList n a) where
   mempty  = replicate mempty
   mappend = (<>)
   {-# INLINE mempty  #-}
   {-# INLINE mappend #-}
 
-instance (Arity n, Semigroup a) => Semigroup (VecList n a) where
+instance (Arity (C.Peano n), Semigroup a) => Semigroup (VecList n a) where
   (<>) = zipWith (<>)
   {-# INLINE (<>) #-}
 
 
-instance (Storable a, Arity n) => Storable (VecList n a) where
+instance (Storable a, Arity (C.Peano n)) => Storable (VecList n a) where
   alignment = defaultAlignemnt
   sizeOf    = defaultSizeOf
   peek      = defaultPeek
@@ -337,7 +339,7 @@ instance (Semigroup a) => Semigroup (Only a) where
 instance NFData a => NFData (Only a) where
   rnf (Only a) = rnf a
 
-type instance Dim Only = 1
+type instance Dim Only = C.N1
 
 instance Vector Only a where
   construct = Fun Only
@@ -363,7 +365,7 @@ data Empty a = Empty
 instance NFData (Empty a) where
   rnf Empty = ()
 
-type instance Dim Empty = 0
+type instance Dim Empty = 'Z
 
 instance Vector Empty a where
   construct = Fun Empty
@@ -381,7 +383,7 @@ type Tuple5 a = (a,a,a,a,a)
 -- Patterns
 ----------------------------------------------------------------
 
-pattern V1 :: (Vector v a, Dim v ~ 1) => a -> v a
+pattern V1 :: (Vector v a, Dim v ~ C.N1) => a -> v a
 pattern V1 x <- (convert -> (Only x)) where
   V1 x = mk1 x
 #if MIN_VERSION_base(4,16,0)
@@ -389,7 +391,7 @@ pattern V1 x <- (convert -> (Only x)) where
 {-# COMPLETE V1 #-}
 #endif
 
-pattern V2 :: (Vector v a, Dim v ~ 2) => a -> a -> v a
+pattern V2 :: (Vector v a, Dim v ~ C.N2) => a -> a -> v a
 pattern V2 x y <- (convert -> (x,y)) where
   V2 x y = mk2 x y
 #if MIN_VERSION_base(4,16,0)
@@ -397,7 +399,7 @@ pattern V2 x y <- (convert -> (x,y)) where
 {-# COMPLETE V2 #-}
 #endif
 
-pattern V3 :: (Vector v a, Dim v ~ 3) => a -> a -> a -> v a
+pattern V3 :: (Vector v a, Dim v ~ C.N3) => a -> a -> a -> v a
 pattern V3 x y z <- (convert -> (x,y,z)) where
   V3 x y z = mk3 x y z
 #if MIN_VERSION_base(4,16,0)
@@ -405,7 +407,7 @@ pattern V3 x y z <- (convert -> (x,y,z)) where
 {-# COMPLETE V3 #-}
 #endif
 
-pattern V4 :: (Vector v a, Dim v ~ 4) => a -> a -> a -> a -> v a
+pattern V4 :: (Vector v a, Dim v ~ C.N4) => a -> a -> a -> a -> v a
 pattern V4 t x y z <- (convert -> (t,x,y,z)) where
   V4 t x y z = mk4 t x y z
 #if MIN_VERSION_base(4,16,0)

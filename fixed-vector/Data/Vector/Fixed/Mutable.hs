@@ -56,7 +56,7 @@ import Prelude hiding (read,length,replicate)
 type family Mutable (v :: Type -> Type) :: Type -> Type -> Type
 
 -- | Dimension for mutable vector.
-type family DimM (v :: Type -> Type -> Type) :: Nat
+type family DimM (v :: Type -> Type -> Type) :: PeanoNum
 
 -- | Type class for mutable vectors.
 class (Arity (DimM v)) => MVector v a where
@@ -80,9 +80,10 @@ class (Arity (DimM v)) => MVector v a where
   unsafeWrite :: PrimMonad m => v (PrimState m) a -> Int -> a -> m ()
 
 
+-- FIXME
 -- | Length of mutable vector. Function doesn't evaluate its argument.
 lengthM :: forall v s a. (Arity (DimM v)) => v s a -> Int
-lengthM _ = arity (Proxy :: Proxy (DimM v))
+lengthM _ = undefined  -- arity (Proxy :: Proxy (DimM v))
 
 -- | Create copy of vector.
 --
@@ -222,22 +223,22 @@ thaw v = clone =<< unsafeThaw v
 ----------------------------------------------------------------
 
 -- | Generic inspect implementation for array-based vectors.
-inspectVec :: forall v a b. (Arity (Dim v), IVector v a) => v a -> Fun (Peano (Dim v)) a b -> b
+inspectVec :: forall v a b. (Arity (Dim v), IVector v a) => v a -> Fun (Dim v) a b -> b
 {-# INLINE inspectVec #-}
 inspectVec v
   = inspect cv
   where
     cv :: ContVec (Dim v) a
     cv = apply (\(Const i) -> (unsafeIndex v i, Const (i+1)))
-               (Const 0 :: Const Int (Peano (Dim v)))
+               (Const 0 :: Const Int (Dim v))
 
 -- | Generic construct implementation for array-based vectors.
-constructVec :: forall v a. (Arity (Dim v), IVector v a) => Fun (Peano (Dim v)) a (v a)
+constructVec :: forall v a. (Arity (Dim v), IVector v a) => Fun (Dim v) a (v a)
 {-# INLINE constructVec #-}
 constructVec =
   accum step
         (\(T_new _ st) -> runST $ unsafeFreeze =<< st :: v a)
-        (T_new 0 new :: T_new v a (Peano (Dim v)))
+        (T_new 0 new :: T_new v a (Dim v))
 
 data T_new v a n = T_new Int (forall s. ST s (Mutable v s a))
 
