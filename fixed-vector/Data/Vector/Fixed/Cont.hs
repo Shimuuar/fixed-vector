@@ -5,6 +5,7 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE GADTs                 #-}
+{-# LANGUAGE MagicHash             #-}
 {-# LANGUAGE InstanceSigs          #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PolyKinds             #-}
@@ -12,6 +13,7 @@
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
+{-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE UndecidableInstances  #-}
 -- |
 -- API for Church-encoded vectors. Implementation of function from
@@ -137,7 +139,7 @@ import qualified Data.Foldable    as F
 import qualified Data.Traversable as F
 import Unsafe.Coerce       (unsafeCoerce)
 import GHC.TypeLits
-
+import GHC.Exts       (Proxy#, proxy#)
 import Prelude hiding ( replicate,map,zipWith,zipWith3,maximum,minimum,and,or,any,all
                       , foldl,foldr,foldl1,length,sum,reverse,scanl,scanl1
                       , head,tail,mapM,mapM_,sequence,sequence_,concat
@@ -248,6 +250,9 @@ class Arity n where
             -> t n                                -- ^ Initial value
             -> (f (ContVec n a), t 'Z)
 
+  -- | Conver peano number to int
+  peanoToInt :: Proxy# n -> Int
+
   -- | Reverse order of parameters. It's implemented directly in type
   --   class since expressing it in terms of @accum@ will require
   --   putting Arity constraint on step funcion
@@ -257,6 +262,7 @@ class Arity n where
   gunfoldF :: (Data a)
            => (forall b x. Data b => c (b -> x) -> c x)
            -> T_gunfold c r a n -> c r
+
 
 newtype T_gunfold c r a n = T_gunfold (c (Fn n a r))
 
@@ -284,12 +290,14 @@ arity :: KnownNat n => proxy n -> Int
 arity = fromIntegral . natVal
 
 instance Arity 'Z where
-  accum     _ g t = Fun $ g t
-  applyFun  _ t   = (ContVec unFun, t)
-  applyFunM _ t   = (pure (ContVec unFun), t)
-  {-# INLINE accum     #-}
-  {-# INLINE applyFun  #-}
-  {-# INLINE applyFunM #-}
+  accum      _ g t = Fun $ g t
+  applyFun   _ t   = (ContVec unFun, t)
+  applyFunM  _ t   = (pure (ContVec unFun), t)
+  peanoToInt _    = 0       
+  {-# INLINE accum      #-}
+  {-# INLINE applyFun   #-}
+  {-# INLINE applyFunM  #-}
+  {-# INLINE peanoToInt #-}
   reverseF = id
   gunfoldF _ (T_gunfold c) = c
   {-# INLINE reverseF    #-}
@@ -303,9 +311,11 @@ instance Arity n => Arity ('S n) where
   applyFunM f t   = let (a,t')   = f t
                         (vec,t0) = applyFunM f t'
                     in  (consPeano <$> a <*> vec, t0)
-  {-# INLINE accum     #-}
-  {-# INLINE applyFun  #-}
-  {-# INLINE applyFunM #-}
+  peanoToInt _ = 1 + peanoToInt (proxy# @n)
+  {-# INLINE accum      #-}
+  {-# INLINE applyFun   #-}
+  {-# INLINE applyFunM  #-}
+  {-# INLINE peanoToInt #-}
   reverseF f   = Fun $ \a -> unFun (reverseF $ apLast f a)
   gunfoldF f c = gunfoldF f (apGunfold f c)
   {-# INLINE reverseF    #-}
@@ -425,10 +435,9 @@ class Arity (Dim v) => Vector v a where
 class (Vector (v n) a, Dim (v n) ~ Peano n) => VectorN v n a
 
 -- | Length of vector. Function doesn't evaluate its argument.
-length :: forall v a. () => v a -> Int
+length :: forall v a. Arity (Dim v) => v a -> Int
 {-# INLINE length #-}
--- FIXME: 
-length _ = undefined --  arity (Proxy :: Proxy (Dim v))
+length _ = peanoToInt (proxy# @(Dim v))
 
 
 ----------------------------------------------------------------
