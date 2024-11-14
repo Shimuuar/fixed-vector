@@ -1,3 +1,18 @@
+Changes in 1.3.0.0
+
+  * Type family `Dim` returns Peano numbers instead of standard type level
+    naturals.
+
+     - `Index` type class restored and all indexing operation are performed in
+
+	 - `Arity` simplified
+
+	 - `CVecPeano` dropped and `ContVec` is parameterized using Peano numbers.
+
+  * `Data.Vector.Fixed.Cont.arity` dropped
+
+  * Type of `D.V.F.Cont.withFun` generalized
+
 Changes in 1.2.3.0
 
   * Pattern `V1` added
