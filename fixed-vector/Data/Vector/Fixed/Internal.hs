@@ -21,7 +21,7 @@ import Foreign.Ptr      (Ptr,castPtr)
 import GHC.Exts         (proxy#)
 
 import           Data.Vector.Fixed.Cont (Vector(..),Dim,Arity,vector,Add,PeanoNum(..),
-                                         Peano,Index)
+                                         Peano,Index,ArityPeano)
 import qualified Data.Vector.Fixed.Cont as C
 
 import Prelude hiding ( replicate,map,zipWith,maximum,minimum,and,or,all,any
@@ -230,7 +230,7 @@ reverse = vector . C.reverse . C.cvec
 v ! n = runIndex n (C.cvec v)
 
 -- Used in rewriting of index function.
-runIndex :: Arity n => Int -> C.ContVec n r -> r
+runIndex :: ArityPeano n => Int -> C.ContVec n r -> r
 runIndex = C.index
 {-# INLINE[0] runIndex #-}
 

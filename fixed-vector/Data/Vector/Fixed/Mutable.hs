@@ -1,9 +1,11 @@
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE MagicHash             #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE Rank2Types            #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
 -- |
@@ -41,8 +43,11 @@ import Control.Applicative  (Const(..))
 import Control.Monad.ST
 import Control.Monad.Primitive
 import Data.Kind      (Type)
-import Data.Vector.Fixed.Cont (Dim,PeanoNum(..),Arity,Fun(..),Vector(..),ContVec,apply,accum,length)
 import Prelude hiding (read,length,replicate)
+import GHC.Exts (proxy#)
+
+import Data.Vector.Fixed.Cont (Dim,PeanoNum(..),Arity,ArityPeano(..),Fun(..),Vector(..),
+                               ContVec,apply,accum,length)
 
 
 ----------------------------------------------------------------
@@ -56,7 +61,7 @@ type family Mutable (v :: Type -> Type) :: Type -> Type -> Type
 type family DimM (v :: Type -> Type -> Type) :: PeanoNum
 
 -- | Type class for mutable vectors.
-class (Arity (DimM v)) => MVector v a where
+class (ArityPeano (DimM v)) => MVector v a where
   -- | Copy vector. The two vectors may not overlap. Since vectors'
   --   length is encoded in the type there is no need in runtime checks.
   copy :: PrimMonad m
@@ -77,10 +82,9 @@ class (Arity (DimM v)) => MVector v a where
   unsafeWrite :: PrimMonad m => v (PrimState m) a -> Int -> a -> m ()
 
 
--- FIXME
 -- | Length of mutable vector. Function doesn't evaluate its argument.
-lengthM :: forall v s a. (Arity (DimM v)) => v s a -> Int
-lengthM _ = undefined  -- arity (Proxy :: Proxy (DimM v))
+lengthM :: forall v s a. (ArityPeano (DimM v)) => v s a -> Int
+lengthM _ = peanoToInt (proxy# @(DimM v))
 
 -- | Create copy of vector.
 --
@@ -220,7 +224,7 @@ thaw v = clone =<< unsafeThaw v
 ----------------------------------------------------------------
 
 -- | Generic inspect implementation for array-based vectors.
-inspectVec :: forall v a b. (Arity (Dim v), IVector v a) => v a -> Fun (Dim v) a b -> b
+inspectVec :: forall v a b. (ArityPeano (Dim v), IVector v a) => v a -> Fun (Dim v) a b -> b
 {-# INLINE inspectVec #-}
 inspectVec v
   = inspect cv
@@ -230,7 +234,7 @@ inspectVec v
                (Const 0 :: Const Int (Dim v))
 
 -- | Generic construct implementation for array-based vectors.
-constructVec :: forall v a. (Arity (Dim v), IVector v a) => Fun (Dim v) a (v a)
+constructVec :: forall v a. (ArityPeano (Dim v), IVector v a) => Fun (Dim v) a (v a)
 {-# INLINE constructVec #-}
 constructVec =
   accum step
