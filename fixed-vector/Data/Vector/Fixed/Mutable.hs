@@ -13,7 +13,6 @@
 module Data.Vector.Fixed.Mutable (
     -- * Mutable vectors
     Arity
-  , arity
   , Mutable
   , DimM
   , MVector(..)
@@ -41,10 +40,8 @@ module Data.Vector.Fixed.Mutable (
 import Control.Applicative  (Const(..))
 import Control.Monad.ST
 import Control.Monad.Primitive
-import Data.Typeable  (Proxy(..))
 import Data.Kind      (Type)
-import GHC.TypeLits
-import Data.Vector.Fixed.Cont (Dim,PeanoNum(..),Peano,Arity,Fun(..),Vector(..),ContVec,arity,apply,accum,length)
+import Data.Vector.Fixed.Cont (Dim,PeanoNum(..),Arity,Fun(..),Vector(..),ContVec,apply,accum,length)
 import Prelude hiding (read,length,replicate)
 
 

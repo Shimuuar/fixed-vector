@@ -2,9 +2,11 @@
 {-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MagicHash             #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE StandaloneDeriving    #-}
+{-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE UndecidableInstances  #-}
 -- |
@@ -31,12 +33,14 @@ import qualified Data.Foldable    as F
 import qualified Data.Traversable as T
 import Foreign.Storable (Storable(..))
 import GHC.TypeLits
+import GHC.Exts (proxy#)
 import Prelude ( Show(..),Eq(..),Ord(..),Functor(..),Monad(..)
                , ($),($!),error,seq)
 
 import Data.Vector.Fixed hiding (index)
-import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, arity, index)
+import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, index)
 import qualified Data.Vector.Fixed.Cont     as C
+import           Data.Vector.Fixed.Cont     (Peano,Arity(..))
 import qualified Data.Vector.Fixed.Internal as I
 
 
@@ -61,7 +65,7 @@ type Vec4 = Vec 4
 type Vec5 = Vec 5
 
 
-instance (Typeable n, Arity n, Data a) => Data (Vec n a) where
+instance (Typeable n, Arity (Peano n), Data a) => Data (Vec n a) where
   gfoldl       = C.gfoldl
   gunfold      = C.gunfold
   toConstr   _ = con_Vec
@@ -73,7 +77,7 @@ ty_Vec  = mkDataType "Data.Vector.Fixed.Boxed.Vec" [con_Vec]
 con_Vec :: Constr
 con_Vec = mkConstr ty_Vec "Vec" [] Prefix
 
-instance (Storable a, Arity n) => Storable (Vec n a) where
+instance (Storable a, Arity (Peano n)) => Storable (Vec n a) where
   alignment = defaultAlignemnt
   sizeOf    = defaultSizeOf
   peek      = defaultPeek
@@ -90,30 +94,30 @@ instance (Storable a, Arity n) => Storable (Vec n a) where
 -- Instances
 ----------------------------------------------------------------
 
-instance (Arity n, Show a) => Show (Vec n a) where
+instance (Arity (Peano n), Show a) => Show (Vec n a) where
   showsPrec = I.showsPrec
 
-instance (Arity n, NFData a) => NFData (Vec n a) where
+instance (Arity (Peano n), NFData a) => NFData (Vec n a) where
   rnf = foldl (\r a -> r `seq` rnf a) ()
   {-# INLINE rnf #-}
 
 type instance Mutable (Vec n) = MVec n
 
-instance (Arity n) => MVector (MVec n) a where
+instance (Arity (Peano n)) => MVector (MVec n) a where
   new = do
-    v <- newSmallArray (arity (Proxy :: Proxy n)) uninitialised
+    v <- newSmallArray (peanoToInt (proxy# @(Peano n))) uninitialised
     return $ MVec v
   {-# INLINE new         #-}
   copy = move
   {-# INLINE copy        #-}
-  move (MVec dst) (MVec src) = copySmallMutableArray dst 0 src 0 (arity (Proxy :: Proxy n))
+  move (MVec dst) (MVec src) = copySmallMutableArray dst 0 src 0 (peanoToInt (proxy# @(Peano n)))
   {-# INLINE move        #-}
   unsafeRead  (MVec v) i   = readSmallArray  v i
   {-# INLINE unsafeRead  #-}
   unsafeWrite (MVec v) i x = writeSmallArray v i x
   {-# INLINE unsafeWrite #-}
 
-instance (Arity n) => IVector (Vec n) a where
+instance (Arity (Peano n)) => IVector (Vec n) a where
   unsafeFreeze (MVec v)   = do { a <- unsafeFreezeSmallArray v; return $! Vec  a }
   unsafeThaw   (Vec  v)   = do { a <- unsafeThawSmallArray   v; return $! MVec a }
   unsafeIndex  (Vec  v) i = indexSmallArray v i
@@ -123,50 +127,50 @@ instance (Arity n) => IVector (Vec n) a where
 
 
 
-type instance Dim  (Vec  n) = n
-type instance DimM (MVec n) = n
+type instance Dim  (Vec  n) = Peano n
+type instance DimM (MVec n) = Peano n
 
-instance (Arity n) => Vector (Vec n) a where
+instance (Arity (Peano n)) => Vector (Vec n) a where
   construct  = constructVec
   inspect    = inspectVec
   basicIndex = index
   {-# INLINE construct  #-}
   {-# INLINE inspect    #-}
   {-# INLINE basicIndex #-}
-instance (Arity n) => VectorN Vec n a
+instance (Arity (Peano n)) => VectorN Vec n a
 
-instance (Arity n, Eq a) => Eq (Vec n a) where
+instance (Arity (Peano n), Eq a) => Eq (Vec n a) where
   (==) = eq
   {-# INLINE (==) #-}
-instance (Arity n, Ord a) => Ord (Vec n a) where
+instance (Arity (Peano n), Ord a) => Ord (Vec n a) where
   compare = ord
   {-# INLINE compare #-}
 
-instance (Arity n, Monoid a) => Monoid (Vec n a) where
+instance (Arity (Peano n), Monoid a) => Monoid (Vec n a) where
   mempty  = replicate mempty
   mappend = (<>)
   {-# INLINE mempty  #-}
   {-# INLINE mappend #-}
 
-instance (Arity n, Semigroup a) => Semigroup (Vec n a) where
+instance (Arity (Peano n), Semigroup a) => Semigroup (Vec n a) where
   (<>) = zipWith (<>)
   {-# INLINE (<>) #-}
 
-instance Arity n => Functor (Vec n) where
+instance Arity (Peano n) => Functor (Vec n) where
   {-# INLINE fmap #-}
   fmap = map
 
-instance Arity n => Applicative (Vec n) where
+instance Arity (Peano n) => Applicative (Vec n) where
   pure  = replicate
   (<*>) = zipWith ($)
   {-# INLINE pure  #-}
   {-# INLINE (<*>) #-}
 
-instance Arity n => F.Foldable (Vec n) where
+instance Arity (Peano n) => F.Foldable (Vec n) where
   foldr = foldr
   {-# INLINE foldr #-}
 
-instance Arity n => T.Traversable (Vec n) where
+instance Arity (Peano n) => T.Traversable (Vec n) where
   sequenceA = sequenceA
   traverse  = traverse
   {-# INLINE sequenceA #-}

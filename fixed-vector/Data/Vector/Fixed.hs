@@ -91,15 +91,15 @@ module Data.Vector.Fixed (
   , tail
   , cons
   , snoc
-  -- , concat   FIXME
+  , concat
   , reverse
     -- ** Indexing & lenses
   -- , C.Index
   , (!)
-  -- , index FIXME
-  -- , set  FIXME
+  , index
+  , set
   , element
-  -- , elementTy FIXME
+  , elementTy
     -- ** Comparison
   , eq
   , ord

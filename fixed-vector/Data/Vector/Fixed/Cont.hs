@@ -29,7 +29,6 @@ module Data.Vector.Fixed.Cont (
   , Fn
   , Fun(..)
   , Arity(..)
-  , arity
   , apply
   , applyM
   , Index(..)
@@ -282,11 +281,6 @@ applyM :: (Applicative f, Arity n)
        -> f (ContVec n a)
 {-# INLINE applyM #-}
 applyM f t = fst $ applyFunM f t
-
--- | Arity of function.
-arity :: KnownNat n => proxy n -> Int
-{-# INLINE arity #-}
-arity = fromIntegral . natVal
 
 
 -- | Type class for indexing of vector of length @n@ with statically

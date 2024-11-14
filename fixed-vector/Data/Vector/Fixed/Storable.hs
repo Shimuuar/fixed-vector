@@ -2,9 +2,11 @@
 {-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MagicHash             #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE StandaloneDeriving    #-}
+{-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE UndecidableInstances  #-}
 -- |
@@ -38,14 +40,15 @@ import Foreign.ForeignPtr
 import Foreign.Marshal.Array ( copyArray, moveArray )
 import GHC.ForeignPtr        ( ForeignPtr(..), mallocPlainForeignPtrBytes )
 import GHC.Ptr               ( Ptr(..) )
+import GHC.Exts              ( proxy# )
 import GHC.TypeLits
 import Prelude ( Show(..),Eq(..),Ord(..),Num(..),Monad(..),IO,Int
                , ($),undefined,seq)
 
 import Data.Vector.Fixed hiding (index)
-import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, arity, index)
+import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, index)
 import qualified Data.Vector.Fixed.Cont     as C
-import           Data.Vector.Fixed.Cont     (Peano)
+import           Data.Vector.Fixed.Cont     (Peano,Arity(..))
 import qualified Data.Vector.Fixed.Internal as I
 
 
@@ -106,20 +109,20 @@ type instance Mutable (Vec n) = MVec n
 
 instance (Arity (Peano n), Storable a) => MVector (MVec n) a where
   new = unsafePrimToPrim $ do
-    fp <- mallocVector $ arity (Proxy :: Proxy n)
+    fp <- mallocVector (peanoToInt (proxy# @(Peano n)))
     return $ MVec fp
   {-# INLINE new         #-}
   copy (MVec fp) (MVec fq)
     = unsafePrimToPrim
     $ withForeignPtr fp $ \p ->
       withForeignPtr fq $ \q ->
-      copyArray p q (arity (Proxy :: Proxy n))
+      copyArray p q (peanoToInt (proxy# @(Peano n)))
   {-# INLINE copy        #-}
   move (MVec fp) (MVec fq)
     = unsafePrimToPrim
     $ withForeignPtr fp $ \p ->
       withForeignPtr fq $ \q ->
-      moveArray p q (arity (Proxy :: Proxy n))
+      moveArray p q (peanoToInt (proxy# @(Peano n)))
   {-# INLINE move        #-}
   unsafeRead (MVec fp) i
     = unsafePrimToPrim
@@ -172,17 +175,16 @@ instance (Arity (Peano n), Storable a, Semigroup a) => Semigroup (Vec n a) where
   {-# INLINE (<>) #-}
 
 instance (Arity (Peano n), Storable a) => Storable (Vec n a) where
-  sizeOf    _ = arity  (Proxy :: Proxy n)
-              * sizeOf (undefined :: a)
-  alignment _ = alignment (undefined :: a)
+  sizeOf    = defaultSizeOf
+  alignment = defaultAlignemnt
   peek ptr = do
     arr@(MVec fp) <- new
     withForeignPtr fp $ \p ->
-      moveArray p (castPtr ptr) (arity (Proxy :: Proxy n))
+      moveArray p (castPtr ptr) (peanoToInt (proxy# @(Peano n)))
     unsafeFreeze arr
   poke ptr (Vec fp)
     = withForeignPtr fp $ \p ->
-      moveArray (castPtr ptr) p (arity (Proxy :: Proxy n))
+      moveArray (castPtr ptr) p (peanoToInt (proxy# @(Peano n)))
 
 instance (Typeable n, Arity (Peano n), Storable a, Data a) => Data (Vec n a) where
   gfoldl       = C.gfoldl

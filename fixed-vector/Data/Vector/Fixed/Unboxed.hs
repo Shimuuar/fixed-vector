@@ -46,6 +46,7 @@ import Data.Vector.Fixed (Dim,Vector(..),VectorN,eq,ord,replicate,zipWith,foldl,
                          )
 import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, Arity, index)
 import qualified Data.Vector.Fixed.Cont      as C
+import           Data.Vector.Fixed.Cont      (Peano)
 import qualified Data.Vector.Fixed.Primitive as P
 import qualified Data.Vector.Fixed.Internal  as I
 
@@ -67,24 +68,24 @@ type Vec3 = Vec 3
 type Vec4 = Vec 4
 type Vec5 = Vec 5
 
-class (Arity n, IVector (Vec n) a, MVector (MVec n) a) => Unbox n a
+class (Arity (Peano n), IVector (Vec n) a, MVector (MVec n) a) => Unbox n a
 
 
 ----------------------------------------------------------------
 -- Generic instances
 ----------------------------------------------------------------
 
-instance (Arity n, Show a, Unbox n a) => Show (Vec n a) where
+instance (Arity (Peano n), Show a, Unbox n a) => Show (Vec n a) where
   showsPrec = I.showsPrec
 
-instance (Arity n, Unbox n a, NFData a) => NFData (Vec n a) where
+instance (Arity (Peano n), Unbox n a, NFData a) => NFData (Vec n a) where
   rnf = foldl (\r a -> r `seq` rnf a) ()
   {-# INLINE rnf #-}
 
 type instance Mutable (Vec n) = MVec n
 
-type instance Dim  (Vec  n) = n
-type instance DimM (MVec n) = n
+type instance Dim  (Vec  n) = Peano n
+type instance DimM (MVec n) = Peano n
 
 instance (Unbox n a) => Vector (Vec n) a where
   construct  = constructVec
@@ -146,9 +147,9 @@ instance (Storable a, Unbox n a) => Storable (Vec n a) where
 data instance MVec n s () = MV_Unit
 data instance Vec  n   () = V_Unit
 
-instance Arity n => Unbox n ()
+instance Arity (Peano n) => Unbox n ()
 
-instance Arity n => MVector (MVec n) () where
+instance Arity (Peano n) => MVector (MVec n) () where
   new          = return MV_Unit
   {-# INLINE new         #-}
   copy _ _     = return ()
@@ -160,7 +161,7 @@ instance Arity n => MVector (MVec n) () where
   unsafeWrite _ _ _ = return ()
   {-# INLINE unsafeWrite #-}
 
-instance Arity n => IVector (Vec n) () where
+instance Arity (Peano n) => IVector (Vec n) () where
   unsafeFreeze _   = return V_Unit
   unsafeThaw   _   = return MV_Unit
   unsafeIndex  _ _ = ()
@@ -176,9 +177,9 @@ instance Arity n => IVector (Vec n) () where
 newtype instance MVec n s Bool = MV_Bool (P.MVec n s Word8)
 newtype instance Vec  n   Bool = V_Bool  (P.Vec  n   Word8)
 
-instance Arity n => Unbox n Bool
+instance Arity (Peano n) => Unbox n Bool
 
-instance Arity n => MVector (MVec n) Bool where
+instance Arity (Peano n) => MVector (MVec n) Bool where
   new          = MV_Bool `liftM` new
   {-# INLINE new         #-}
   copy (MV_Bool v) (MV_Bool w) = copy v w
@@ -190,7 +191,7 @@ instance Arity n => MVector (MVec n) Bool where
   unsafeWrite (MV_Bool v) i b = unsafeWrite v i (fromBool b)
   {-# INLINE unsafeWrite #-}
 
-instance Arity n => IVector (Vec n) Bool where
+instance Arity (Peano n) => IVector (Vec n) Bool where
   unsafeFreeze (MV_Bool v) = V_Bool  `liftM` unsafeFreeze v
   unsafeThaw   (V_Bool  v) = MV_Bool `liftM` unsafeThaw   v
   unsafeIndex  (V_Bool  v) = toBool . unsafeIndex v
@@ -213,7 +214,7 @@ toBool _ = True
 ----------------------------------------------------------------
 -- Primitive wrappers
 #define primMV(ty,con)                              \
-instance Arity n => MVector (MVec n) ty where {     \
+instance Arity (Peano n) => MVector (MVec n) ty where {     \
 ; new = con `liftM` new                             \
 ; copy (con v) (con w) = copy v w                   \
 ; move (con v) (con w) = move v w                   \
@@ -227,7 +228,7 @@ instance Arity n => MVector (MVec n) ty where {     \
 }
 
 #define primIV(ty,con,mcon)                             \
-instance Arity n => IVector (Vec n) ty where {          \
+instance Arity (Peano n) => IVector (Vec n) ty where {          \
 ; unsafeFreeze (mcon v)   = con  `liftM` unsafeFreeze v \
 ; unsafeThaw   (con  v)   = mcon `liftM` unsafeThaw   v \
 ; unsafeIndex  (con  v) i = unsafeIndex v i             \
@@ -239,7 +240,7 @@ instance Arity n => IVector (Vec n) ty where {          \
 #define primWrap(ty,con,mcon) \
 newtype instance MVec n s ty = mcon (P.MVec n s ty) ; \
 newtype instance Vec  n   ty = con  (P.Vec  n   ty) ; \
-instance Arity n => Unbox n ty ; \
+instance Arity (Peano n) => Unbox n ty ; \
 primMV(ty, mcon     )          ; \
 primIV(ty, con, mcon)
 
@@ -270,7 +271,7 @@ newtype instance Vec  n   (Complex a) = V_Complex  (Vec  n   (a,a))
 
 instance (Unbox n a) => Unbox n (Complex a)
 
-instance (Arity n, MVector (MVec n) a) => MVector (MVec n) (Complex a) where
+instance (Arity (Peano n), MVector (MVec n) a) => MVector (MVec n) (Complex a) where
   new = MV_Complex `liftM` new
   {-# INLINE new #-}
   copy (MV_Complex v) (MV_Complex w) = copy v w
@@ -283,7 +284,7 @@ instance (Arity n, MVector (MVec n) a) => MVector (MVec n) (Complex a) where
   unsafeWrite (MV_Complex v) i (a :+ b) = unsafeWrite v i (a,b)
   {-# INLINE unsafeWrite #-}
 
-instance (Arity n, IVector (Vec n) a) => IVector (Vec n) (Complex a) where
+instance (Arity (Peano n), IVector (Vec n) a) => IVector (Vec n) (Complex a) where
   unsafeFreeze (MV_Complex v) = V_Complex `liftM` unsafeFreeze v
   {-# INLINE unsafeFreeze #-}
   unsafeThaw   (V_Complex  v) = MV_Complex `liftM` unsafeThaw v
@@ -301,7 +302,7 @@ data instance Vec  n   (a,b) = V_2  !(Vec  n   a) !(Vec  n   b)
 
 instance (Unbox n a, Unbox n b) => Unbox n (a,b)
 
-instance (Arity n, MVector (MVec n) a, MVector (MVec n) b) => MVector (MVec n) (a,b) where
+instance (Arity (Peano n), MVector (MVec n) a, MVector (MVec n) b) => MVector (MVec n) (a,b) where
   new = do as <- new
            bs <- new
            return $ MV_2 as bs
@@ -318,7 +319,7 @@ instance (Arity n, MVector (MVec n) a, MVector (MVec n) b) => MVector (MVec n) (
   {-# INLINE unsafeWrite #-}
 
 
-instance ( Arity n
+instance ( Arity (Peano n)
          , IVector (Vec n) a, IVector (Vec n) b
          ) => IVector (Vec n) (a,b) where
   unsafeFreeze (MV_2 v w)   = do as <- unsafeFreeze v
@@ -340,7 +341,7 @@ data instance Vec  n   (a,b,c) = V_3  !(Vec  n   a) !(Vec  n   b) !(Vec  n   c)
 
 instance (Unbox n a, Unbox n b, Unbox n c) => Unbox n (a,b,c)
 
-instance (Arity n, MVector (MVec n) a, MVector (MVec n) b, MVector (MVec n) c
+instance (Arity (Peano n), MVector (MVec n) a, MVector (MVec n) b, MVector (MVec n) c
          ) => MVector (MVec n) (a,b,c) where
   new = do as <- new
            bs <- new
@@ -362,7 +363,7 @@ instance (Arity n, MVector (MVec n) a, MVector (MVec n) b, MVector (MVec n) c
     = unsafeWrite v i a >> unsafeWrite w i b >> unsafeWrite u i c
   {-# INLINE unsafeWrite #-}
 
-instance ( Arity n
+instance ( Arity (Peano n)
          , Vector  (Vec n) a, Vector  (Vec n) b, Vector  (Vec n) c
          , IVector (Vec n) a, IVector (Vec n) b, IVector (Vec n) c
          ) => IVector (Vec n) (a,b,c) where
@@ -455,7 +456,7 @@ primNewWrap(Product, V_Product, MV_Product)
 -- Monomorphic newtype wrappers
 
 #define primNewMonoMV(ty,con)                         \
-instance Arity n => MVector (MVec n) ty where {     \
+instance Arity (Peano n) => MVector (MVec n) ty where {     \
 ; new = con `liftM` new                             \
 ; copy (con v) (con w) = copy v w                   \
 ; move (con v) (con w) = move v w                   \
@@ -469,7 +470,7 @@ instance Arity n => MVector (MVec n) ty where {     \
 }
 
 #define primNewMonoIV(ty,con,mcon)                             \
-instance Arity n => IVector (Vec n) ty where {          \
+instance Arity (Peano n) => IVector (Vec n) ty where {          \
 ; unsafeFreeze (mcon v)   = con  `liftM` unsafeFreeze v \
 ; unsafeThaw   (con  v)   = mcon `liftM` unsafeThaw   v \
 ; unsafeIndex  (con  v) i = ty (unsafeIndex v i)             \
@@ -481,7 +482,7 @@ instance Arity n => IVector (Vec n) ty where {          \
 #define primNewMonoWrap(ty,repr,con,mcon) \
 newtype instance MVec n s ty = mcon (MVec n s repr) ; \
 newtype instance Vec  n   ty = con  (Vec  n   repr) ; \
-instance Arity n => Unbox n ty ; \
+instance Arity (Peano n) => Unbox n ty ; \
 primNewMonoMV(ty, mcon     )          ; \
 primNewMonoIV(ty, con, mcon)
 
