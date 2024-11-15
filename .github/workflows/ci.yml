@@ -77,6 +77,7 @@ jobs:
     # ----------------
     - name: Build
       run: |
+        set -x
         if [ "${{ matrix.skip-test  }}" == "" ]; then FLAG_TEST=--enable-test; fi
         if [ "${{ matrix.skip-bench }}" == "" ]; then FLAG_BENCH=--enable-benchmarks; fi
         cabal configure $FLAG_TEST $FLAG_BENCH

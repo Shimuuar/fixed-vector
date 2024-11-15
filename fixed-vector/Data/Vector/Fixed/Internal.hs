@@ -1,14 +1,5 @@
-{-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MagicHash             #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE PolyKinds             #-}
-{-# LANGUAGE Rank2Types            #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE TypeApplications      #-}
-{-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE TypeOperators         #-}
+{-# LANGUAGE MagicHash #-}
+{-# LANGUAGE PolyKinds #-}
 -- |
 -- Implementation of fixed-vectors
 module Data.Vector.Fixed.Internal where
@@ -97,14 +88,14 @@ mkN _ = C.unFun (construct :: C.Fun (Dim v) a (v a))
 --
 --   >>> import Data.Vector.Fixed.Boxed (Vec2)
 --   >>> replicate 1 :: Vec2 Int
---   fromList [1,1]
+--   [1,1]
 --
 --   >>> replicate 2 :: (Double,Double,Double)
 --   (2.0,2.0,2.0)
 --
 --   >>> import Data.Vector.Fixed.Boxed (Vec4)
 --   >>> replicate "foo" :: Vec4 String
---   fromList ["foo","foo","foo","foo"]
+--   ["foo","foo","foo","foo"]
 replicate :: Vector v a => a -> v a
 {-# INLINE replicate #-}
 replicate
@@ -117,11 +108,11 @@ replicate
 --
 --   >>> import Data.Vector.Fixed.Boxed (Vec2,Vec3)
 --   >>> replicateM (Just 3) :: Maybe (Vec3 Int)
---   Just (fromList [3,3,3])
+--   Just [3,3,3]
 --   >>> replicateM (putStrLn "Hi!") :: IO (Vec2 ())
 --   Hi!
 --   Hi!
---   fromList [(),()]
+--   [(),()]
 replicateM :: (Vector v a, Applicative f) => f a -> f (v a)
 {-# INLINE replicateM #-}
 replicateM
@@ -135,11 +126,11 @@ replicateM
 --
 --   >>> import Data.Vector.Fixed.Boxed (Vec3)
 --   >>> basis 0 :: Vec3 Int
---   fromList [1,0,0]
+--   [1,0,0]
 --   >>> basis 1 :: Vec3 Int
---   fromList [0,1,0]
+--   [0,1,0]
 --   >>> basis 3 :: Vec3 Int
---   fromList [0,0,0]
+--   [0,0,0]
 basis :: (Vector v a, Num a) => Int -> v a
 {-# INLINE basis #-}
 basis = vector . C.basis
@@ -158,7 +149,7 @@ unfoldr f = vector . C.unfoldr f
 --
 --   >>> import Data.Vector.Fixed.Unboxed (Vec4)
 --   >>> generate (^2) :: Vec4 Int
---   fromList [0,1,4,9]
+--   [0,1,4,9]
 generate :: (Vector v a) => (Int -> a) -> v a
 {-# INLINE generate #-}
 generate = vector . C.generate
@@ -227,7 +218,7 @@ reverse = vector . C.reverse . C.cvec
 --   /O(n)/ but more efficient one is used when possible.
 (!) :: (Vector v a) => v a -> Int -> a
 {-# INLINE (!) #-}
-v ! n = runIndex n (C.cvec v)
+(!) v n = runIndex n (C.cvec v)
 
 -- Used in rewriting of index function.
 runIndex :: ArityPeano n => Int -> C.ContVec n r -> r
@@ -535,11 +526,11 @@ collect f = vector . C.collect (C.cvec . f)
 --   >>> let b2 = basis 2 :: Vec3 Int
 --   >>> let vplus x y = zipWith (+) x y
 --   >>> vplus b0 b1
---   fromList [1,1,0]
+--   [1,1,0]
 --   >>> vplus b0 b2
---   fromList [1,0,1]
+--   [1,0,1]
 --   >>> vplus b1 b2
---   fromList [0,1,1]
+--   [0,1,1]
 zipWith :: (Vector v a, Vector v b, Vector v c)
         => (a -> b -> c) -> v a -> v b -> v c
 {-# INLINE zipWith #-}
@@ -681,5 +672,5 @@ fromFoldable = fromListM . T.toList
 
 -- | Generic definition of 'Prelude.showsPrec'
 showsPrec :: (Vector v a, Show a) => Int -> v a -> ShowS
-showsPrec d v = showParen (d > 10) $ showString "fromList " . Prelude.showsPrec 11 (toList v)
+showsPrec _ = shows . toList
 {-# INLINE showsPrec #-}

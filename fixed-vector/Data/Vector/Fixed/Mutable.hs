@@ -1,13 +1,5 @@
-{-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE MagicHash             #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE PolyKinds             #-}
-{-# LANGUAGE Rank2Types            #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE TypeApplications      #-}
-{-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE TypeOperators         #-}
+{-# LANGUAGE MagicHash #-}
+{-# LANGUAGE PolyKinds #-}
 -- |
 -- Type classes for vectors which are implemented on top of the arrays
 -- and support in-place mutation. API is similar to one used in the
@@ -96,7 +88,7 @@ lengthM _ = peanoToInt (proxy# @(DimM v))
 --   >>> import qualified Data.Vector.Fixed.Mutable as M
 --   >>> let x = runST (do { v <- M.replicate 100; v' <- clone v; M.write v' 0 2; M.unsafeFreeze v' }) :: Vec3 Int
 --   >>> x
---   fromList [2,100,100]
+--   [2,100,100]
 clone :: (PrimMonad m, MVector v a) => v (PrimState m) a -> m (v (PrimState m) a)
 {-# INLINE clone #-}
 clone v = do

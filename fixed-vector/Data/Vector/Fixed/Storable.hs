@@ -1,14 +1,5 @@
-{-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE DeriveDataTypeable    #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MagicHash             #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE StandaloneDeriving    #-}
-{-# LANGUAGE TypeApplications      #-}
-{-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE UndecidableInstances  #-}
+{-# LANGUAGE MagicHash            #-}
+{-# LANGUAGE UndecidableInstances #-}
 -- |
 -- Storable-based unboxed vectors.
 module Data.Vector.Fixed.Storable (
@@ -49,7 +40,6 @@ import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, index)
 import qualified Data.Vector.Fixed.Cont     as C
 import           Data.Vector.Fixed.Cont     (Peano,ArityPeano(..))
-import qualified Data.Vector.Fixed.Internal as I
 
 
 
@@ -63,15 +53,15 @@ newtype Vec (n :: Nat) a = Vec (ForeignPtr a)
 -- | Storable-based mutable vector with fixed length
 newtype MVec (n :: Nat) s a = MVec (ForeignPtr a)
 
-deriving instance Typeable Vec
-deriving instance Typeable MVec
-
 type Vec1 = Vec 1
 type Vec2 = Vec 2
 type Vec3 = Vec 3
 type Vec4 = Vec 4
 type Vec5 = Vec 5
 
+type instance Mutable (Vec  n) = MVec n
+type instance Dim     (Vec  n) = Peano n
+type instance DimM    (MVec n) = Peano n
 
 
 ----------------------------------------------------------------
@@ -98,14 +88,14 @@ unsafeWith f (Vec fp) = f (getPtr fp)
 -- Instances
 ----------------------------------------------------------------
 
-instance (Arity n, Storable a, Show a) => Show (Vec n a) where
-  showsPrec = I.showsPrec
-
 instance (Arity n, Storable a, NFData a) => NFData (Vec n a) where
-  rnf = foldl (\r a -> r `seq` rnf a) ()
-  {-# INLINE rnf #-}
+  rnf x = seq x ()
 
-type instance Mutable (Vec n) = MVec n
+deriving via ViaFixed (Vec n) a instance (Arity n, Storable a, Show      a) => Show      (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Storable a, Eq        a) => Eq        (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Storable a, Ord       a) => Ord       (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Storable a, Semigroup a) => Semigroup (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Storable a, Monoid    a) => Monoid    (Vec n a)
 
 instance (Arity n, Storable a) => MVector (MVec n) a where
   new = unsafePrimToPrim $ do
@@ -133,7 +123,6 @@ instance (Arity n, Storable a) => MVector (MVec n) a where
     $ withForeignPtr fp $ \p -> pokeElemOff p i x
   {-# INLINE unsafeWrite #-}
 
-
 instance (Arity n, Storable a) => IVector (Vec n) a where
   unsafeFreeze (MVec fp)   = return $ Vec  fp
   unsafeThaw   (Vec  fp)   = return $ MVec fp
@@ -144,10 +133,6 @@ instance (Arity n, Storable a) => IVector (Vec n) a where
   {-# INLINE unsafeThaw   #-}
   {-# INLINE unsafeIndex  #-}
 
-
-type instance Dim  (Vec  n) = Peano n
-type instance DimM (MVec n) = Peano n
-
 instance (Arity n, Storable a) => Vector (Vec n) a where
   construct  = constructVec
   inspect    = inspectVec
@@ -155,23 +140,6 @@ instance (Arity n, Storable a) => Vector (Vec n) a where
   {-# INLINE construct  #-}
   {-# INLINE inspect    #-}
   {-# INLINE basicIndex #-}
-
-instance (Arity n, Storable a, Eq a) => Eq (Vec n a) where
-  (==) = eq
-  {-# INLINE (==) #-}
-instance (Arity n, Storable a, Ord a) => Ord (Vec n a) where
-  compare = ord
-  {-# INLINE compare #-}
-
-instance (Arity n, Storable a, Monoid a) => Monoid (Vec n a) where
-  mempty  = replicate mempty
-  mappend = (<>)
-  {-# INLINE mempty  #-}
-  {-# INLINE mappend #-}
-
-instance (Arity n, Storable a, Semigroup a) => Semigroup (Vec n a) where
-  (<>) = zipWith (<>)
-  {-# INLINE (<>) #-}
 
 instance (Arity n, Storable a) => Storable (Vec n a) where
   sizeOf    = defaultSizeOf

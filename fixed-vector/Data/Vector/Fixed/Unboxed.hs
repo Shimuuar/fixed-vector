@@ -1,14 +1,6 @@
-{-# LANGUAGE CPP                   #-}
-{-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE DeriveDataTypeable    #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE PolyKinds             #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE StandaloneDeriving    #-}
-{-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE UndecidableInstances  #-}
+{-# LANGUAGE CPP                  #-}
+{-# LANGUAGE PolyKinds            #-}
+{-# LANGUAGE UndecidableInstances #-}
 -- |
 -- Unboxed vectors with fixed length.
 module Data.Vector.Fixed.Unboxed(
@@ -39,17 +31,13 @@ import Data.Word             (Word,Word8,Word16,Word32,Word64)
 import Foreign.Storable      (Storable(..))
 import GHC.TypeLits
 import Prelude               ( Show(..),Eq(..),Ord(..),Int,Double,Float,Char,Bool(..)
-                             , ($),(.),seq)
+                             , ($),(.))
 
-import Data.Vector.Fixed (Dim,Vector(..),eq,ord,replicate,zipWith,foldl,
-                          defaultSizeOf,defaultAlignemnt,defaultPeek,defaultPoke
-                         )
+import Data.Vector.Fixed (Dim,Vector(..),ViaFixed(..))
 import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, Arity, index)
 import qualified Data.Vector.Fixed.Cont      as C
 import           Data.Vector.Fixed.Cont      (Peano)
 import qualified Data.Vector.Fixed.Primitive as P
-import qualified Data.Vector.Fixed.Internal  as I
-
 
 
 ----------------------------------------------------------------
@@ -59,9 +47,6 @@ import qualified Data.Vector.Fixed.Internal  as I
 data family Vec  (n :: Nat) a
 data family MVec (n :: Nat) s a
 
-deriving instance Typeable Vec
-deriving instance Typeable MVec
-
 type Vec1 = Vec 1
 type Vec2 = Vec 2
 type Vec3 = Vec 3
@@ -70,22 +55,22 @@ type Vec5 = Vec 5
 
 class (Arity n, IVector (Vec n) a, MVector (MVec n) a) => Unbox n a
 
+type instance Mutable (Vec  n) = MVec n
+type instance Dim     (Vec  n) = Peano n
+type instance DimM    (MVec n) = Peano n
+
 
 ----------------------------------------------------------------
 -- Generic instances
 ----------------------------------------------------------------
 
-instance (Arity n, Show a, Unbox n a) => Show (Vec n a) where
-  showsPrec = I.showsPrec
-
-instance (Arity n, Unbox n a, NFData a) => NFData (Vec n a) where
-  rnf = foldl (\r a -> r `seq` rnf a) ()
-  {-# INLINE rnf #-}
-
-type instance Mutable (Vec n) = MVec n
-
-type instance Dim  (Vec  n) = Peano n
-type instance DimM (MVec n) = Peano n
+deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Show      a) => Show      (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Eq        a) => Eq        (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Ord       a) => Ord       (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, NFData    a) => NFData    (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Semigroup a) => Semigroup (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Monoid    a) => Monoid    (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Storable  a) => Storable  (Vec n a)
 
 instance (Unbox n a) => Vector (Vec n) a where
   construct  = constructVec
@@ -94,23 +79,6 @@ instance (Unbox n a) => Vector (Vec n) a where
   {-# INLINE construct  #-}
   {-# INLINE inspect    #-}
   {-# INLINE basicIndex #-}
-
-instance (Unbox n a, Eq a) => Eq (Vec n a) where
-  (==) = eq
-  {-# INLINE (==) #-}
-instance (Unbox n a, Ord a) => Ord (Vec n a) where
-  compare = ord
-  {-# INLINE compare #-}
-
-instance (Unbox n a, Monoid a) => Monoid (Vec n a) where
-  mempty  = replicate mempty
-  mappend = (<>)
-  {-# INLINE mempty  #-}
-  {-# INLINE mappend #-}
-
-instance (Unbox n a, Semigroup a) => Semigroup (Vec n a) where
-  (<>) = zipWith (<>)
-  {-# INLINE (<>) #-}
 
 instance (Typeable n, Unbox n a, Data a) => Data (Vec n a) where
   gfoldl       = C.gfoldl
@@ -123,17 +91,6 @@ ty_Vec  = mkDataType "Data.Vector.Fixed.Unboxed.Vec" [con_Vec]
 
 con_Vec :: Constr
 con_Vec = mkConstr ty_Vec "Vec" [] Prefix
-
-instance (Storable a, Unbox n a) => Storable (Vec n a) where
-  alignment = defaultAlignemnt
-  sizeOf    = defaultSizeOf
-  peek      = defaultPeek
-  poke      = defaultPoke
-  {-# INLINE alignment #-}
-  {-# INLINE sizeOf    #-}
-  {-# INLINE peek      #-}
-  {-# INLINE poke      #-}
-
 
 
 ----------------------------------------------------------------
