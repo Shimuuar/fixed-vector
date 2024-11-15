@@ -78,9 +78,11 @@ unsafeFromForeignPtr :: ForeignPtr a -> Vec n a
 {-# INLINE unsafeFromForeignPtr #-}
 unsafeFromForeignPtr = Vec
 
+-- | Pass pointer to the vector's data to the IO action. The data may
+--   not be modified through the 'Ptr.
 unsafeWith :: (Ptr a -> IO b) -> Vec n a -> IO b
 {-# INLINE unsafeWith #-}
-unsafeWith f (Vec fp) = f (getPtr fp)
+unsafeWith f (Vec fp) = withForeignPtr fp f
 
 
 
