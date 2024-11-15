@@ -1,5 +1,7 @@
 {-# LANGUAGE FlexibleContexts     #-}
+{-# LANGUAGE MagicHash            #-}
 {-# LANGUAGE ScopedTypeVariables  #-}
+{-# LANGUAGE TypeApplications     #-}
 {-# LANGUAGE TypeFamilies         #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
@@ -10,12 +12,11 @@ module Data.Vector.Fixed.Instances.CBOR where
 import           Codec.Serialise
 import           Codec.CBOR.Encoding           (Encoding,encodeListLen,encodeNull)
 import           Codec.CBOR.Decoding           (Decoder,decodeListLenOf,decodeNull)
-import           Data.Monoid                   ((<>))
-import           Data.Typeable                 (Proxy(..))
+import           GHC.Exts                      (proxy#)
 
 import           Data.Vector.Fixed             (Arity)
 import qualified Data.Vector.Fixed           as F
-import           Data.Vector.Fixed.Cont        (arity,Dim)
+import           Data.Vector.Fixed.Cont        (peanoToInt,Dim)
 import qualified Data.Vector.Fixed.Boxed     as B
 import qualified Data.Vector.Fixed.Unboxed   as U
 import qualified Data.Vector.Fixed.Primitive as P
@@ -63,5 +64,5 @@ encodeFixedVector v = encodeListLen (fromIntegral $ F.length v)
 decodeFixedVector :: forall v s a. (F.Vector v a, Serialise a) => Decoder s (v a)
 {-# INLINE decodeFixedVector #-}
 decodeFixedVector = do
-  decodeListLenOf (fromIntegral $ arity (Proxy :: Proxy (Dim v)))
+  decodeListLenOf (fromIntegral $ peanoToInt (proxy# @(Dim v)))
   F.replicateM decode
