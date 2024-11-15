@@ -1,6 +1,8 @@
+{-# LANGUAGE DerivingVia          #-}
 {-# LANGUAGE FlexibleContexts     #-}
 {-# LANGUAGE MagicHash            #-}
 {-# LANGUAGE ScopedTypeVariables  #-}
+{-# LANGUAGE StandaloneDeriving   #-}
 {-# LANGUAGE TypeApplications     #-}
 {-# LANGUAGE TypeFamilies         #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -14,7 +16,7 @@ import           Codec.CBOR.Encoding           (Encoding,encodeListLen,encodeNul
 import           Codec.CBOR.Decoding           (Decoder,decodeListLenOf,decodeNull)
 import           GHC.Exts                      (proxy#)
 
-import           Data.Vector.Fixed             (Arity)
+import           Data.Vector.Fixed             (Arity,ArityPeano,Vector,ViaFixed)
 import qualified Data.Vector.Fixed           as F
 import           Data.Vector.Fixed.Cont        (peanoToInt,Dim)
 import qualified Data.Vector.Fixed.Boxed     as B
@@ -23,30 +25,21 @@ import qualified Data.Vector.Fixed.Primitive as P
 import qualified Data.Vector.Fixed.Storable  as S
 
 
-
-instance (Arity n, Serialise a) => Serialise (B.Vec n a) where
+instance (Vector v a, Serialise a) => Serialise (ViaFixed v a) where
   encode = encodeFixedVector
   decode = decodeFixedVector
+  {-# INLINE encode #-}
+  {-# INLINE decode #-}
 
-instance (Arity n, P.Prim a, Serialise a) => Serialise (P.Vec n a) where
-  encode = encodeFixedVector
-  decode = decodeFixedVector
+deriving via ViaFixed (B.Vec n) a instance (Arity n, Serialise a)               => Serialise (B.Vec n a)
+deriving via ViaFixed (P.Vec n) a instance (Arity n, Serialise a, P.Prim a)     => Serialise (P.Vec n a)
+deriving via ViaFixed (S.Vec n) a instance (Arity n, Serialise a, S.Storable a) => Serialise (S.Vec n a)
+deriving via ViaFixed (U.Vec n) a instance (Arity n, Serialise a, U.Unbox n a)  => Serialise (U.Vec n a)
 
-instance (Arity n, S.Storable a, Serialise a) => Serialise (S.Vec n a) where
-  encode = encodeFixedVector
-  decode = decodeFixedVector
+deriving via ViaFixed (F.VecList  n) a instance (Arity n,      Serialise a) => Serialise (F.VecList  n a)
+deriving via ViaFixed (F.VecPeano n) a instance (ArityPeano n, Serialise a) => Serialise (F.VecPeano n a)
 
-instance (U.Unbox n a, Serialise a) => Serialise (U.Vec n a) where
-  encode = encodeFixedVector
-  decode = decodeFixedVector
-
-instance (Arity n, Serialise a) => Serialise (F.VecList n a) where
-  encode = encodeFixedVector
-  decode = decodeFixedVector
-
-instance (Serialise a) => Serialise (F.Only a) where
-  encode = encodeFixedVector
-  decode = decodeFixedVector
+deriving via ViaFixed F.Only a instance (Serialise a) => Serialise (F.Only a)
 
 instance Serialise (F.Empty a) where
   encode = const encodeNull
