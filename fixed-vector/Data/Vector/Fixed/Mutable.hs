@@ -1,13 +1,5 @@
-{-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE MagicHash             #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE PolyKinds             #-}
-{-# LANGUAGE Rank2Types            #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE TypeApplications      #-}
-{-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE TypeOperators         #-}
+{-# LANGUAGE MagicHash #-}
+{-# LANGUAGE PolyKinds #-}
 -- |
 -- Type classes for vectors which are implemented on top of the arrays
 -- and support in-place mutation. API is similar to one used in the

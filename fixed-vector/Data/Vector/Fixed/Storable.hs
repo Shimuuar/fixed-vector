@@ -1,15 +1,5 @@
-{-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE DeriveDataTypeable    #-}
-{-# LANGUAGE DerivingVia           #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MagicHash             #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE StandaloneDeriving    #-}
-{-# LANGUAGE TypeApplications      #-}
-{-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE UndecidableInstances  #-}
+{-# LANGUAGE MagicHash            #-}
+{-# LANGUAGE UndecidableInstances #-}
 -- |
 -- Storable-based unboxed vectors.
 module Data.Vector.Fixed.Storable (

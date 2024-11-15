@@ -1,14 +1,5 @@
 {-# LANGUAGE CPP                   #-}
-{-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE DeriveDataTypeable    #-}
-{-# LANGUAGE DerivingVia           #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PolyKinds             #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE StandaloneDeriving    #-}
-{-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE UndecidableInstances  #-}
 -- |
 -- Unboxed vectors with fixed length.

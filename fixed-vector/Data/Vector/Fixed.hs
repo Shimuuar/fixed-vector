@@ -1,25 +1,7 @@
 {-# LANGUAGE CPP                   #-}
-{-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE DeriveDataTypeable    #-}
-{-# LANGUAGE DeriveFoldable        #-}
-{-# LANGUAGE DeriveFunctor         #-}
-{-# LANGUAGE DeriveTraversable     #-}
-{-# LANGUAGE DerivingVia           #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE GADTs                 #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE PatternSynonyms       #-}
 {-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE QuantifiedConstraints #-}
-{-# LANGUAGE RoleAnnotations       #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE StandaloneDeriving    #-}
-{-# LANGUAGE TypeApplications      #-}
-{-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE UndecidableInstances  #-}
-{-# LANGUAGE ViewPatterns          #-}
 -- |
 -- Generic API for vectors with fixed length.
 --

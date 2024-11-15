@@ -1,15 +1,5 @@
-{-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE DeriveDataTypeable    #-}
-{-# LANGUAGE DerivingVia           #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MagicHash             #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE StandaloneDeriving    #-}
-{-# LANGUAGE TypeApplications      #-}
-{-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE UndecidableInstances  #-}
+{-# LANGUAGE MagicHash            #-}
+{-# LANGUAGE UndecidableInstances #-}
 -- |
 -- Vector which could hold any value.
 module Data.Vector.Fixed.Boxed (

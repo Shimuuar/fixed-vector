@@ -1,14 +1,5 @@
-{-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MagicHash             #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE PolyKinds             #-}
-{-# LANGUAGE Rank2Types            #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE TypeApplications      #-}
-{-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE TypeOperators         #-}
+{-# LANGUAGE MagicHash #-}
+{-# LANGUAGE PolyKinds #-}
 -- |
 -- Implementation of fixed-vectors
 module Data.Vector.Fixed.Internal where

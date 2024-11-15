@@ -1,15 +1,5 @@
-{-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE DeriveDataTypeable    #-}
-{-# LANGUAGE DerivingVia           #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MagicHash             #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE StandaloneDeriving    #-}
-{-# LANGUAGE TypeApplications      #-}
-{-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE UndecidableInstances  #-}
+{-# LANGUAGE MagicHash            #-}
+{-# LANGUAGE UndecidableInstances #-}
 -- |
 -- Unboxed vectors with fixed length. Vectors from
 -- "Data.Vector.Fixed.Unboxed" provide more flexibility at no
