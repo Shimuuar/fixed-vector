@@ -20,7 +20,7 @@ import Foreign.Storable (Storable(..))
 import Foreign.Ptr      (Ptr,castPtr)
 import GHC.Exts         (proxy#)
 
-import           Data.Vector.Fixed.Cont (Vector(..),Dim,Arity,vector,Add,PeanoNum(..),
+import           Data.Vector.Fixed.Cont (Vector(..),Dim,vector,Add,PeanoNum(..),
                                          Peano,Index,ArityPeano)
 import qualified Data.Vector.Fixed.Cont as C
 

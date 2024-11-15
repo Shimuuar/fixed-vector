@@ -264,8 +264,7 @@ instance Arity n => Vector (VecList n) a where
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
 
--- FIXME
--- instance Arity n => VectorN VecList n a
+instance Arity n => VectorN VecList n a
 
 newtype Flip f a n = Flip (f n a)
 newtype T_List a n k = T_List (VecPeano k a -> VecPeano n a)
