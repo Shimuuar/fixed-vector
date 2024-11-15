@@ -53,6 +53,7 @@ module Data.Vector.Fixed (
     -- ** Type class
   , Vector(..)
   , Arity
+  , ArityPeano
   , Fun(..)
   , length
     -- * Constructors
@@ -191,7 +192,7 @@ import Foreign.Storable (Storable(..))
 import GHC.TypeLits
 
 import Data.Vector.Fixed.Cont     (Vector(..),Dim,length,ContVec,PeanoNum(..),
-                                   vector,empty,Arity,Fun(..),accum,apply,vector)
+                                   vector,empty,Arity,ArityPeano,Fun(..),accum,apply,vector)
 import qualified Data.Vector.Fixed.Cont as C
 import Data.Vector.Fixed.Internal as I
 
@@ -275,8 +276,6 @@ newtype T_List a n k = T_List (VecPeano k a -> VecPeano n a)
 
 
 -- Standard instances
-instance (Show a, Arity n) => Show (VecList n a) where
-  show = show . foldr (:) []
 instance Arity n => Functor (VecList n) where
   fmap = map
 instance Arity n => Applicative (VecList n) where
@@ -288,6 +287,7 @@ instance Arity n => T.Traversable (VecList n) where
   sequenceA = sequenceA
   traverse  = traverse
 
+deriving via ViaFixed (VecList n) a instance (Arity n, Show      a) => Show      (VecList n a)
 deriving via ViaFixed (VecList n) a instance (Arity n, Eq        a) => Eq        (VecList n a)
 deriving via ViaFixed (VecList n) a instance (Arity n, Ord       a) => Ord       (VecList n a)
 deriving via ViaFixed (VecList n) a instance (Arity n, NFData    a) => NFData    (VecList n a)
@@ -295,6 +295,13 @@ deriving via ViaFixed (VecList n) a instance (Arity n, Semigroup a) => Semigroup
 deriving via ViaFixed (VecList n) a instance (Arity n, Monoid    a) => Monoid    (VecList n a)
 deriving via ViaFixed (VecList n) a instance (Arity n, Storable  a) => Storable  (VecList n a)
 
+deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, Show      a) => Show      (VecPeano n a)
+deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, Eq        a) => Eq        (VecPeano n a)
+deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, Ord       a) => Ord       (VecPeano n a)
+deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, NFData    a) => NFData    (VecPeano n a)
+deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, Semigroup a) => Semigroup (VecPeano n a)
+deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, Monoid    a) => Monoid    (VecPeano n a)
+deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, Storable  a) => Storable  (VecPeano n a)
 
 
 
