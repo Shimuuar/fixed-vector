@@ -64,6 +64,11 @@ type Vec3 = Vec 3
 type Vec4 = Vec 4
 type Vec5 = Vec 5
 
+type instance Mutable (Vec  n) = MVec n
+type instance Dim     (Vec  n) = Peano n
+type instance DimM    (MVec n) = Peano n
+
+
 
 instance (Typeable n, Arity n, Data a) => Data (Vec n a) where
   gfoldl       = C.gfoldl
@@ -100,9 +105,6 @@ deriving via ViaFixed (Vec n) a instance (Arity n, Semigroup a) => Semigroup (Ve
 deriving via ViaFixed (Vec n) a instance (Arity n, Monoid    a) => Monoid    (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Storable  a) => Storable  (Vec n a)
 
-
-type instance Mutable (Vec n) = MVec n
-
 instance (Arity n) => MVector (MVec n) a where
   new = do
     v <- newSmallArray (peanoToInt (proxy# @(Peano n))) uninitialised
@@ -124,9 +126,6 @@ instance (Arity n) => IVector (Vec n) a where
   {-# INLINE unsafeFreeze #-}
   {-# INLINE unsafeThaw   #-}
   {-# INLINE unsafeIndex  #-}
-
-type instance Dim  (Vec  n) = Peano n
-type instance DimM (MVec n) = Peano n
 
 instance (Arity n) => Vector (Vec n) a where
   construct  = constructVec

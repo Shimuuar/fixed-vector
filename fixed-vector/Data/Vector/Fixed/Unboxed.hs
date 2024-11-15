@@ -67,6 +67,10 @@ type Vec5 = Vec 5
 
 class (Arity n, IVector (Vec n) a, MVector (MVec n) a) => Unbox n a
 
+type instance Mutable (Vec  n) = MVec n
+type instance Dim     (Vec  n) = Peano n
+type instance DimM    (MVec n) = Peano n
+
 
 ----------------------------------------------------------------
 -- Generic instances
@@ -79,11 +83,6 @@ deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, NFData    a) => NF
 deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Semigroup a) => Semigroup (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Monoid    a) => Monoid    (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Storable  a) => Storable  (Vec n a)
-
-type instance Mutable (Vec n) = MVec n
-
-type instance Dim  (Vec  n) = Peano n
-type instance DimM (MVec n) = Peano n
 
 instance (Unbox n a) => Vector (Vec n) a where
   construct  = constructVec

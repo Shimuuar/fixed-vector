@@ -68,6 +68,9 @@ type Vec3 = Vec 3
 type Vec4 = Vec 4
 type Vec5 = Vec 5
 
+type instance Mutable (Vec  n) = MVec n
+type instance Dim     (Vec  n) = Peano n
+type instance DimM    (MVec n) = Peano n
 
 
 ----------------------------------------------------------------
@@ -83,8 +86,6 @@ deriving via ViaFixed (Vec n) a instance (Arity n, Prim a, Ord       a) => Ord  
 deriving via ViaFixed (Vec n) a instance (Arity n, Prim a, Semigroup a) => Semigroup (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Prim a, Monoid    a) => Monoid    (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Prim a, Storable  a) => Storable  (Vec n a)
-
-type instance Mutable (Vec n) = MVec n
 
 instance (Arity n, Prim a) => MVector (MVec n) a where
   new = do
@@ -108,11 +109,6 @@ instance (Arity n, Prim a) => IVector (Vec n) a where
   {-# INLINE unsafeFreeze #-}
   {-# INLINE unsafeThaw   #-}
   {-# INLINE unsafeIndex  #-}
-
-
-
-type instance Dim  (Vec  n) = Peano n
-type instance DimM (MVec n) = Peano n
 
 instance (Arity n, Prim a) => Vector (Vec n) a where
   construct  = constructVec

@@ -72,6 +72,9 @@ type Vec3 = Vec 3
 type Vec4 = Vec 4
 type Vec5 = Vec 5
 
+type instance Mutable (Vec  n) = MVec n
+type instance Dim     (Vec  n) = Peano n
+type instance DimM    (MVec n) = Peano n
 
 
 ----------------------------------------------------------------
@@ -107,9 +110,6 @@ deriving via ViaFixed (Vec n) a instance (Arity n, Storable a, Ord       a) => O
 deriving via ViaFixed (Vec n) a instance (Arity n, Storable a, Semigroup a) => Semigroup (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Storable a, Monoid    a) => Monoid    (Vec n a)
 
-
-type instance Mutable (Vec n) = MVec n
-
 instance (Arity n, Storable a) => MVector (MVec n) a where
   new = unsafePrimToPrim $ do
     fp <- mallocVector (peanoToInt (proxy# @(Peano n)))
@@ -136,7 +136,6 @@ instance (Arity n, Storable a) => MVector (MVec n) a where
     $ withForeignPtr fp $ \p -> pokeElemOff p i x
   {-# INLINE unsafeWrite #-}
 
-
 instance (Arity n, Storable a) => IVector (Vec n) a where
   unsafeFreeze (MVec fp)   = return $ Vec  fp
   unsafeThaw   (Vec  fp)   = return $ MVec fp
@@ -146,10 +145,6 @@ instance (Arity n, Storable a) => IVector (Vec n) a where
   {-# INLINE unsafeFreeze #-}
   {-# INLINE unsafeThaw   #-}
   {-# INLINE unsafeIndex  #-}
-
-
-type instance Dim  (Vec  n) = Peano n
-type instance DimM (MVec n) = Peano n
 
 instance (Arity n, Storable a) => Vector (Vec n) a where
   construct  = constructVec
