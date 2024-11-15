@@ -82,6 +82,16 @@ con_Vec = mkConstr ty_Vec "Vec" [] Prefix
 -- Instances
 ----------------------------------------------------------------
 
+deriving via ViaFixed (Vec n) instance Arity n => Functor    (Vec n)
+deriving via ViaFixed (Vec n) instance Arity n => Applicative (Vec n)
+deriving via ViaFixed (Vec n) instance Arity n => F.Foldable  (Vec n)
+
+instance Arity n => T.Traversable (Vec n) where
+  sequenceA = sequenceA
+  traverse  = traverse
+  {-# INLINE sequenceA #-}
+  {-# INLINE traverse #-}
+
 deriving via ViaFixed (Vec n) a instance (Arity n, Show      a) => Show      (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Eq        a) => Eq        (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Ord       a) => Ord       (Vec n a)
@@ -126,26 +136,6 @@ instance (Arity n) => Vector (Vec n) a where
   {-# INLINE inspect    #-}
   {-# INLINE basicIndex #-}
 
-
-instance Arity n => Functor (Vec n) where
-  {-# INLINE fmap #-}
-  fmap = map
-
-instance Arity n => Applicative (Vec n) where
-  pure  = replicate
-  (<*>) = zipWith ($)
-  {-# INLINE pure  #-}
-  {-# INLINE (<*>) #-}
-
-instance Arity n => F.Foldable (Vec n) where
-  foldr = foldr
-  {-# INLINE foldr #-}
-
-instance Arity n => T.Traversable (Vec n) where
-  sequenceA = sequenceA
-  traverse  = traverse
-  {-# INLINE sequenceA #-}
-  {-# INLINE traverse #-}
 
 uninitialised :: a
 uninitialised = error "Data.Vector.Fixed.Boxed: uninitialised element"

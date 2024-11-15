@@ -11,6 +11,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PatternSynonyms       #-}
 {-# LANGUAGE PolyKinds             #-}
+{-# LANGUAGE QuantifiedConstraints #-}
 {-# LANGUAGE RoleAnnotations       #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE StandaloneDeriving    #-}
@@ -196,7 +197,7 @@ import Data.Vector.Fixed.Cont     (Vector(..),Dim,length,ContVec,PeanoNum(..),
 import qualified Data.Vector.Fixed.Cont as C
 import Data.Vector.Fixed.Internal as I
 
-import Prelude (Show(..),Eq(..),Ord(..),Functor(..),id,(.),($),(<$>))
+import Prelude (Show(..),Eq(..),Ord(..),Functor(..),id,(.),($),(<$>),undefined)
 
 
 -- $construction
@@ -275,14 +276,11 @@ newtype Flip f a n = Flip (f n a)
 newtype T_List a n k = T_List (VecPeano k a -> VecPeano n a)
 
 
--- Standard instances
-instance Arity n => Functor (VecList n) where
-  fmap = map
-instance Arity n => Applicative (VecList n) where
-  pure  = replicate
-  (<*>) = zipWith ($)
-instance Arity n => F.Foldable (VecList n) where
-  foldr = foldr
+
+deriving via ViaFixed (VecList n) instance (Arity n) => Functor     (VecList n)
+deriving via ViaFixed (VecList n) instance (Arity n) => Applicative (VecList n)
+deriving via ViaFixed (VecList n) instance (Arity n) => F.Foldable  (VecList n)
+
 instance Arity n => T.Traversable (VecList n) where
   sequenceA = sequenceA
   traverse  = traverse
@@ -294,6 +292,16 @@ deriving via ViaFixed (VecList n) a instance (Arity n, NFData    a) => NFData   
 deriving via ViaFixed (VecList n) a instance (Arity n, Semigroup a) => Semigroup (VecList n a)
 deriving via ViaFixed (VecList n) a instance (Arity n, Monoid    a) => Monoid    (VecList n a)
 deriving via ViaFixed (VecList n) a instance (Arity n, Storable  a) => Storable  (VecList n a)
+
+
+
+deriving via ViaFixed (VecPeano n) instance (ArityPeano n) => Functor     (VecPeano n)
+deriving via ViaFixed (VecPeano n) instance (ArityPeano n) => Applicative (VecPeano n)
+deriving via ViaFixed (VecPeano n) instance (ArityPeano n) => F.Foldable  (VecPeano n)
+
+instance ArityPeano n => T.Traversable (VecPeano n) where
+  sequenceA = sequenceA
+  traverse  = traverse
 
 deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, Show      a) => Show      (VecPeano n a)
 deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, Eq        a) => Eq        (VecPeano n a)
@@ -365,6 +373,14 @@ type Tuple5 a = (a,a,a,a,a)
 --   'Storable', 'NFData'.
 newtype ViaFixed v a = ViaFixed (v a)
 
+type instance Dim (ViaFixed v) = Dim v
+
+instance Vector v a => Vector (ViaFixed v) a where
+  construct = ViaFixed <$> construct
+  inspect (ViaFixed v) = inspect v
+  {-# INLINE construct #-}
+  {-# INLINE inspect   #-}
+
 instance (Vector v a, Show a) => Show (ViaFixed v a) where
   showsPrec = coerce (I.showsPrec @v @a)
 
@@ -397,6 +413,29 @@ instance (Vector v a, Storable a) => Storable (ViaFixed v a) where
   {-# INLINE sizeOf    #-}
   {-# INLINE peek      #-}
   {-# INLINE poke      #-}
+
+instance (forall a. Vector v a) => Functor (ViaFixed v) where
+  fmap = map
+  {-# INLINE fmap #-}
+
+instance (forall a. Vector v a) => Applicative (ViaFixed v) where
+  pure   = replicate
+  (<*>)  = zipWith ($)
+  liftA2 = zipWith
+  a <* _ = a
+  _ *> b = b
+  {-# INLINE pure   #-}
+  {-# INLINE (<*>)  #-}
+  {-# INLINE (<*)   #-}
+  {-# INLINE (*>)   #-}
+  {-# INLINE liftA2 #-}
+
+instance (forall a. Vector v a) => F.Foldable (ViaFixed v) where
+  foldr    = foldr
+  length _ = length (undefined :: v ())
+  {-# INLINE foldr  #-}
+  {-# INLINE length #-}
+
 
 
 ----------------------------------------------------------------
