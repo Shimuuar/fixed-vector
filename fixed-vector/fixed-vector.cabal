@@ -54,14 +54,13 @@ extra-source-files:
   ChangeLog.md
 
 tested-with:
-    GHC ==8.4.4
-     || ==8.6.5
-     || ==8.8.4
-     || ==8.10.7
+    GHC ==8.10.7
      || ==9.0.1
      || ==9.2.8
      || ==9.4.7
-     || ==9.6.3
+     || ==9.6.6
+     || ==9.8.2
+     || ==9.10.1
 
 source-repository head
   type:     git
@@ -70,7 +69,7 @@ source-repository head
 Library
   Ghc-options:          -Wall -Wno-incomplete-uni-patterns
   Default-Language:     Haskell2010
-  Build-Depends: base      >=4.11 && <5
+  Build-Depends: base      >=4.14 && <5
                , primitive >=0.6.2
                , deepseq
   Exposed-modules:

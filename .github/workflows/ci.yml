@@ -23,9 +23,6 @@ jobs:
       matrix:
         include:
           # Linux
-          - { cabal: "3.12", os: ubuntu-latest,  ghc: "8.4.4"  }
-          - { cabal: "3.12", os: ubuntu-latest,  ghc: "8.6.5"  }
-          - { cabal: "3.12", os: ubuntu-latest,  ghc: "8.8.4"  }
           - { cabal: "3.12", os: ubuntu-latest,  ghc: "8.10.7" }
           - { cabal: "3.12", os: ubuntu-latest,  ghc: "9.0.1"  }
           - { cabal: "3.12", os: ubuntu-latest,  ghc: "9.2.8"  }
