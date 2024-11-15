@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
+{-# LANGUAGE DerivingVia           #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MagicHash             #-}
@@ -35,7 +36,7 @@ import Foreign.Storable (Storable(..))
 import GHC.TypeLits
 import GHC.Exts (proxy#)
 import Prelude ( Show(..),Eq(..),Ord(..),Functor(..),Monad(..)
-               , ($),($!),error,seq)
+               , ($),($!),error)
 
 import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, index)
@@ -77,29 +78,21 @@ ty_Vec  = mkDataType "Data.Vector.Fixed.Boxed.Vec" [con_Vec]
 con_Vec :: Constr
 con_Vec = mkConstr ty_Vec "Vec" [] Prefix
 
-instance (Storable a, Arity n) => Storable (Vec n a) where
-  alignment = defaultAlignemnt
-  sizeOf    = defaultSizeOf
-  peek      = defaultPeek
-  poke      = defaultPoke
-  {-# INLINE alignment #-}
-  {-# INLINE sizeOf    #-}
-  {-# INLINE peek      #-}
-  {-# INLINE poke      #-}
-
-
-
 
 ----------------------------------------------------------------
 -- Instances
 ----------------------------------------------------------------
 
+deriving via ViaFixed (Vec n) a instance (Arity n, Eq        a) => Eq        (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Ord       a) => Ord       (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, NFData    a) => NFData    (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Semigroup a) => Semigroup (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Monoid    a) => Monoid    (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Storable  a) => Storable  (Vec n a)
+
+
 instance (Arity n, Show a) => Show (Vec n a) where
   showsPrec = I.showsPrec
-
-instance (Arity n, NFData a) => NFData (Vec n a) where
-  rnf = foldl (\r a -> r `seq` rnf a) ()
-  {-# INLINE rnf #-}
 
 type instance Mutable (Vec n) = MVec n
 
@@ -125,8 +118,6 @@ instance (Arity n) => IVector (Vec n) a where
   {-# INLINE unsafeThaw   #-}
   {-# INLINE unsafeIndex  #-}
 
-
-
 type instance Dim  (Vec  n) = Peano n
 type instance DimM (MVec n) = Peano n
 
@@ -138,22 +129,6 @@ instance (Arity n) => Vector (Vec n) a where
   {-# INLINE inspect    #-}
   {-# INLINE basicIndex #-}
 
-instance (Arity n, Eq a) => Eq (Vec n a) where
-  (==) = eq
-  {-# INLINE (==) #-}
-instance (Arity n, Ord a) => Ord (Vec n a) where
-  compare = ord
-  {-# INLINE compare #-}
-
-instance (Arity n, Monoid a) => Monoid (Vec n a) where
-  mempty  = replicate mempty
-  mappend = (<>)
-  {-# INLINE mempty  #-}
-  {-# INLINE mappend #-}
-
-instance (Arity n, Semigroup a) => Semigroup (Vec n a) where
-  (<>) = zipWith (<>)
-  {-# INLINE (<>) #-}
 
 instance Arity n => Functor (Vec n) where
   {-# INLINE fmap #-}

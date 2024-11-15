@@ -1,6 +1,7 @@
 {-# LANGUAGE CPP                   #-}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
+{-# LANGUAGE DerivingVia           #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -39,11 +40,9 @@ import Data.Word             (Word,Word8,Word16,Word32,Word64)
 import Foreign.Storable      (Storable(..))
 import GHC.TypeLits
 import Prelude               ( Show(..),Eq(..),Ord(..),Int,Double,Float,Char,Bool(..)
-                             , ($),(.),seq)
+                             , ($),(.))
 
-import Data.Vector.Fixed (Dim,Vector(..),eq,ord,replicate,zipWith,foldl,
-                          defaultSizeOf,defaultAlignemnt,defaultPeek,defaultPoke
-                         )
+import Data.Vector.Fixed (Dim,Vector(..),ViaFixed(..))
 import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, Arity, index)
 import qualified Data.Vector.Fixed.Cont      as C
 import           Data.Vector.Fixed.Cont      (Peano)
@@ -75,12 +74,15 @@ class (Arity n, IVector (Vec n) a, MVector (MVec n) a) => Unbox n a
 -- Generic instances
 ----------------------------------------------------------------
 
+deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Eq        a) => Eq        (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Ord       a) => Ord       (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, NFData    a) => NFData    (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Semigroup a) => Semigroup (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Monoid    a) => Monoid    (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Storable  a) => Storable  (Vec n a)
+
 instance (Arity n, Show a, Unbox n a) => Show (Vec n a) where
   showsPrec = I.showsPrec
-
-instance (Arity n, Unbox n a, NFData a) => NFData (Vec n a) where
-  rnf = foldl (\r a -> r `seq` rnf a) ()
-  {-# INLINE rnf #-}
 
 type instance Mutable (Vec n) = MVec n
 
@@ -95,23 +97,6 @@ instance (Unbox n a) => Vector (Vec n) a where
   {-# INLINE inspect    #-}
   {-# INLINE basicIndex #-}
 
-instance (Unbox n a, Eq a) => Eq (Vec n a) where
-  (==) = eq
-  {-# INLINE (==) #-}
-instance (Unbox n a, Ord a) => Ord (Vec n a) where
-  compare = ord
-  {-# INLINE compare #-}
-
-instance (Unbox n a, Monoid a) => Monoid (Vec n a) where
-  mempty  = replicate mempty
-  mappend = (<>)
-  {-# INLINE mempty  #-}
-  {-# INLINE mappend #-}
-
-instance (Unbox n a, Semigroup a) => Semigroup (Vec n a) where
-  (<>) = zipWith (<>)
-  {-# INLINE (<>) #-}
-
 instance (Typeable n, Unbox n a, Data a) => Data (Vec n a) where
   gfoldl       = C.gfoldl
   gunfold      = C.gunfold
@@ -123,17 +108,6 @@ ty_Vec  = mkDataType "Data.Vector.Fixed.Unboxed.Vec" [con_Vec]
 
 con_Vec :: Constr
 con_Vec = mkConstr ty_Vec "Vec" [] Prefix
-
-instance (Storable a, Unbox n a) => Storable (Vec n a) where
-  alignment = defaultAlignemnt
-  sizeOf    = defaultSizeOf
-  peek      = defaultPeek
-  poke      = defaultPoke
-  {-# INLINE alignment #-}
-  {-# INLINE sizeOf    #-}
-  {-# INLINE peek      #-}
-  {-# INLINE poke      #-}
-
 
 
 ----------------------------------------------------------------

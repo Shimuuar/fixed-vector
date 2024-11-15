@@ -4,12 +4,14 @@
 {-# LANGUAGE DeriveFoldable        #-}
 {-# LANGUAGE DeriveFunctor         #-}
 {-# LANGUAGE DeriveTraversable     #-}
+{-# LANGUAGE DerivingVia           #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PatternSynonyms       #-}
 {-# LANGUAGE PolyKinds             #-}
+{-# LANGUAGE RoleAnnotations       #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE StandaloneDeriving    #-}
 {-# LANGUAGE TypeApplications      #-}
@@ -145,14 +147,15 @@ module Data.Vector.Fixed (
   , izipWith3
   , izipWithM
   , izipWithM_
-    -- * Storable methods
+    -- * Deriving and default implementations
+  , ViaFixed(..)
+    -- ** Storable
     -- $storable
-  , StorableViaFixed(..)
   , defaultAlignemnt
   , defaultSizeOf
   , defaultPeek
   , defaultPoke
-    -- * NFData
+    -- ** NFData
   , defaultRnf
     -- * Conversion
   , convert
@@ -171,9 +174,12 @@ module Data.Vector.Fixed (
   , Tuple3
   , Tuple4
   , Tuple5
+    -- * Deprecations
+  , StorableViaFixed
+  , pattern StorableViaFixed
   ) where
 
-import Control.Applicative (Applicative(..),(<$>))
+import Control.Applicative (Applicative(..))
 import Control.DeepSeq     (NFData(..))
 import Data.Coerce
 import Data.Data           (Typeable,Data)
@@ -182,7 +188,6 @@ import Data.Semigroup      (Semigroup(..))
 import qualified Data.Foldable    as F
 import qualified Data.Traversable as T
 import Foreign.Storable (Storable(..))
-import Foreign.Ptr      (castPtr)
 import GHC.TypeLits
 
 import Data.Vector.Fixed.Cont     (Vector(..),Dim,length,ContVec,PeanoNum(..),
@@ -190,7 +195,7 @@ import Data.Vector.Fixed.Cont     (Vector(..),Dim,length,ContVec,PeanoNum(..),
 import qualified Data.Vector.Fixed.Cont as C
 import Data.Vector.Fixed.Internal
 
-import Prelude (Show(..),Eq(..),Ord(..),Functor(..),id,(.),($),undefined)
+import Prelude (Show(..),Eq(..),Ord(..),Functor(..),id,(.),($),(<$>))
 
 
 -- $construction
@@ -232,7 +237,6 @@ import Prelude (Show(..),Eq(..),Ord(..),Functor(..),id,(.),($),undefined)
 -- that individual elements of vector are stored as N-element array.
 
 
-
 -- | Type-based vector with statically known length parametrized by
 --   GHC's type naturals
 newtype VecList (n :: Nat) a = VecList (VecPeano (C.Peano n) a)
@@ -243,10 +247,6 @@ data VecPeano (n :: PeanoNum) a where
   Nil  :: VecPeano 'Z a
   Cons :: a -> VecPeano n a -> VecPeano ('S n) a
   deriving (Typeable)
-
-instance (Arity n, NFData a) => NFData (VecList n a) where
-  rnf = defaultRnf
-  {-# INLINE rnf #-}
 
 type instance Dim (VecList  n) = C.Peano n
 type instance Dim (VecPeano n) = n
@@ -277,10 +277,6 @@ newtype T_List a n k = T_List (VecPeano k a -> VecPeano n a)
 -- Standard instances
 instance (Show a, Arity n) => Show (VecList n a) where
   show = show . foldr (:) []
-instance (Eq a, Arity n) => Eq (VecList n a) where
-  (==) = eq
-instance (Ord a, Arity n) => Ord (VecList n a) where
-  compare = ord
 instance Arity n => Functor (VecList n) where
   fmap = map
 instance Arity n => Applicative (VecList n) where
@@ -291,40 +287,15 @@ instance Arity n => F.Foldable (VecList n) where
 instance Arity n => T.Traversable (VecList n) where
   sequenceA = sequenceA
   traverse  = traverse
-instance (Arity n, Monoid a) => Monoid (VecList n a) where
-  mempty  = replicate mempty
-  mappend = (<>)
-  {-# INLINE mempty  #-}
-  {-# INLINE mappend #-}
 
-instance (Arity n, Semigroup a) => Semigroup (VecList n a) where
-  (<>) = zipWith (<>)
-  {-# INLINE (<>) #-}
+deriving via ViaFixed (VecList n) a instance (Arity n, Eq        a) => Eq        (VecList n a)
+deriving via ViaFixed (VecList n) a instance (Arity n, Ord       a) => Ord       (VecList n a)
+deriving via ViaFixed (VecList n) a instance (Arity n, NFData    a) => NFData    (VecList n a)
+deriving via ViaFixed (VecList n) a instance (Arity n, Semigroup a) => Semigroup (VecList n a)
+deriving via ViaFixed (VecList n) a instance (Arity n, Monoid    a) => Monoid    (VecList n a)
+deriving via ViaFixed (VecList n) a instance (Arity n, Storable  a) => Storable  (VecList n a)
 
 
-instance (Storable a, Arity n) => Storable (VecList n a) where
-  alignment = defaultAlignemnt
-  sizeOf    = defaultSizeOf
-  peek      = defaultPeek
-  poke      = defaultPoke
-  {-# INLINE alignment #-}
-  {-# INLINE sizeOf    #-}
-  {-# INLINE peek      #-}
-  {-# INLINE poke      #-}
-
--- | Newtype for deriving 'Storable' instance for data types which has
---   instance of 'Vector'
-newtype StorableViaFixed v a = StorableViaFixed (v a)
-
-instance (Vector v a, Storable a) => Storable (StorableViaFixed v a) where
-  alignment = coerce (defaultAlignemnt @a @v)
-  sizeOf    = coerce (defaultSizeOf    @a @v)
-  peek      = coerce (defaultPeek      @a @v)
-  poke      = coerce (defaultPoke      @a @v)
-  {-# INLINE alignment #-}
-  {-# INLINE sizeOf    #-}
-  {-# INLINE peek      #-}
-  {-# INLINE poke      #-}
 
 
 -- | Single-element tuple.
@@ -351,14 +322,10 @@ instance Vector Only a where
   {-# INLINE inspect   #-}
 
 instance (Storable a) => Storable (Only a) where
-  alignment _ = alignment (undefined :: a)
-  sizeOf    _ = sizeOf    (undefined :: a)
-  peek p          = Only <$> peek (castPtr p)
-  poke p (Only a) = poke (castPtr p) a
-  {-# INLINE alignment #-}
-  {-# INLINE sizeOf    #-}
-  {-# INLINE peek      #-}
-  {-# INLINE poke      #-}
+  alignment = coerce (alignment @a)
+  sizeOf    = coerce (sizeOf    @a)
+  peek      = coerce (peek      @a)
+  poke      = coerce (poke      @a)
 
 
 -- | Empty tuple.
@@ -380,6 +347,46 @@ type Tuple2 a = (a,a)
 type Tuple3 a = (a,a,a)
 type Tuple4 a = (a,a,a,a)
 type Tuple5 a = (a,a,a,a,a)
+
+
+----------------------------------------------------------------
+-- Deriving
+----------------------------------------------------------------
+
+-- | Newtype for deriving instance for data types which has instance
+--   of 'Vector'. It supports 'Eq', 'Ord', 'Semigroup', 'Monoid',
+--   'Storable', 'NFData'.
+newtype ViaFixed v a = ViaFixed (v a)
+
+instance (Vector v a, Eq a) => Eq (ViaFixed v a) where
+  (==) = coerce (eq @v @a)
+  {-# INLINE (==) #-}
+
+instance (Vector v a, Ord a) => Ord (ViaFixed v a) where
+  compare = coerce (ord @v @a)
+  {-# INLINE compare #-}
+
+instance (Vector v a, NFData a) => NFData (ViaFixed v a) where
+  rnf = coerce (defaultRnf @a @v)
+  {-# INLINE rnf #-}
+
+instance (Vector v a, Semigroup a) => Semigroup (ViaFixed v a) where
+  (<>) = coerce (zipWith @v @a (<>))
+  {-# INLINE (<>) #-}
+
+instance (Vector v a, Monoid a) => Monoid (ViaFixed v a) where
+  mempty = coerce (replicate @v @a mempty)
+  {-# INLINE mempty #-}
+
+instance (Vector v a, Storable a) => Storable (ViaFixed v a) where
+  alignment = coerce (defaultAlignemnt @a @v)
+  sizeOf    = coerce (defaultSizeOf    @a @v)
+  peek      = coerce (defaultPeek      @a @v)
+  poke      = coerce (defaultPoke      @a @v)
+  {-# INLINE alignment #-}
+  {-# INLINE sizeOf    #-}
+  {-# INLINE peek      #-}
+  {-# INLINE poke      #-}
 
 
 ----------------------------------------------------------------
@@ -418,7 +425,14 @@ pattern V4 t x y z <- (convert -> (t,x,y,z)) where
 {-# COMPLETE V4 #-}
 #endif
 
+----------------------------------------------------------------
+-- Deprecation
+----------------------------------------------------------------
 
+type StorableViaFixed v a = ViaFixed v a
+pattern StorableViaFixed :: v a -> ViaFixed v a
+pattern StorableViaFixed v = ViaFixed v
+{-# DEPRECATED StorableViaFixed "Use ViaFixed" #-}
 
 
 -- $setup

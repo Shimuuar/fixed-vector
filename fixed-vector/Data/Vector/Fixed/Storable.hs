@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
+{-# LANGUAGE DerivingVia           #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MagicHash             #-}
@@ -98,12 +99,18 @@ unsafeWith f (Vec fp) = f (getPtr fp)
 -- Instances
 ----------------------------------------------------------------
 
+instance (Arity n, Storable a, NFData a) => NFData (Vec n a) where
+  rnf x = seq x ()
+
+deriving via ViaFixed (Vec n) a instance (Arity n, Storable a, Eq        a) => Eq        (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Storable a, Ord       a) => Ord       (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Storable a, Semigroup a) => Semigroup (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Storable a, Monoid    a) => Monoid    (Vec n a)
+
+
+
 instance (Arity n, Storable a, Show a) => Show (Vec n a) where
   showsPrec = I.showsPrec
-
-instance (Arity n, Storable a, NFData a) => NFData (Vec n a) where
-  rnf = foldl (\r a -> r `seq` rnf a) ()
-  {-# INLINE rnf #-}
 
 type instance Mutable (Vec n) = MVec n
 
@@ -155,23 +162,6 @@ instance (Arity n, Storable a) => Vector (Vec n) a where
   {-# INLINE construct  #-}
   {-# INLINE inspect    #-}
   {-# INLINE basicIndex #-}
-
-instance (Arity n, Storable a, Eq a) => Eq (Vec n a) where
-  (==) = eq
-  {-# INLINE (==) #-}
-instance (Arity n, Storable a, Ord a) => Ord (Vec n a) where
-  compare = ord
-  {-# INLINE compare #-}
-
-instance (Arity n, Storable a, Monoid a) => Monoid (Vec n a) where
-  mempty  = replicate mempty
-  mappend = (<>)
-  {-# INLINE mempty  #-}
-  {-# INLINE mappend #-}
-
-instance (Arity n, Storable a, Semigroup a) => Semigroup (Vec n a) where
-  (<>) = zipWith (<>)
-  {-# INLINE (<>) #-}
 
 instance (Arity n, Storable a) => Storable (Vec n a) where
   sizeOf    = defaultSizeOf

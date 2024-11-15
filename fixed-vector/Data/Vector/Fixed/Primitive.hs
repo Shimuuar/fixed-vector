@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
+{-# LANGUAGE DerivingVia           #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MagicHash             #-}
@@ -34,7 +35,7 @@ import Data.Monoid              (Monoid(..))
 import Data.Semigroup           (Semigroup(..))
 import Data.Primitive.ByteArray
 import Data.Primitive
-import qualified Foreign.Storable as Foreign (Storable(..))
+import Foreign.Storable         (Storable)
 import GHC.TypeLits
 import GHC.Exts (proxy#)
 import Prelude (Show(..),Eq(..),Ord(..),Num(..))
@@ -78,8 +79,13 @@ instance (Arity n, Prim a, Show a) => Show (Vec n a) where
   showsPrec = I.showsPrec
 
 instance (Arity n, Prim a, NFData a) => NFData (Vec n a) where
-  rnf = foldl (\r a -> r `seq` rnf a) ()
-  {-# INLINE rnf #-}
+  rnf x = seq x ()
+
+deriving via ViaFixed (Vec n) a instance (Arity n, Prim a, Eq        a) => Eq        (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Prim a, Ord       a) => Ord       (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Prim a, Semigroup a) => Semigroup (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Prim a, Monoid    a) => Monoid    (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Arity n, Prim a, Storable  a) => Storable  (Vec n a)
 
 type instance Mutable (Vec n) = MVec n
 
@@ -119,24 +125,6 @@ instance (Arity n, Prim a) => Vector (Vec n) a where
   {-# INLINE inspect    #-}
   {-# INLINE basicIndex #-}
 
-instance (Arity n, Prim a, Eq a) => Eq (Vec n a) where
-  (==) = eq
-  {-# INLINE (==) #-}
-instance (Arity n, Prim a, Ord a) => Ord (Vec n a) where
-  compare = ord
-  {-# INLINE compare #-}
-
-instance (Arity n, Prim a, Monoid a) => Monoid (Vec n a) where
-  mempty  = replicate mempty
-  mappend = (<>)
-  {-# INLINE mempty  #-}
-  {-# INLINE mappend #-}
-
-instance (Arity n, Prim a, Semigroup a) => Semigroup (Vec n a) where
-  (<>) = zipWith (<>)
-  {-# INLINE (<>) #-}
-
-
 instance (Typeable n, Arity n, Prim a, Data a) => Data (Vec n a) where
   gfoldl       = C.gfoldl
   gunfold      = C.gunfold
@@ -148,13 +136,3 @@ ty_Vec  = mkDataType "Data.Vector.Fixed.Primitive.Vec" [con_Vec]
 
 con_Vec :: Constr
 con_Vec = mkConstr ty_Vec "Vec" [] Prefix
-
-instance (Foreign.Storable a, Prim a, Arity n) => Foreign.Storable (Vec n a) where
-  alignment = defaultAlignemnt
-  sizeOf    = defaultSizeOf
-  peek      = defaultPeek
-  poke      = defaultPoke
-  {-# INLINE alignment #-}
-  {-# INLINE sizeOf    #-}
-  {-# INLINE peek      #-}
-  {-# INLINE poke      #-}
