@@ -413,10 +413,12 @@ instance (forall a. Vector v a) => Applicative (ViaFixed v) where
 
 instance (forall a. Vector v a) => F.Foldable (ViaFixed v) where
   foldr    = foldr
-  length _ = length (undefined :: v ())
   {-# INLINE foldr  #-}
+-- GHC<9.2 fails to compile this
+#if MIN_VERSION_base(4,16,0)
+  length _ = length (undefined :: v ())
   {-# INLINE length #-}
-
+#endif
 
 
 ----------------------------------------------------------------

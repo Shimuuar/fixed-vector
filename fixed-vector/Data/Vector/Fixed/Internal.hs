@@ -218,7 +218,7 @@ reverse = vector . C.reverse . C.cvec
 --   /O(n)/ but more efficient one is used when possible.
 (!) :: (Vector v a) => v a -> Int -> a
 {-# INLINE (!) #-}
-v ! n = runIndex n (C.cvec v)
+(!) v n = runIndex n (C.cvec v)
 
 -- Used in rewriting of index function.
 runIndex :: ArityPeano n => Int -> C.ContVec n r -> r

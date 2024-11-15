@@ -35,7 +35,6 @@ exts =
   , "-XExistentialQuantification"
   , "-XExplicitForAll"
   , "-XExplicitNamespaces"
-  , "-XFieldSelectors"
   , "-XFlexibleContexts"
   , "-XFlexibleInstances"
   , "-XForeignFunctionInterface"

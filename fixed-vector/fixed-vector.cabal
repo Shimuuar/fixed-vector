@@ -91,7 +91,6 @@ Library
     ExistentialQuantification
     ExplicitForAll
     ExplicitNamespaces
-    FieldSelectors
     FlexibleContexts
     FlexibleInstances
     ForeignFunctionInterface
