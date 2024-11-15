@@ -25,6 +25,7 @@ import Data.Monoid              (Monoid(..))
 import Data.Semigroup           (Semigroup(..))
 import Data.Primitive.ByteArray
 import Data.Primitive
+import Data.Kind                (Type)
 import Foreign.Storable         (Storable)
 import GHC.TypeLits
 import GHC.Exts (proxy#)
@@ -43,7 +44,7 @@ import           Data.Vector.Fixed.Cont     (Peano,ArityPeano(..))
 ----------------------------------------------------------------
 
 -- | Unboxed vector with fixed length
-newtype Vec (n :: Nat) a = Vec ByteArray
+newtype Vec (n :: Nat) (a :: Type) = Vec ByteArray
 
 -- | Mutable unboxed vector with fixed length
 newtype MVec (n :: Nat) s a = MVec (MutableByteArray s)
