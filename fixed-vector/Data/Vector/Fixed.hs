@@ -248,15 +248,22 @@ instance (Arity n, NFData a) => NFData (VecList n a) where
   rnf = defaultRnf
   {-# INLINE rnf #-}
 
-type instance Dim (VecList n) = C.Peano n
+type instance Dim (VecList  n) = C.Peano n
+type instance Dim (VecPeano n) = n
 
 instance Arity n => Vector (VecList n) a where
-  construct = fmap VecList $ accum
+  construct = VecList <$> construct @(VecPeano (C.Peano n)) @a
+  inspect (VecList v) = inspect v
+  {-# INLINE construct #-}
+  {-# INLINE inspect   #-}
+
+instance C.ArityPeano n => Vector (VecPeano n) a where
+  construct = accum
     (\(T_List f) a -> T_List (f . Cons a))
     (\(T_List f)   -> f Nil)
-    (T_List id :: T_List a (C.Peano n) (C.Peano n))
-  inspect (VecList v)
-    = inspect (apply step (Flip v) :: C.ContVec (C.Peano n) a)
+    (T_List id :: T_List a n n)
+  inspect v
+    = inspect (apply step (Flip v) :: C.ContVec n a)
     where
       step :: Flip VecPeano a ('S k)  -> (a, Flip VecPeano a k)
       step (Flip (Cons a xs)) = (a, Flip xs)
