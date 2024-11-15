@@ -41,11 +41,12 @@ import GHC.TypeLits
 import Prelude               ( Show(..),Eq(..),Ord(..),Int,Double,Float,Char,Bool(..)
                              , ($),(.),seq)
 
-import Data.Vector.Fixed (Dim,Vector(..),VectorN,eq,ord,replicate,zipWith,foldl,
+import Data.Vector.Fixed (Dim,Vector(..),eq,ord,replicate,zipWith,foldl,
                           defaultSizeOf,defaultAlignemnt,defaultPeek,defaultPoke
                          )
 import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, Arity, index)
 import qualified Data.Vector.Fixed.Cont      as C
+import           Data.Vector.Fixed.Cont      (Peano)
 import qualified Data.Vector.Fixed.Primitive as P
 import qualified Data.Vector.Fixed.Internal  as I
 
@@ -83,8 +84,8 @@ instance (Arity n, Unbox n a, NFData a) => NFData (Vec n a) where
 
 type instance Mutable (Vec n) = MVec n
 
-type instance Dim  (Vec  n) = n
-type instance DimM (MVec n) = n
+type instance Dim  (Vec  n) = Peano n
+type instance DimM (MVec n) = Peano n
 
 instance (Unbox n a) => Vector (Vec n) a where
   construct  = constructVec
@@ -93,9 +94,6 @@ instance (Unbox n a) => Vector (Vec n) a where
   {-# INLINE construct  #-}
   {-# INLINE inspect    #-}
   {-# INLINE basicIndex #-}
-
-
-instance (Unbox n a) => VectorN Vec n a
 
 instance (Unbox n a, Eq a) => Eq (Vec n a) where
   (==) = eq

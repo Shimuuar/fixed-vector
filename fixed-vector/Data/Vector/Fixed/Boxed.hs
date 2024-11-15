@@ -2,9 +2,11 @@
 {-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MagicHash             #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE StandaloneDeriving    #-}
+{-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE UndecidableInstances  #-}
 -- |
@@ -31,12 +33,14 @@ import qualified Data.Foldable    as F
 import qualified Data.Traversable as T
 import Foreign.Storable (Storable(..))
 import GHC.TypeLits
+import GHC.Exts (proxy#)
 import Prelude ( Show(..),Eq(..),Ord(..),Functor(..),Monad(..)
                , ($),($!),error,seq)
 
 import Data.Vector.Fixed hiding (index)
-import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, arity, index)
+import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, index)
 import qualified Data.Vector.Fixed.Cont     as C
+import           Data.Vector.Fixed.Cont     (Peano,ArityPeano(..))
 import qualified Data.Vector.Fixed.Internal as I
 
 
@@ -101,12 +105,12 @@ type instance Mutable (Vec n) = MVec n
 
 instance (Arity n) => MVector (MVec n) a where
   new = do
-    v <- newSmallArray (arity (Proxy :: Proxy n)) uninitialised
+    v <- newSmallArray (peanoToInt (proxy# @(Peano n))) uninitialised
     return $ MVec v
   {-# INLINE new         #-}
   copy = move
   {-# INLINE copy        #-}
-  move (MVec dst) (MVec src) = copySmallMutableArray dst 0 src 0 (arity (Proxy :: Proxy n))
+  move (MVec dst) (MVec src) = copySmallMutableArray dst 0 src 0 (peanoToInt (proxy# @(Peano n)))
   {-# INLINE move        #-}
   unsafeRead  (MVec v) i   = readSmallArray  v i
   {-# INLINE unsafeRead  #-}
@@ -123,8 +127,8 @@ instance (Arity n) => IVector (Vec n) a where
 
 
 
-type instance Dim  (Vec  n) = n
-type instance DimM (MVec n) = n
+type instance Dim  (Vec  n) = Peano n
+type instance DimM (MVec n) = Peano n
 
 instance (Arity n) => Vector (Vec n) a where
   construct  = constructVec
@@ -133,7 +137,6 @@ instance (Arity n) => Vector (Vec n) a where
   {-# INLINE construct  #-}
   {-# INLINE inspect    #-}
   {-# INLINE basicIndex #-}
-instance (Arity n) => VectorN Vec n a
 
 instance (Arity n, Eq a) => Eq (Vec n a) where
   (==) = eq

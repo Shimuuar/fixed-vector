@@ -50,7 +50,6 @@ module Data.Vector.Fixed (
     Dim
     -- ** Type class
   , Vector(..)
-  , VectorN
   , Arity
   , Fun(..)
   , length
@@ -186,7 +185,7 @@ import Foreign.Storable (Storable(..))
 import Foreign.Ptr      (castPtr)
 import GHC.TypeLits
 
-import Data.Vector.Fixed.Cont     (Vector(..),VectorN,Dim,length,ContVec,PeanoNum(..),
+import Data.Vector.Fixed.Cont     (Vector(..),Dim,length,ContVec,PeanoNum(..),
                                    vector,empty,Arity,Fun(..),accum,apply,vector)
 import qualified Data.Vector.Fixed.Cont as C
 import Data.Vector.Fixed.Internal
@@ -249,21 +248,27 @@ instance (Arity n, NFData a) => NFData (VecList n a) where
   rnf = defaultRnf
   {-# INLINE rnf #-}
 
-type instance Dim (VecList n) = n
+type instance Dim (VecList  n) = C.Peano n
+type instance Dim (VecPeano n) = n
 
 instance Arity n => Vector (VecList n) a where
-  construct = fmap VecList $ accum
+  construct = VecList <$> construct @(VecPeano (C.Peano n)) @a
+  inspect (VecList v) = inspect v
+  {-# INLINE construct #-}
+  {-# INLINE inspect   #-}
+
+instance C.ArityPeano n => Vector (VecPeano n) a where
+  construct = accum
     (\(T_List f) a -> T_List (f . Cons a))
     (\(T_List f)   -> f Nil)
-    (T_List id :: T_List a (C.Peano n) (C.Peano n))
-  inspect (VecList v)
+    (T_List id :: T_List a n n)
+  inspect v
     = inspect (apply step (Flip v) :: C.ContVec n a)
     where
       step :: Flip VecPeano a ('S k)  -> (a, Flip VecPeano a k)
       step (Flip (Cons a xs)) = (a, Flip xs)
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
-instance Arity n => VectorN VecList n a
 
 newtype Flip f a n = Flip (f n a)
 newtype T_List a n k = T_List (VecPeano k a -> VecPeano n a)
@@ -337,7 +342,7 @@ instance (Semigroup a) => Semigroup (Only a) where
 instance NFData a => NFData (Only a) where
   rnf (Only a) = rnf a
 
-type instance Dim Only = 1
+type instance Dim Only = C.N1
 
 instance Vector Only a where
   construct = Fun Only
@@ -363,7 +368,7 @@ data Empty a = Empty
 instance NFData (Empty a) where
   rnf Empty = ()
 
-type instance Dim Empty = 0
+type instance Dim Empty = 'Z
 
 instance Vector Empty a where
   construct = Fun Empty
@@ -381,7 +386,7 @@ type Tuple5 a = (a,a,a,a,a)
 -- Patterns
 ----------------------------------------------------------------
 
-pattern V1 :: (Vector v a, Dim v ~ 1) => a -> v a
+pattern V1 :: (Vector v a, Dim v ~ C.N1) => a -> v a
 pattern V1 x <- (convert -> (Only x)) where
   V1 x = mk1 x
 #if MIN_VERSION_base(4,16,0)
@@ -389,7 +394,7 @@ pattern V1 x <- (convert -> (Only x)) where
 {-# COMPLETE V1 #-}
 #endif
 
-pattern V2 :: (Vector v a, Dim v ~ 2) => a -> a -> v a
+pattern V2 :: (Vector v a, Dim v ~ C.N2) => a -> a -> v a
 pattern V2 x y <- (convert -> (x,y)) where
   V2 x y = mk2 x y
 #if MIN_VERSION_base(4,16,0)
@@ -397,7 +402,7 @@ pattern V2 x y <- (convert -> (x,y)) where
 {-# COMPLETE V2 #-}
 #endif
 
-pattern V3 :: (Vector v a, Dim v ~ 3) => a -> a -> a -> v a
+pattern V3 :: (Vector v a, Dim v ~ C.N3) => a -> a -> a -> v a
 pattern V3 x y z <- (convert -> (x,y,z)) where
   V3 x y z = mk3 x y z
 #if MIN_VERSION_base(4,16,0)
@@ -405,7 +410,7 @@ pattern V3 x y z <- (convert -> (x,y,z)) where
 {-# COMPLETE V3 #-}
 #endif
 
-pattern V4 :: (Vector v a, Dim v ~ 4) => a -> a -> a -> a -> v a
+pattern V4 :: (Vector v a, Dim v ~ C.N4) => a -> a -> a -> a -> v a
 pattern V4 t x y z <- (convert -> (t,x,y,z)) where
   V4 t x y z = mk4 t x y z
 #if MIN_VERSION_base(4,16,0)

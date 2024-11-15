@@ -2,9 +2,11 @@
 {-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MagicHash             #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE StandaloneDeriving    #-}
+{-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE UndecidableInstances  #-}
 -- |
@@ -34,13 +36,15 @@ import Data.Primitive.ByteArray
 import Data.Primitive
 import qualified Foreign.Storable as Foreign (Storable(..))
 import GHC.TypeLits
+import GHC.Exts (proxy#)
 import Prelude (Show(..),Eq(..),Ord(..),Num(..))
 import Prelude (($),($!),undefined,seq)
 
 
 import Data.Vector.Fixed hiding (index)
-import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, arity, index)
+import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, index)
 import qualified Data.Vector.Fixed.Cont     as C
+import           Data.Vector.Fixed.Cont     (Peano,ArityPeano(..))
 import qualified Data.Vector.Fixed.Internal as I
 
 
@@ -81,13 +85,13 @@ type instance Mutable (Vec n) = MVec n
 
 instance (Arity n, Prim a) => MVector (MVec n) a where
   new = do
-    v <- newByteArray $! arity (Proxy :: Proxy n)
+    v <- newByteArray $! peanoToInt (proxy# @(Peano n))
                        * sizeOf (undefined :: a)
     return $ MVec v
   {-# INLINE new         #-}
   copy                       = move
   {-# INLINE copy        #-}
-  move (MVec dst) (MVec src) = copyMutableByteArray dst 0 src 0 (arity (Proxy :: Proxy n))
+  move (MVec dst) (MVec src) = copyMutableByteArray dst 0 src 0 (peanoToInt (proxy# @(Peano n)))
   {-# INLINE move        #-}
   unsafeRead  (MVec v) i   = readByteArray  v i
   {-# INLINE unsafeRead  #-}
@@ -104,8 +108,8 @@ instance (Arity n, Prim a) => IVector (Vec n) a where
 
 
 
-type instance Dim  (Vec  n) = n
-type instance DimM (MVec n) = n
+type instance Dim  (Vec  n) = Peano n
+type instance DimM (MVec n) = Peano n
 
 instance (Arity n, Prim a) => Vector (Vec n) a where
   construct  = constructVec
@@ -114,7 +118,6 @@ instance (Arity n, Prim a) => Vector (Vec n) a where
   {-# INLINE construct  #-}
   {-# INLINE inspect    #-}
   {-# INLINE basicIndex #-}
-instance (Arity n, Prim a) => VectorN Vec n a
 
 instance (Arity n, Prim a, Eq a) => Eq (Vec n a) where
   (==) = eq
