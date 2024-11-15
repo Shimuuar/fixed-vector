@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP                  #-}
 {-# LANGUAGE MagicHash            #-}
 {-# LANGUAGE UndecidableInstances #-}
 -- |
@@ -27,12 +28,15 @@ import Data.Semigroup        (Semigroup(..))
 import Data.Data
 import Foreign.Ptr           (castPtr)
 import Foreign.Storable
-import Foreign.ForeignPtr
 import Foreign.Marshal.Array ( copyArray, moveArray )
-import GHC.ForeignPtr        ( ForeignPtr(..), mallocPlainForeignPtrBytes )
+import GHC.ForeignPtr        ( mallocPlainForeignPtrBytes )
 import GHC.Ptr               ( Ptr(..) )
 import GHC.Exts              ( proxy# )
 import GHC.TypeLits
+#if MIN_VERSION_base(4,15,0)
+import GHC.ForeignPtr       ( unsafeWithForeignPtr )
+#endif
+import Foreign.ForeignPtr   ( ForeignPtr, withForeignPtr )
 import Prelude ( Show(..),Eq(..),Ord(..),Num(..),Monad(..),IO,Int
                , ($),undefined,seq)
 
@@ -106,23 +110,23 @@ instance (Arity n, Storable a) => MVector (MVec n) a where
   {-# INLINE new         #-}
   copy (MVec fp) (MVec fq)
     = unsafePrimToPrim
-    $ withForeignPtr fp $ \p ->
-      withForeignPtr fq $ \q ->
+    $ unsafeWithForeignPtr fp $ \p ->
+      unsafeWithForeignPtr fq $ \q ->
       copyArray p q (peanoToInt (proxy# @(Peano n)))
   {-# INLINE copy        #-}
   move (MVec fp) (MVec fq)
     = unsafePrimToPrim
-    $ withForeignPtr fp $ \p ->
-      withForeignPtr fq $ \q ->
+    $ unsafeWithForeignPtr fp $ \p ->
+      unsafeWithForeignPtr fq $ \q ->
       moveArray p q (peanoToInt (proxy# @(Peano n)))
   {-# INLINE move        #-}
   unsafeRead (MVec fp) i
     = unsafePrimToPrim
-    $ withForeignPtr fp (`peekElemOff` i)
+    $ unsafeWithForeignPtr fp (`peekElemOff` i)
   {-# INLINE unsafeRead  #-}
   unsafeWrite (MVec fp) i x
     = unsafePrimToPrim
-    $ withForeignPtr fp $ \p -> pokeElemOff p i x
+    $ unsafeWithForeignPtr fp $ \p -> pokeElemOff p i x
   {-# INLINE unsafeWrite #-}
 
 instance (Arity n, Storable a) => IVector (Vec n) a where
@@ -130,7 +134,7 @@ instance (Arity n, Storable a) => IVector (Vec n) a where
   unsafeThaw   (Vec  fp)   = return $ MVec fp
   unsafeIndex  (Vec  fp) i
     = unsafeInlineIO
-    $ withForeignPtr fp (`peekElemOff` i)
+    $ unsafeWithForeignPtr fp (`peekElemOff` i)
   {-# INLINE unsafeFreeze #-}
   {-# INLINE unsafeThaw   #-}
   {-# INLINE unsafeIndex  #-}
@@ -148,11 +152,11 @@ instance (Arity n, Storable a) => Storable (Vec n a) where
   alignment = defaultAlignemnt
   peek ptr = do
     arr@(MVec fp) <- new
-    withForeignPtr fp $ \p ->
+    unsafeWithForeignPtr fp $ \p ->
       moveArray p (castPtr ptr) (peanoToInt (proxy# @(Peano n)))
     unsafeFreeze arr
   poke ptr (Vec fp)
-    = withForeignPtr fp $ \p ->
+    = unsafeWithForeignPtr fp $ \p ->
       moveArray (castPtr ptr) p (peanoToInt (proxy# @(Peano n)))
 
 instance (Typeable n, Arity n, Storable a, Data a) => Data (Vec n a) where
@@ -181,6 +185,12 @@ mallocVector :: forall a. Storable a => Int -> IO (ForeignPtr a)
 mallocVector size
   = mallocPlainForeignPtrBytes (size * sizeOf (undefined :: a))
 
-getPtr :: ForeignPtr a -> Ptr a
-{-# INLINE getPtr #-}
-getPtr (ForeignPtr addr _) = Ptr addr
+#if !MIN_VERSION_base(4,15,0)
+-- | A compatibility wrapper for 'GHC.ForeignPtr.unsafeWithForeignPtr' provided
+-- by GHC 9.0.1 and later.
+--
+-- Only to be used when the continuation is known not to
+-- unconditionally diverge lest unsoundness can result.
+unsafeWithForeignPtr :: ForeignPtr a -> (Ptr a -> IO b) -> IO b
+unsafeWithForeignPtr = withForeignPtr
+#endif
