@@ -45,7 +45,6 @@ module Data.Vector.Fixed.Cont (
     -- * Vector type class
   , Dim
   , Vector(..)
-  , VectorN
   , length
     -- * Vector as continuation
   , ContVec(..)
@@ -451,13 +450,6 @@ class ArityPeano (Dim v) => Vector v a where
   basicIndex :: v a -> Int -> a
   basicIndex v i = index i (cvec v)
   {-# INLINE basicIndex #-}
-
--- | Vector parametrized by length. In ideal world it should be:
---
--- > forall n. (ArityPeano n, Vector (v n) a, Dim (v n) ~ n) => VectorN v a
---
--- Alas polymorphic constraints aren't allowed in haskell.
-class (Vector (v n) a, Dim (v n) ~ Peano n) => VectorN v n a
 
 -- | Length of vector. Function doesn't evaluate its argument.
 length :: forall v a. ArityPeano (Dim v) => v a -> Int

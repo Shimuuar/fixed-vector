@@ -50,7 +50,6 @@ module Data.Vector.Fixed (
     Dim
     -- ** Type class
   , Vector(..)
-  , VectorN
   , Arity
   , Fun(..)
   , length
@@ -186,7 +185,7 @@ import Foreign.Storable (Storable(..))
 import Foreign.Ptr      (castPtr)
 import GHC.TypeLits
 
-import Data.Vector.Fixed.Cont     (Vector(..),VectorN,Dim,length,ContVec,PeanoNum(..),
+import Data.Vector.Fixed.Cont     (Vector(..),Dim,length,ContVec,PeanoNum(..),
                                    vector,empty,Arity,Fun(..),accum,apply,vector)
 import qualified Data.Vector.Fixed.Cont as C
 import Data.Vector.Fixed.Internal
@@ -263,8 +262,6 @@ instance Arity n => Vector (VecList n) a where
       step (Flip (Cons a xs)) = (a, Flip xs)
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
-
-instance Arity n => VectorN VecList n a
 
 newtype Flip f a n = Flip (f n a)
 newtype T_List a n k = T_List (VecPeano k a -> VecPeano n a)

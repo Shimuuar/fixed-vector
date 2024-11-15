@@ -41,7 +41,7 @@ import GHC.TypeLits
 import Prelude               ( Show(..),Eq(..),Ord(..),Int,Double,Float,Char,Bool(..)
                              , ($),(.),seq)
 
-import Data.Vector.Fixed (Dim,Vector(..),VectorN,eq,ord,replicate,zipWith,foldl,
+import Data.Vector.Fixed (Dim,Vector(..),eq,ord,replicate,zipWith,foldl,
                           defaultSizeOf,defaultAlignemnt,defaultPeek,defaultPoke
                          )
 import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, Arity, index)
@@ -94,9 +94,6 @@ instance (Unbox n a) => Vector (Vec n) a where
   {-# INLINE construct  #-}
   {-# INLINE inspect    #-}
   {-# INLINE basicIndex #-}
-
-
-instance (Unbox n a) => VectorN Vec n a
 
 instance (Unbox n a, Eq a) => Eq (Vec n a) where
   (==) = eq

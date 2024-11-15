@@ -13,6 +13,8 @@ Changes in 1.3.0.0
 
   * Type of `D.V.F.Cont.withFun` generalized
 
+  * Type class `VectorN` dropped. Use QuantifiedConstraints instead
+
 Changes in 1.2.3.0
 
   * Pattern `V1` added

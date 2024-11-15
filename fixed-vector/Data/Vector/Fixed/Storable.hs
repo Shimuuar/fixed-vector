@@ -155,7 +155,6 @@ instance (Arity n, Storable a) => Vector (Vec n) a where
   {-# INLINE construct  #-}
   {-# INLINE inspect    #-}
   {-# INLINE basicIndex #-}
-instance (Arity n, Storable a) => VectorN Vec n a
 
 instance (Arity n, Storable a, Eq a) => Eq (Vec n a) where
   (==) = eq
