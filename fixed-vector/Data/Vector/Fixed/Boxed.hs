@@ -34,7 +34,6 @@ import qualified Data.Vector.Fixed.Cont     as C
 import           Data.Vector.Fixed.Cont     (Peano,ArityPeano(..))
 
 
-
 ----------------------------------------------------------------
 -- Data type
 ----------------------------------------------------------------
@@ -54,20 +53,6 @@ type Vec5 = Vec 5
 type instance Mutable (Vec  n) = MVec n
 type instance Dim     (Vec  n) = Peano n
 type instance DimM    (MVec n) = Peano n
-
-
-
-instance (Typeable n, Arity n, Data a) => Data (Vec n a) where
-  gfoldl       = C.gfoldl
-  gunfold      = C.gunfold
-  toConstr   _ = con_Vec
-  dataTypeOf _ = ty_Vec
-
-ty_Vec :: DataType
-ty_Vec  = mkDataType "Data.Vector.Fixed.Boxed.Vec" [con_Vec]
-
-con_Vec :: Constr
-con_Vec = mkConstr ty_Vec "Vec" [] Prefix
 
 
 ----------------------------------------------------------------
@@ -122,6 +107,17 @@ instance (Arity n) => Vector (Vec n) a where
   {-# INLINE inspect    #-}
   {-# INLINE basicIndex #-}
 
+instance (Typeable n, Arity n, Data a) => Data (Vec n a) where
+  gfoldl       = C.gfoldl
+  gunfold      = C.gunfold
+  toConstr   _ = con_Vec
+  dataTypeOf _ = ty_Vec
+
+ty_Vec :: DataType
+ty_Vec  = mkDataType "Data.Vector.Fixed.Boxed.Vec" [con_Vec]
+
+con_Vec :: Constr
+con_Vec = mkConstr ty_Vec "Vec" [] Prefix
 
 uninitialised :: a
 uninitialised = error "Data.Vector.Fixed.Boxed: uninitialised element"

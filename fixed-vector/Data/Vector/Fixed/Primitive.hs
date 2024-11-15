@@ -38,7 +38,6 @@ import qualified Data.Vector.Fixed.Cont     as C
 import           Data.Vector.Fixed.Cont     (Peano,ArityPeano(..))
 
 
-
 ----------------------------------------------------------------
 -- Data type
 ----------------------------------------------------------------
