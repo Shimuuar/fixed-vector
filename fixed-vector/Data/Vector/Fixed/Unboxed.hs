@@ -47,8 +47,6 @@ import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, const
 import qualified Data.Vector.Fixed.Cont      as C
 import           Data.Vector.Fixed.Cont      (Peano)
 import qualified Data.Vector.Fixed.Primitive as P
-import qualified Data.Vector.Fixed.Internal  as I
-
 
 
 ----------------------------------------------------------------
@@ -74,15 +72,13 @@ class (Arity n, IVector (Vec n) a, MVector (MVec n) a) => Unbox n a
 -- Generic instances
 ----------------------------------------------------------------
 
+deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Show      a) => Show      (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Eq        a) => Eq        (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Ord       a) => Ord       (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, NFData    a) => NFData    (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Semigroup a) => Semigroup (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Monoid    a) => Monoid    (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Storable  a) => Storable  (Vec n a)
-
-instance (Arity n, Show a, Unbox n a) => Show (Vec n a) where
-  showsPrec = I.showsPrec
 
 type instance Mutable (Vec n) = MVec n
 

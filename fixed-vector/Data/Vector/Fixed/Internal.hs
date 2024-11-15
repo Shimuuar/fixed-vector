@@ -681,5 +681,5 @@ fromFoldable = fromListM . T.toList
 
 -- | Generic definition of 'Prelude.showsPrec'
 showsPrec :: (Vector v a, Show a) => Int -> v a -> ShowS
-showsPrec d v = showParen (d > 10) $ showString "fromList " . Prelude.showsPrec 11 (toList v)
+showsPrec _ = shows . toList
 {-# INLINE showsPrec #-}

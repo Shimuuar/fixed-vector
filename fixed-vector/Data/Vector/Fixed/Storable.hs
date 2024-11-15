@@ -50,7 +50,6 @@ import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, index)
 import qualified Data.Vector.Fixed.Cont     as C
 import           Data.Vector.Fixed.Cont     (Peano,ArityPeano(..))
-import qualified Data.Vector.Fixed.Internal as I
 
 
 
@@ -102,15 +101,12 @@ unsafeWith f (Vec fp) = f (getPtr fp)
 instance (Arity n, Storable a, NFData a) => NFData (Vec n a) where
   rnf x = seq x ()
 
+deriving via ViaFixed (Vec n) a instance (Arity n, Storable a, Show      a) => Show      (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Storable a, Eq        a) => Eq        (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Storable a, Ord       a) => Ord       (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Storable a, Semigroup a) => Semigroup (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Storable a, Monoid    a) => Monoid    (Vec n a)
 
-
-
-instance (Arity n, Storable a, Show a) => Show (Vec n a) where
-  showsPrec = I.showsPrec
 
 type instance Mutable (Vec n) = MVec n
 

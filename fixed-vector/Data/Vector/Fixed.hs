@@ -193,7 +193,7 @@ import GHC.TypeLits
 import Data.Vector.Fixed.Cont     (Vector(..),Dim,length,ContVec,PeanoNum(..),
                                    vector,empty,Arity,Fun(..),accum,apply,vector)
 import qualified Data.Vector.Fixed.Cont as C
-import Data.Vector.Fixed.Internal
+import Data.Vector.Fixed.Internal as I
 
 import Prelude (Show(..),Eq(..),Ord(..),Functor(..),id,(.),($),(<$>))
 
@@ -357,6 +357,9 @@ type Tuple5 a = (a,a,a,a,a)
 --   of 'Vector'. It supports 'Eq', 'Ord', 'Semigroup', 'Monoid',
 --   'Storable', 'NFData'.
 newtype ViaFixed v a = ViaFixed (v a)
+
+instance (Vector v a, Show a) => Show (ViaFixed v a) where
+  showsPrec = coerce (I.showsPrec @v @a)
 
 instance (Vector v a, Eq a) => Eq (ViaFixed v a) where
   (==) = coerce (eq @v @a)

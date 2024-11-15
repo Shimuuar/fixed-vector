@@ -15,6 +15,9 @@ Changes in 1.3.0.0
 
   * Type class `VectorN` dropped. Use QuantifiedConstraints instead
 
+  * Show instance now has form `[...]` instead of `fromList [...]`
+
+
 Changes in 1.2.3.0
 
   * Pattern `V1` added

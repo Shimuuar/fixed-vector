@@ -46,7 +46,6 @@ import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, index)
 import qualified Data.Vector.Fixed.Cont     as C
 import           Data.Vector.Fixed.Cont     (Peano,ArityPeano(..))
-import qualified Data.Vector.Fixed.Internal as I
 
 
 
@@ -75,12 +74,10 @@ type Vec5 = Vec 5
 -- Instances
 ----------------------------------------------------------------
 
-instance (Arity n, Prim a, Show a) => Show (Vec n a) where
-  showsPrec = I.showsPrec
-
 instance (Arity n, Prim a, NFData a) => NFData (Vec n a) where
   rnf x = seq x ()
 
+deriving via ViaFixed (Vec n) a instance (Arity n, Prim a, Show      a) => Show      (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Prim a, Eq        a) => Eq        (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Prim a, Ord       a) => Ord       (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Prim a, Semigroup a) => Semigroup (Vec n a)

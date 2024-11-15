@@ -42,7 +42,6 @@ import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, index)
 import qualified Data.Vector.Fixed.Cont     as C
 import           Data.Vector.Fixed.Cont     (Peano,ArityPeano(..))
-import qualified Data.Vector.Fixed.Internal as I
 
 
 
@@ -83,6 +82,7 @@ con_Vec = mkConstr ty_Vec "Vec" [] Prefix
 -- Instances
 ----------------------------------------------------------------
 
+deriving via ViaFixed (Vec n) a instance (Arity n, Show      a) => Show      (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Eq        a) => Eq        (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Ord       a) => Ord       (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, NFData    a) => NFData    (Vec n a)
@@ -90,9 +90,6 @@ deriving via ViaFixed (Vec n) a instance (Arity n, Semigroup a) => Semigroup (Ve
 deriving via ViaFixed (Vec n) a instance (Arity n, Monoid    a) => Monoid    (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Storable  a) => Storable  (Vec n a)
 
-
-instance (Arity n, Show a) => Show (Vec n a) where
-  showsPrec = I.showsPrec
 
 type instance Mutable (Vec n) = MVec n
 
