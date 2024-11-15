@@ -20,6 +20,8 @@ Changes in 1.3.0.0
   * `ViaFixed` newtype wrapper for deriving instances is
     added. `StorableViaFixed` is deprecated
 
+  * `Data.Vector.Fixed.Storable.unsafeWith` ensures that pointer won't
+    get GC'd while function runs
 
 Changes in 1.2.3.0
 
