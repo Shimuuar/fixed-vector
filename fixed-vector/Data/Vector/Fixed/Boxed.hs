@@ -45,9 +45,6 @@ newtype Vec (n :: Nat) a = Vec (SmallArray a)
 -- | Mutable unboxed vector with fixed length
 newtype MVec (n :: Nat) s a = MVec (SmallMutableArray s a)
 
-deriving instance Typeable Vec
-deriving instance Typeable MVec
-
 type Vec1 = Vec 1
 type Vec2 = Vec 2
 type Vec3 = Vec 3

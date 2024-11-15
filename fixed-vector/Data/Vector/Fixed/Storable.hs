@@ -53,9 +53,6 @@ newtype Vec (n :: Nat) a = Vec (ForeignPtr a)
 -- | Storable-based mutable vector with fixed length
 newtype MVec (n :: Nat) s a = MVec (ForeignPtr a)
 
-deriving instance Typeable Vec
-deriving instance Typeable MVec
-
 type Vec1 = Vec 1
 type Vec2 = Vec 2
 type Vec3 = Vec 3

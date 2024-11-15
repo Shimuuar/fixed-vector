@@ -49,9 +49,6 @@ newtype Vec (n :: Nat) a = Vec ByteArray
 -- | Mutable unboxed vector with fixed length
 newtype MVec (n :: Nat) s a = MVec (MutableByteArray s)
 
-deriving instance Typeable Vec
-deriving instance Typeable MVec
-
 type Vec1 = Vec 1
 type Vec2 = Vec 2
 type Vec3 = Vec 3

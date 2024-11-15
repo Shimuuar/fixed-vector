@@ -166,7 +166,7 @@ module Data.Vector.Fixed (
 import Control.Applicative (Applicative(..))
 import Control.DeepSeq     (NFData(..))
 import Data.Coerce
-import Data.Data           (Typeable,Data)
+import Data.Data           (Data)
 import Data.Monoid         (Monoid(..))
 import Data.Semigroup      (Semigroup(..))
 import qualified Data.Foldable    as F
@@ -230,7 +230,6 @@ newtype VecList (n :: Nat) a = VecList (VecPeano (C.Peano n) a)
 data VecPeano (n :: PeanoNum) a where
   Nil  :: VecPeano 'Z a
   Cons :: a -> VecPeano n a -> VecPeano ('S n) a
-  deriving (Typeable)
 
 type instance Dim (VecList  n) = C.Peano n
 type instance Dim (VecPeano n) = n
@@ -297,7 +296,7 @@ deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, Storable  a) => Sto
 
 -- | Single-element tuple.
 newtype Only a = Only a
-                 deriving (Show,Eq,Ord,Typeable,Data,Functor,F.Foldable,T.Traversable)
+                 deriving (Show,Eq,Ord,Data,Functor,F.Foldable,T.Traversable)
 
 instance Monoid a => Monoid (Only a) where
   mempty  = Only mempty
@@ -327,7 +326,7 @@ instance (Storable a) => Storable (Only a) where
 
 -- | Empty tuple.
 data Empty a = Empty
-  deriving (Show,Eq,Ord,Typeable,Data,Functor,F.Foldable,T.Traversable)
+  deriving (Show,Eq,Ord,Data,Functor,F.Foldable,T.Traversable)
 
 instance NFData (Empty a) where
   rnf Empty = ()

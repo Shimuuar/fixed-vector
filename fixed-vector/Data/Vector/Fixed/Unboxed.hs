@@ -1,6 +1,6 @@
-{-# LANGUAGE CPP                   #-}
-{-# LANGUAGE PolyKinds             #-}
-{-# LANGUAGE UndecidableInstances  #-}
+{-# LANGUAGE CPP                  #-}
+{-# LANGUAGE PolyKinds            #-}
+{-# LANGUAGE UndecidableInstances #-}
 -- |
 -- Unboxed vectors with fixed length.
 module Data.Vector.Fixed.Unboxed(
@@ -46,9 +46,6 @@ import qualified Data.Vector.Fixed.Primitive as P
 
 data family Vec  (n :: Nat) a
 data family MVec (n :: Nat) s a
-
-deriving instance Typeable Vec
-deriving instance Typeable MVec
 
 type Vec1 = Vec 1
 type Vec2 = Vec 2
