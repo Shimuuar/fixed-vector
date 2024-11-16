@@ -30,7 +30,7 @@ import Foreign.Storable         (Storable)
 import GHC.TypeLits
 import GHC.Exts (proxy#)
 import Prelude (Show(..),Eq(..),Ord(..),Num(..))
-import Prelude (($),($!),undefined,seq)
+import Prelude (($),($!),undefined,seq,(<$>))
 
 
 import Data.Vector.Fixed hiding (index)
@@ -75,27 +75,25 @@ deriving via ViaFixed (Vec n) a instance (Arity n, Prim a, Monoid    a) => Monoi
 deriving via ViaFixed (Vec n) a instance (Arity n, Prim a, Storable  a) => Storable  (Vec n a)
 
 instance (Arity n, Prim a) => MVector (MVec n) a where
-  new = do
+  basicNew = do
     v <- newByteArray $! peanoToInt (proxy# @(Peano n))
                        * sizeOf (undefined :: a)
     return $ MVec v
-  {-# INLINE new         #-}
-  copy                       = move
-  {-# INLINE copy        #-}
-  move (MVec dst) (MVec src) = copyMutableByteArray dst 0 src 0 (peanoToInt (proxy# @(Peano n)))
-  {-# INLINE move        #-}
-  unsafeRead  (MVec v) i   = readByteArray  v i
-  {-# INLINE unsafeRead  #-}
-  unsafeWrite (MVec v) i x = writeByteArray v i x
-  {-# INLINE unsafeWrite #-}
+  {-# INLINE basicNew         #-}
+  basicCopy (MVec dst) (MVec src) = copyMutableByteArray dst 0 src 0 (peanoToInt (proxy# @(Peano n)))
+  {-# INLINE basicCopy        #-}
+  basicUnsafeRead  (MVec v) i   = readByteArray  v i
+  {-# INLINE basicUnsafeRead  #-}
+  basicUnsafeWrite (MVec v) i x = writeByteArray v i x
+  {-# INLINE basicUnsafeWrite #-}
 
 instance (Arity n, Prim a) => IVector (Vec n) a where
-  unsafeFreeze (MVec v)   = do { a <- unsafeFreezeByteArray v; return $! Vec  a }
-  unsafeThaw   (Vec  v)   = do { a <- unsafeThawByteArray   v; return $! MVec a }
-  unsafeIndex  (Vec  v) i = indexByteArray v i
-  {-# INLINE unsafeFreeze #-}
-  {-# INLINE unsafeThaw   #-}
-  {-# INLINE unsafeIndex  #-}
+  basicUnsafeFreeze (MVec v) = do { a <- unsafeFreezeByteArray v; return $! Vec  a }
+  basicThaw         (Vec  v) = MVec <$> thawByteArray v 0 (peanoToInt (proxy# @(Peano n)))
+  unsafeIndex       (Vec  v) i = indexByteArray v i
+  {-# INLINE basicUnsafeFreeze #-}
+  {-# INLINE basicThaw         #-}
+  {-# INLINE unsafeIndex       #-}
 
 instance (Arity n, Prim a) => Vector (Vec n) a where
   construct  = constructVec

@@ -26,7 +26,7 @@ import Foreign.Storable (Storable(..))
 import GHC.TypeLits
 import GHC.Exts (proxy#)
 import Prelude ( Show(..),Eq(..),Ord(..),Functor(..),Monad(..)
-               , ($),($!),error)
+               , ($!),error,(<$>))
 
 import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, index)
@@ -78,25 +78,30 @@ deriving via ViaFixed (Vec n) a instance (Arity n, Monoid    a) => Monoid    (Ve
 deriving via ViaFixed (Vec n) a instance (Arity n, Storable  a) => Storable  (Vec n a)
 
 instance (Arity n) => MVector (MVec n) a where
-  new = do
-    v <- newSmallArray (peanoToInt (proxy# @(Peano n))) uninitialised
-    return $ MVec v
-  {-# INLINE new         #-}
-  copy = move
-  {-# INLINE copy        #-}
-  move (MVec dst) (MVec src) = copySmallMutableArray dst 0 src 0 (peanoToInt (proxy# @(Peano n)))
-  {-# INLINE move        #-}
-  unsafeRead  (MVec v) i   = readSmallArray  v i
-  {-# INLINE unsafeRead  #-}
-  unsafeWrite (MVec v) i x = writeSmallArray v i x
-  {-# INLINE unsafeWrite #-}
+  basicNew =
+    MVec <$> newSmallArray (peanoToInt (proxy# @(Peano n))) uninitialised
+  basicReplicate a =
+    MVec <$> newSmallArray (peanoToInt (proxy# @(Peano n))) a
+  basicCopy (MVec dst) (MVec src) =
+    copySmallMutableArray dst 0 src 0 (peanoToInt (proxy# @(Peano n)))
+  basicClone (MVec src) =
+    MVec <$> cloneSmallMutableArray src 0 (peanoToInt (proxy# @(Peano n)))
+  basicUnsafeRead  (MVec v) i   = readSmallArray  v i
+  basicUnsafeWrite (MVec v) i x = writeSmallArray v i x
+  {-# INLINE basicNew         #-}
+  {-# INLINE basicReplicate   #-}
+  {-# INLINE basicCopy        #-}
+  {-# INLINE basicClone       #-}
+  {-# INLINE basicUnsafeRead  #-}
+  {-# INLINE basicUnsafeWrite #-}
 
 instance (Arity n) => IVector (Vec n) a where
-  unsafeFreeze (MVec v)   = do { a <- unsafeFreezeSmallArray v; return $! Vec  a }
-  unsafeThaw   (Vec  v)   = do { a <- unsafeThawSmallArray   v; return $! MVec a }
+  basicUnsafeFreeze (MVec v) = do { a <- unsafeFreezeSmallArray v; return $! Vec  a }
+  basicThaw         (Vec  v) =
+    MVec <$> thawSmallArray v 0 (peanoToInt (proxy# @(Peano n)))
   unsafeIndex  (Vec  v) i = indexSmallArray v i
-  {-# INLINE unsafeFreeze #-}
-  {-# INLINE unsafeThaw   #-}
+  {-# INLINE basicUnsafeFreeze #-}
+  {-# INLINE basicThaw   #-}
   {-# INLINE unsafeIndex  #-}
 
 instance (Arity n) => Vector (Vec n) a where

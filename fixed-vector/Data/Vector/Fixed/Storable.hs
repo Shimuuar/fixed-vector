@@ -38,10 +38,10 @@ import GHC.ForeignPtr       ( unsafeWithForeignPtr )
 #endif
 import Foreign.ForeignPtr   ( ForeignPtr, withForeignPtr )
 import Prelude ( Show(..),Eq(..),Ord(..),Num(..),Monad(..),IO,Int
-               , ($),undefined,seq)
+               , ($),undefined,seq,pure)
 
 import Data.Vector.Fixed hiding (index)
-import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, index)
+import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, index, new,unsafeFreeze)
 import qualified Data.Vector.Fixed.Cont     as C
 import           Data.Vector.Fixed.Cont     (Peano,ArityPeano(..))
 
@@ -104,40 +104,37 @@ deriving via ViaFixed (Vec n) a instance (Arity n, Storable a, Semigroup a) => S
 deriving via ViaFixed (Vec n) a instance (Arity n, Storable a, Monoid    a) => Monoid    (Vec n a)
 
 instance (Arity n, Storable a) => MVector (MVec n) a where
-  new = unsafePrimToPrim $ do
+  basicNew = unsafePrimToPrim $ do
     fp <- mallocVector (peanoToInt (proxy# @(Peano n)))
     return $ MVec fp
-  {-# INLINE new         #-}
-  copy (MVec fp) (MVec fq)
+  {-# INLINE basicNew         #-}
+  basicCopy (MVec fp) (MVec fq)
     = unsafePrimToPrim
     $ unsafeWithForeignPtr fp $ \p ->
       unsafeWithForeignPtr fq $ \q ->
       copyArray p q (peanoToInt (proxy# @(Peano n)))
-  {-# INLINE copy        #-}
-  move (MVec fp) (MVec fq)
-    = unsafePrimToPrim
-    $ unsafeWithForeignPtr fp $ \p ->
-      unsafeWithForeignPtr fq $ \q ->
-      moveArray p q (peanoToInt (proxy# @(Peano n)))
-  {-# INLINE move        #-}
-  unsafeRead (MVec fp) i
+  {-# INLINE basicCopy        #-}
+  basicUnsafeRead (MVec fp) i
     = unsafePrimToPrim
     $ unsafeWithForeignPtr fp (`peekElemOff` i)
-  {-# INLINE unsafeRead  #-}
-  unsafeWrite (MVec fp) i x
+  {-# INLINE basicUnsafeRead  #-}
+  basicUnsafeWrite (MVec fp) i x
     = unsafePrimToPrim
     $ unsafeWithForeignPtr fp $ \p -> pokeElemOff p i x
-  {-# INLINE unsafeWrite #-}
+  {-# INLINE basicUnsafeWrite #-}
 
 instance (Arity n, Storable a) => IVector (Vec n) a where
-  unsafeFreeze (MVec fp)   = return $ Vec  fp
-  unsafeThaw   (Vec  fp)   = return $ MVec fp
+  basicUnsafeFreeze (MVec fp) = return $ Vec  fp
+  basicThaw         (Vec  fp) = do
+    mv <- basicNew
+    basicCopy mv (MVec fp)
+    pure mv
   unsafeIndex  (Vec  fp) i
     = unsafeInlineIO
     $ unsafeWithForeignPtr fp (`peekElemOff` i)
-  {-# INLINE unsafeFreeze #-}
-  {-# INLINE unsafeThaw   #-}
-  {-# INLINE unsafeIndex  #-}
+  {-# INLINE basicUnsafeFreeze #-}
+  {-# INLINE basicThaw         #-}
+  {-# INLINE unsafeIndex       #-}
 
 instance (Arity n, Storable a) => Vector (Vec n) a where
   construct  = constructVec

@@ -104,23 +104,21 @@ data instance Vec  n   () = V_Unit
 instance Arity n => Unbox n ()
 
 instance Arity n => MVector (MVec n) () where
-  new          = return MV_Unit
-  {-# INLINE new         #-}
-  copy _ _     = return ()
-  {-# INLINE move        #-}
-  move _ _     = return ()
-  {-# INLINE copy        #-}
-  unsafeRead  _ _   = return ()
-  {-# INLINE unsafeRead  #-}
-  unsafeWrite _ _ _ = return ()
-  {-# INLINE unsafeWrite #-}
+  basicNew          = return MV_Unit
+  {-# INLINE basicNew         #-}
+  basicCopy _ _     = return ()
+  {-# INLINE basicCopy        #-}
+  basicUnsafeRead  _ _   = return ()
+  {-# INLINE basicUnsafeRead  #-}
+  basicUnsafeWrite _ _ _ = return ()
+  {-# INLINE basicUnsafeWrite #-}
 
 instance Arity n => IVector (Vec n) () where
-  unsafeFreeze _   = return V_Unit
-  unsafeThaw   _   = return MV_Unit
+  basicUnsafeFreeze _   = return V_Unit
+  basicThaw   _   = return MV_Unit
   unsafeIndex  _ _ = ()
-  {-# INLINE unsafeFreeze #-}
-  {-# INLINE unsafeThaw   #-}
+  {-# INLINE basicUnsafeFreeze #-}
+  {-# INLINE basicThaw   #-}
   {-# INLINE unsafeIndex  #-}
 
 
@@ -134,23 +132,21 @@ newtype instance Vec  n   Bool = V_Bool  (P.Vec  n   Word8)
 instance Arity n => Unbox n Bool
 
 instance Arity n => MVector (MVec n) Bool where
-  new          = MV_Bool `liftM` new
-  {-# INLINE new         #-}
-  copy (MV_Bool v) (MV_Bool w) = copy v w
-  {-# INLINE copy        #-}
-  move (MV_Bool v) (MV_Bool w) = move v w
-  {-# INLINE move        #-}
-  unsafeRead  (MV_Bool v) i   = toBool `liftM` unsafeRead v i
-  {-# INLINE unsafeRead  #-}
-  unsafeWrite (MV_Bool v) i b = unsafeWrite v i (fromBool b)
-  {-# INLINE unsafeWrite #-}
+  basicNew          = MV_Bool `liftM` basicNew
+  {-# INLINE basicNew         #-}
+  basicCopy (MV_Bool v) (MV_Bool w) = basicCopy v w
+  {-# INLINE basicCopy        #-}
+  basicUnsafeRead  (MV_Bool v) i   = toBool `liftM` basicUnsafeRead v i
+  {-# INLINE basicUnsafeRead  #-}
+  basicUnsafeWrite (MV_Bool v) i b = basicUnsafeWrite v i (fromBool b)
+  {-# INLINE basicUnsafeWrite #-}
 
 instance Arity n => IVector (Vec n) Bool where
-  unsafeFreeze (MV_Bool v) = V_Bool  `liftM` unsafeFreeze v
-  unsafeThaw   (V_Bool  v) = MV_Bool `liftM` unsafeThaw   v
+  basicUnsafeFreeze (MV_Bool v) = V_Bool  `liftM` basicUnsafeFreeze v
+  basicThaw   (V_Bool  v) = MV_Bool `liftM` basicThaw   v
   unsafeIndex  (V_Bool  v) = toBool . unsafeIndex v
-  {-# INLINE unsafeFreeze #-}
-  {-# INLINE unsafeThaw   #-}
+  {-# INLINE basicUnsafeFreeze #-}
+  {-# INLINE basicThaw   #-}
   {-# INLINE unsafeIndex  #-}
 
 
@@ -169,25 +165,23 @@ toBool _ = True
 -- Primitive wrappers
 #define primMV(ty,con)                              \
 instance Arity n => MVector (MVec n) ty where {     \
-; new = con `liftM` new                             \
-; copy (con v) (con w) = copy v w                   \
-; move (con v) (con w) = move v w                   \
-; unsafeRead  (con v) i = unsafeRead v i            \
-; unsafeWrite (con v) i x = unsafeWrite v i x       \
-; {-# INLINE new         #-}                        \
-; {-# INLINE move        #-}                        \
-; {-# INLINE copy        #-}                        \
-; {-# INLINE unsafeRead  #-}                        \
-; {-# INLINE unsafeWrite #-}                        \
+; basicNew = con `liftM` basicNew                             \
+; basicCopy (con v) (con w) = basicCopy v w                   \
+; basicUnsafeRead  (con v) i = basicUnsafeRead v i            \
+; basicUnsafeWrite (con v) i x = basicUnsafeWrite v i x       \
+; {-# INLINE basicNew         #-}                        \
+; {-# INLINE basicCopy        #-}                        \
+; {-# INLINE basicUnsafeRead  #-}                        \
+; {-# INLINE basicUnsafeWrite #-}                        \
 }
 
 #define primIV(ty,con,mcon)                             \
 instance Arity n => IVector (Vec n) ty where {          \
-; unsafeFreeze (mcon v)   = con  `liftM` unsafeFreeze v \
-; unsafeThaw   (con  v)   = mcon `liftM` unsafeThaw   v \
+; basicUnsafeFreeze (mcon v)   = con  `liftM` basicUnsafeFreeze v \
+; basicThaw   (con  v)   = mcon `liftM` basicThaw   v \
 ; unsafeIndex  (con  v) i = unsafeIndex v i             \
-; {-# INLINE unsafeFreeze #-}                           \
-; {-# INLINE unsafeThaw   #-}                           \
+; {-# INLINE basicUnsafeFreeze #-}                           \
+; {-# INLINE basicThaw   #-}                           \
 ; {-# INLINE unsafeIndex  #-}                           \
 }
 
@@ -226,23 +220,21 @@ newtype instance Vec  n   (Complex a) = V_Complex  (Vec  n   (a,a))
 instance (Unbox n a) => Unbox n (Complex a)
 
 instance (Arity n, MVector (MVec n) a) => MVector (MVec n) (Complex a) where
-  new = MV_Complex `liftM` new
-  {-# INLINE new #-}
-  copy (MV_Complex v) (MV_Complex w) = copy v w
-  {-# INLINE copy        #-}
-  move (MV_Complex v) (MV_Complex w) = move v w
-  {-# INLINE move        #-}
-  unsafeRead (MV_Complex v) i = do (a,b) <- unsafeRead v i
-                                   return (a :+ b)
-  {-# INLINE unsafeRead  #-}
-  unsafeWrite (MV_Complex v) i (a :+ b) = unsafeWrite v i (a,b)
-  {-# INLINE unsafeWrite #-}
+  basicNew = MV_Complex `liftM` basicNew
+  {-# INLINE basicNew #-}
+  basicCopy (MV_Complex v) (MV_Complex w) = basicCopy v w
+  {-# INLINE basicCopy        #-}
+  basicUnsafeRead (MV_Complex v) i = do (a,b) <- basicUnsafeRead v i
+                                        return (a :+ b)
+  {-# INLINE basicUnsafeRead  #-}
+  basicUnsafeWrite (MV_Complex v) i (a :+ b) = basicUnsafeWrite v i (a,b)
+  {-# INLINE basicUnsafeWrite #-}
 
 instance (Arity n, IVector (Vec n) a) => IVector (Vec n) (Complex a) where
-  unsafeFreeze (MV_Complex v) = V_Complex `liftM` unsafeFreeze v
-  {-# INLINE unsafeFreeze #-}
-  unsafeThaw   (V_Complex  v) = MV_Complex `liftM` unsafeThaw v
-  {-# INLINE unsafeThaw   #-}
+  basicUnsafeFreeze (MV_Complex v) = V_Complex `liftM` basicUnsafeFreeze v
+  {-# INLINE basicUnsafeFreeze #-}
+  basicThaw   (V_Complex  v) = MV_Complex `liftM` basicThaw v
+  {-# INLINE basicThaw   #-}
   unsafeIndex (V_Complex v) i =
     case unsafeIndex v i of (a,b) -> a :+ b
   {-# INLINE unsafeIndex  #-}
@@ -257,33 +249,31 @@ data instance Vec  n   (a,b) = V_2  !(Vec  n   a) !(Vec  n   b)
 instance (Unbox n a, Unbox n b) => Unbox n (a,b)
 
 instance (Arity n, MVector (MVec n) a, MVector (MVec n) b) => MVector (MVec n) (a,b) where
-  new = do as <- new
-           bs <- new
-           return $ MV_2 as bs
-  {-# INLINE new #-}
-  copy (MV_2 va vb) (MV_2 wa wb) = copy va wa >> copy vb wb
-  {-# INLINE copy        #-}
-  move (MV_2 va vb) (MV_2 wa wb) = move va wa >> move vb wb
-  {-# INLINE move        #-}
-  unsafeRead  (MV_2 v w) i = do a <- unsafeRead v i
-                                b <- unsafeRead w i
-                                return (a,b)
-  {-# INLINE unsafeRead  #-}
-  unsafeWrite (MV_2 v w) i (a,b) = unsafeWrite v i a >> unsafeWrite w i b
-  {-# INLINE unsafeWrite #-}
+  basicNew = do as <- basicNew
+                bs <- basicNew
+                return $ MV_2 as bs
+  {-# INLINE basicNew #-}
+  basicCopy (MV_2 va vb) (MV_2 wa wb) = basicCopy va wa >> basicCopy vb wb
+  {-# INLINE basicCopy        #-}
+  basicUnsafeRead  (MV_2 v w) i = do a <- basicUnsafeRead v i
+                                     b <- basicUnsafeRead w i
+                                     return (a,b)
+  {-# INLINE basicUnsafeRead  #-}
+  basicUnsafeWrite (MV_2 v w) i (a,b) = basicUnsafeWrite v i a >> basicUnsafeWrite w i b
+  {-# INLINE basicUnsafeWrite #-}
 
 
 instance ( Arity n
          , IVector (Vec n) a, IVector (Vec n) b
          ) => IVector (Vec n) (a,b) where
-  unsafeFreeze (MV_2 v w)   = do as <- unsafeFreeze v
-                                 bs <- unsafeFreeze w
-                                 return $ V_2 as bs
-  {-# INLINE unsafeFreeze #-}
-  unsafeThaw   (V_2  v w)   = do as <- unsafeThaw v
-                                 bs <- unsafeThaw w
-                                 return $ MV_2 as bs
-  {-# INLINE unsafeThaw   #-}
+  basicUnsafeFreeze (MV_2 v w)   = do as <- basicUnsafeFreeze v
+                                      bs <- basicUnsafeFreeze w
+                                      return $ V_2 as bs
+  {-# INLINE basicUnsafeFreeze #-}
+  basicThaw   (V_2  v w)   = do as <- basicThaw v
+                                bs <- basicThaw w
+                                return $ MV_2 as bs
+  {-# INLINE basicThaw   #-}
   unsafeIndex  (V_2  v w) i = (unsafeIndex v i, unsafeIndex w i)
   {-# INLINE unsafeIndex  #-}
 
@@ -297,40 +287,37 @@ instance (Unbox n a, Unbox n b, Unbox n c) => Unbox n (a,b,c)
 
 instance (Arity n, MVector (MVec n) a, MVector (MVec n) b, MVector (MVec n) c
          ) => MVector (MVec n) (a,b,c) where
-  new = do as <- new
-           bs <- new
-           cs <- new
-           return $ MV_3 as bs cs
-  {-# INLINE new #-}
-  copy (MV_3 va vb vc) (MV_3 wa wb wc)
-    = copy va wa >> copy vb wb >> copy vc wc
-  {-# INLINE copy        #-}
-  move (MV_3 va vb vc) (MV_3 wa wb wc)
-    = move va wa >> move vb wb >> move vc wc
-  {-# INLINE move        #-}
-  unsafeRead  (MV_3 v w u) i = do a <- unsafeRead v i
-                                  b <- unsafeRead w i
-                                  c <- unsafeRead u i
-                                  return (a,b,c)
-  {-# INLINE unsafeRead  #-}
-  unsafeWrite (MV_3 v w u) i (a,b,c)
-    = unsafeWrite v i a >> unsafeWrite w i b >> unsafeWrite u i c
-  {-# INLINE unsafeWrite #-}
+  basicNew = do as <- basicNew
+                bs <- basicNew
+                cs <- basicNew
+                return $ MV_3 as bs cs
+  {-# INLINE basicNew #-}
+  basicCopy (MV_3 va vb vc) (MV_3 wa wb wc)
+    = basicCopy va wa >> basicCopy vb wb >> basicCopy vc wc
+  {-# INLINE basicCopy        #-}
+  basicUnsafeRead  (MV_3 v w u) i = do a <- basicUnsafeRead v i
+                                       b <- basicUnsafeRead w i
+                                       c <- basicUnsafeRead u i
+                                       return (a,b,c)
+  {-# INLINE basicUnsafeRead  #-}
+  basicUnsafeWrite (MV_3 v w u) i (a,b,c)
+    = basicUnsafeWrite v i a >> basicUnsafeWrite w i b >> basicUnsafeWrite u i c
+  {-# INLINE basicUnsafeWrite #-}
 
 instance ( Arity n
          , Vector  (Vec n) a, Vector  (Vec n) b, Vector  (Vec n) c
          , IVector (Vec n) a, IVector (Vec n) b, IVector (Vec n) c
          ) => IVector (Vec n) (a,b,c) where
-  unsafeFreeze (MV_3 v w u) = do as <- unsafeFreeze v
-                                 bs <- unsafeFreeze w
-                                 cs <- unsafeFreeze u
-                                 return $ V_3 as bs cs
-  {-# INLINE unsafeFreeze #-}
-  unsafeThaw   (V_3  v w u) = do as <- unsafeThaw v
-                                 bs <- unsafeThaw w
-                                 cs <- unsafeThaw u
-                                 return $ MV_3 as bs cs
-  {-# INLINE unsafeThaw   #-}
+  basicUnsafeFreeze (MV_3 v w u) = do as <- basicUnsafeFreeze v
+                                      bs <- basicUnsafeFreeze w
+                                      cs <- basicUnsafeFreeze u
+                                      return $ V_3 as bs cs
+  {-# INLINE basicUnsafeFreeze #-}
+  basicThaw   (V_3  v w u) = do as <- basicThaw v
+                                bs <- basicThaw w
+                                cs <- basicThaw u
+                                return $ MV_3 as bs cs
+  {-# INLINE basicThaw   #-}
   unsafeIndex  (V_3 v w u) i
     = (unsafeIndex v i, unsafeIndex w i, unsafeIndex u i)
   {-# INLINE unsafeIndex  #-}
@@ -342,62 +329,19 @@ instance ( Arity n
 newtype instance MVec n s (Const a b) = MV_Const (MVec n s a)
 newtype instance Vec  n   (Const a b) = V_Const  (Vec  n   a)
 instance Unbox n a => Unbox n (Const a b)
-
-instance (Unbox n a) => MVector (MVec n) (Const a b) where
-  new                                  = MV_Const `liftM` new
-  copy (MV_Const v) (MV_Const w)       = copy v w
-  move (MV_Const v) (MV_Const w)       = move v w
-  unsafeRead  (MV_Const v) i           = Const `liftM` unsafeRead v i
-  unsafeWrite (MV_Const v) i (Const x) = unsafeWrite v i x
-  {-# INLINE new         #-}
-  {-# INLINE move        #-}
-  {-# INLINE copy        #-}
-  {-# INLINE unsafeRead  #-}
-  {-# INLINE unsafeWrite #-}
-
-instance (Unbox n a) => IVector (Vec n) (Const a b) where
-  unsafeFreeze (MV_Const v)   = V_Const  `liftM` unsafeFreeze v
-  unsafeThaw   (V_Const  v)   = MV_Const `liftM` unsafeThaw   v
-  unsafeIndex  (V_Const  v) i = Const (unsafeIndex v i)
-  {-# INLINE unsafeFreeze #-}
-  {-# INLINE unsafeThaw   #-}
-  {-# INLINE unsafeIndex  #-}
+deriving newtype instance (Unbox n a) => MVector (MVec n) (Const a b)
+deriving newtype instance (Unbox n a) => IVector (Vec n)  (Const a b)
 
 
 ----------------------------------------------------------------
 -- Newtype wrappers with kind * -> *
 
-#define primNewMV(ty,con)                         \
-instance Unbox n a => MVector (MVec n) (ty a) where {     \
-; new = con `liftM` new                             \
-; copy (con v) (con w) = copy v w                   \
-; move (con v) (con w) = move v w                   \
-; unsafeRead  (con v) i = ty `liftM` unsafeRead v i            \
-; unsafeWrite (con v) i (ty x) = unsafeWrite v i x       \
-; {-# INLINE new         #-}                        \
-; {-# INLINE move        #-}                        \
-; {-# INLINE copy        #-}                        \
-; {-# INLINE unsafeRead  #-}                        \
-; {-# INLINE unsafeWrite #-}                        \
-}
-
-#define primNewIV(ty,con,mcon)                             \
-instance Unbox n a => IVector (Vec n) (ty a)  where {          \
-; unsafeFreeze (mcon v)   = con  `liftM` unsafeFreeze v \
-; unsafeThaw   (con  v)   = mcon `liftM` unsafeThaw   v \
-; unsafeIndex  (con  v) i = ty (unsafeIndex v i)             \
-; {-# INLINE unsafeFreeze #-}                           \
-; {-# INLINE unsafeThaw   #-}                           \
-; {-# INLINE unsafeIndex  #-}                           \
-}
-
 #define primNewWrap(ty,con,mcon) \
 newtype instance MVec n s (ty a) = mcon (MVec n s a) ; \
 newtype instance Vec  n   (ty a) = con  (Vec  n   a) ; \
 instance Unbox n a => Unbox n (ty a) ; \
-primNewMV(ty, mcon     )          ; \
-primNewIV(ty, con, mcon)
-
+deriving newtype instance Unbox n a => MVector (MVec n) (ty a); \
+deriving newtype instance Unbox n a => IVector (Vec  n) (ty a)
 
 primNewWrap(Identity, V_Identity, MV_Identity)
 primNewWrap(Down, V_Down, MV_Down)
@@ -409,36 +353,15 @@ primNewWrap(Product, V_Product, MV_Product)
 ----------------------------------------------------------------
 -- Monomorphic newtype wrappers
 
-#define primNewMonoMV(ty,con)                         \
-instance Arity n => MVector (MVec n) ty where {     \
-; new = con `liftM` new                             \
-; copy (con v) (con w) = copy v w                   \
-; move (con v) (con w) = move v w                   \
-; unsafeRead  (con v) i = ty `liftM` unsafeRead v i            \
-; unsafeWrite (con v) i (ty x) = unsafeWrite v i x       \
-; {-# INLINE new         #-}                        \
-; {-# INLINE move        #-}                        \
-; {-# INLINE copy        #-}                        \
-; {-# INLINE unsafeRead  #-}                        \
-; {-# INLINE unsafeWrite #-}                        \
-}
 
-#define primNewMonoIV(ty,con,mcon)                             \
-instance Arity n => IVector (Vec n) ty where {          \
-; unsafeFreeze (mcon v)   = con  `liftM` unsafeFreeze v \
-; unsafeThaw   (con  v)   = mcon `liftM` unsafeThaw   v \
-; unsafeIndex  (con  v) i = ty (unsafeIndex v i)             \
-; {-# INLINE unsafeFreeze #-}                           \
-; {-# INLINE unsafeThaw   #-}                           \
-; {-# INLINE unsafeIndex  #-}                           \
-}
+newtype instance MVec n s Any = MV_Any (MVec n s Bool)
+newtype instance Vec  n   Any = V_Any  (Vec  n   Bool)
+instance Arity n => Unbox n Any
+deriving newtype instance Arity n => IVector (Vec  n) Any
+deriving newtype instance Arity n => MVector (MVec n) Any
 
-#define primNewMonoWrap(ty,repr,con,mcon) \
-newtype instance MVec n s ty = mcon (MVec n s repr) ; \
-newtype instance Vec  n   ty = con  (Vec  n   repr) ; \
-instance Arity n => Unbox n ty ; \
-primNewMonoMV(ty, mcon     )          ; \
-primNewMonoIV(ty, con, mcon)
-
-primNewMonoWrap(Any, Bool, V_Any, MV_Any)
-primNewMonoWrap(All, Bool, V_All, MV_All)
+newtype instance MVec n s All = MV_All (MVec n s Bool)
+newtype instance Vec  n   All = V_All  (Vec  n   Bool)
+instance Arity n => Unbox n All
+deriving newtype instance Arity n => IVector (Vec  n) All
+deriving newtype instance Arity n => MVector (MVec n) All
