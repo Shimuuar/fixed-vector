@@ -151,8 +151,20 @@ Test-Suite fixed-vector-doctests
   Type:           exitcode-stdio-1.0
   Hs-source-dirs: test
   Main-is:        Doctests.hs
-  Build-Depends: base >=4.8 && <5
+  Build-Depends: base      >=4.14 && <5
                , primitive >=0.6.2
                  -- Additional test dependencies.
                , doctest   >= 0.18
                , filemanip == 0.3.6.*
+
+Test-Suite fixed-vector-inspect
+  import:         language
+  Type:           exitcode-stdio-1.0
+  Hs-source-dirs: test
+  Main-is:        inspect.hs
+  Other-modules:  Inspect.Obligations
+  Build-Depends:  base         >=4.8 && <5
+                , template-haskell
+                , fixed-vector
+                , tasty        >= 1.2
+                , tasty-inspection-testing >= 0.1
