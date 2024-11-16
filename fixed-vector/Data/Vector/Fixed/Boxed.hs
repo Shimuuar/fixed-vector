@@ -26,7 +26,7 @@ import Foreign.Storable (Storable(..))
 import GHC.TypeLits
 import GHC.Exts (proxy#)
 import Prelude ( Show(..),Eq(..),Ord(..),Functor(..),Monad(..)
-               , ($),($!),error)
+               , ($!),error,(<$>))
 
 import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, index)
@@ -93,11 +93,11 @@ instance (Arity n) => MVector (MVec n) a where
   {-# INLINE basicUnsafeWrite #-}
 
 instance (Arity n) => IVector (Vec n) a where
-  unsafeFreeze (MVec v)   = do { a <- unsafeFreezeSmallArray v; return $! Vec  a }
-  unsafeThaw   (Vec  v)   = do { a <- unsafeThawSmallArray   v; return $! MVec a }
+  basicUnsafeFreeze (MVec v)   = do { a <- unsafeFreezeSmallArray v; return $! Vec  a }
+  basicUnsafeThaw   (Vec  v)   = do { a <- unsafeThawSmallArray   v; return $! MVec a }
   unsafeIndex  (Vec  v) i = indexSmallArray v i
-  {-# INLINE unsafeFreeze #-}
-  {-# INLINE unsafeThaw   #-}
+  {-# INLINE basicUnsafeFreeze #-}
+  {-# INLINE basicUnsafeThaw   #-}
   {-# INLINE unsafeIndex  #-}
 
 instance (Arity n) => Vector (Vec n) a where

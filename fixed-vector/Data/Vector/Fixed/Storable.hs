@@ -41,7 +41,7 @@ import Prelude ( Show(..),Eq(..),Ord(..),Num(..),Monad(..),IO,Int
                , ($),undefined,seq)
 
 import Data.Vector.Fixed hiding (index)
-import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, index, new)
+import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, index, new,unsafeFreeze)
 import qualified Data.Vector.Fixed.Cont     as C
 import           Data.Vector.Fixed.Cont     (Peano,ArityPeano(..))
 
@@ -124,13 +124,13 @@ instance (Arity n, Storable a) => MVector (MVec n) a where
   {-# INLINE basicUnsafeWrite #-}
 
 instance (Arity n, Storable a) => IVector (Vec n) a where
-  unsafeFreeze (MVec fp)   = return $ Vec  fp
-  unsafeThaw   (Vec  fp)   = return $ MVec fp
+  basicUnsafeFreeze (MVec fp)   = return $ Vec  fp
+  basicUnsafeThaw   (Vec  fp)   = return $ MVec fp
   unsafeIndex  (Vec  fp) i
     = unsafeInlineIO
     $ unsafeWithForeignPtr fp (`peekElemOff` i)
-  {-# INLINE unsafeFreeze #-}
-  {-# INLINE unsafeThaw   #-}
+  {-# INLINE basicUnsafeFreeze #-}
+  {-# INLINE basicUnsafeThaw   #-}
   {-# INLINE unsafeIndex  #-}
 
 instance (Arity n, Storable a) => Vector (Vec n) a where

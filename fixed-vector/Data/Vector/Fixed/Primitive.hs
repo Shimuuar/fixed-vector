@@ -88,11 +88,11 @@ instance (Arity n, Prim a) => MVector (MVec n) a where
   {-# INLINE basicUnsafeWrite #-}
 
 instance (Arity n, Prim a) => IVector (Vec n) a where
-  unsafeFreeze (MVec v)   = do { a <- unsafeFreezeByteArray v; return $! Vec  a }
-  unsafeThaw   (Vec  v)   = do { a <- unsafeThawByteArray   v; return $! MVec a }
+  basicUnsafeFreeze (MVec v)   = do { a <- unsafeFreezeByteArray v; return $! Vec  a }
+  basicUnsafeThaw   (Vec  v)   = do { a <- unsafeThawByteArray   v; return $! MVec a }
   unsafeIndex  (Vec  v) i = indexByteArray v i
-  {-# INLINE unsafeFreeze #-}
-  {-# INLINE unsafeThaw   #-}
+  {-# INLINE basicUnsafeFreeze #-}
+  {-# INLINE basicUnsafeThaw   #-}
   {-# INLINE unsafeIndex  #-}
 
 instance (Arity n, Prim a) => Vector (Vec n) a where

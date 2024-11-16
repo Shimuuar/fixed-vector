@@ -114,11 +114,11 @@ instance Arity n => MVector (MVec n) () where
   {-# INLINE basicUnsafeWrite #-}
 
 instance Arity n => IVector (Vec n) () where
-  unsafeFreeze _   = return V_Unit
-  unsafeThaw   _   = return MV_Unit
+  basicUnsafeFreeze _   = return V_Unit
+  basicUnsafeThaw   _   = return MV_Unit
   unsafeIndex  _ _ = ()
-  {-# INLINE unsafeFreeze #-}
-  {-# INLINE unsafeThaw   #-}
+  {-# INLINE basicUnsafeFreeze #-}
+  {-# INLINE basicUnsafeThaw   #-}
   {-# INLINE unsafeIndex  #-}
 
 
@@ -142,11 +142,11 @@ instance Arity n => MVector (MVec n) Bool where
   {-# INLINE basicUnsafeWrite #-}
 
 instance Arity n => IVector (Vec n) Bool where
-  unsafeFreeze (MV_Bool v) = V_Bool  `liftM` unsafeFreeze v
-  unsafeThaw   (V_Bool  v) = MV_Bool `liftM` unsafeThaw   v
+  basicUnsafeFreeze (MV_Bool v) = V_Bool  `liftM` basicUnsafeFreeze v
+  basicUnsafeThaw   (V_Bool  v) = MV_Bool `liftM` basicUnsafeThaw   v
   unsafeIndex  (V_Bool  v) = toBool . unsafeIndex v
-  {-# INLINE unsafeFreeze #-}
-  {-# INLINE unsafeThaw   #-}
+  {-# INLINE basicUnsafeFreeze #-}
+  {-# INLINE basicUnsafeThaw   #-}
   {-# INLINE unsafeIndex  #-}
 
 
@@ -177,11 +177,11 @@ instance Arity n => MVector (MVec n) ty where {     \
 
 #define primIV(ty,con,mcon)                             \
 instance Arity n => IVector (Vec n) ty where {          \
-; unsafeFreeze (mcon v)   = con  `liftM` unsafeFreeze v \
-; unsafeThaw   (con  v)   = mcon `liftM` unsafeThaw   v \
+; basicUnsafeFreeze (mcon v)   = con  `liftM` basicUnsafeFreeze v \
+; basicUnsafeThaw   (con  v)   = mcon `liftM` basicUnsafeThaw   v \
 ; unsafeIndex  (con  v) i = unsafeIndex v i             \
-; {-# INLINE unsafeFreeze #-}                           \
-; {-# INLINE unsafeThaw   #-}                           \
+; {-# INLINE basicUnsafeFreeze #-}                           \
+; {-# INLINE basicUnsafeThaw   #-}                           \
 ; {-# INLINE unsafeIndex  #-}                           \
 }
 
@@ -231,10 +231,10 @@ instance (Arity n, MVector (MVec n) a) => MVector (MVec n) (Complex a) where
   {-# INLINE basicUnsafeWrite #-}
 
 instance (Arity n, IVector (Vec n) a) => IVector (Vec n) (Complex a) where
-  unsafeFreeze (MV_Complex v) = V_Complex `liftM` unsafeFreeze v
-  {-# INLINE unsafeFreeze #-}
-  unsafeThaw   (V_Complex  v) = MV_Complex `liftM` unsafeThaw v
-  {-# INLINE unsafeThaw   #-}
+  basicUnsafeFreeze (MV_Complex v) = V_Complex `liftM` basicUnsafeFreeze v
+  {-# INLINE basicUnsafeFreeze #-}
+  basicUnsafeThaw   (V_Complex  v) = MV_Complex `liftM` basicUnsafeThaw v
+  {-# INLINE basicUnsafeThaw   #-}
   unsafeIndex (V_Complex v) i =
     case unsafeIndex v i of (a,b) -> a :+ b
   {-# INLINE unsafeIndex  #-}
@@ -266,14 +266,14 @@ instance (Arity n, MVector (MVec n) a, MVector (MVec n) b) => MVector (MVec n) (
 instance ( Arity n
          , IVector (Vec n) a, IVector (Vec n) b
          ) => IVector (Vec n) (a,b) where
-  unsafeFreeze (MV_2 v w)   = do as <- unsafeFreeze v
-                                 bs <- unsafeFreeze w
-                                 return $ V_2 as bs
-  {-# INLINE unsafeFreeze #-}
-  unsafeThaw   (V_2  v w)   = do as <- unsafeThaw v
-                                 bs <- unsafeThaw w
-                                 return $ MV_2 as bs
-  {-# INLINE unsafeThaw   #-}
+  basicUnsafeFreeze (MV_2 v w)   = do as <- basicUnsafeFreeze v
+                                      bs <- basicUnsafeFreeze w
+                                      return $ V_2 as bs
+  {-# INLINE basicUnsafeFreeze #-}
+  basicUnsafeThaw   (V_2  v w)   = do as <- basicUnsafeThaw v
+                                      bs <- basicUnsafeThaw w
+                                      return $ MV_2 as bs
+  {-# INLINE basicUnsafeThaw   #-}
   unsafeIndex  (V_2  v w) i = (unsafeIndex v i, unsafeIndex w i)
   {-# INLINE unsafeIndex  #-}
 
@@ -308,16 +308,16 @@ instance ( Arity n
          , Vector  (Vec n) a, Vector  (Vec n) b, Vector  (Vec n) c
          , IVector (Vec n) a, IVector (Vec n) b, IVector (Vec n) c
          ) => IVector (Vec n) (a,b,c) where
-  unsafeFreeze (MV_3 v w u) = do as <- unsafeFreeze v
-                                 bs <- unsafeFreeze w
-                                 cs <- unsafeFreeze u
-                                 return $ V_3 as bs cs
-  {-# INLINE unsafeFreeze #-}
-  unsafeThaw   (V_3  v w u) = do as <- unsafeThaw v
-                                 bs <- unsafeThaw w
-                                 cs <- unsafeThaw u
-                                 return $ MV_3 as bs cs
-  {-# INLINE unsafeThaw   #-}
+  basicUnsafeFreeze (MV_3 v w u) = do as <- basicUnsafeFreeze v
+                                      bs <- basicUnsafeFreeze w
+                                      cs <- basicUnsafeFreeze u
+                                      return $ V_3 as bs cs
+  {-# INLINE basicUnsafeFreeze #-}
+  basicUnsafeThaw   (V_3  v w u) = do as <- basicUnsafeThaw v
+                                      bs <- basicUnsafeThaw w
+                                      cs <- basicUnsafeThaw u
+                                      return $ MV_3 as bs cs
+  {-# INLINE basicUnsafeThaw   #-}
   unsafeIndex  (V_3 v w u) i
     = (unsafeIndex v i, unsafeIndex w i, unsafeIndex u i)
   {-# INLINE unsafeIndex  #-}
@@ -341,11 +341,11 @@ instance (Unbox n a) => MVector (MVec n) (Const a b) where
   {-# INLINE basicUnsafeWrite #-}
 
 instance (Unbox n a) => IVector (Vec n) (Const a b) where
-  unsafeFreeze (MV_Const v)   = V_Const  `liftM` unsafeFreeze v
-  unsafeThaw   (V_Const  v)   = MV_Const `liftM` unsafeThaw   v
+  basicUnsafeFreeze (MV_Const v)   = V_Const  `liftM` basicUnsafeFreeze v
+  basicUnsafeThaw   (V_Const  v)   = MV_Const `liftM` basicUnsafeThaw   v
   unsafeIndex  (V_Const  v) i = Const (unsafeIndex v i)
-  {-# INLINE unsafeFreeze #-}
-  {-# INLINE unsafeThaw   #-}
+  {-# INLINE basicUnsafeFreeze #-}
+  {-# INLINE basicUnsafeThaw   #-}
   {-# INLINE unsafeIndex  #-}
 
 
@@ -366,11 +366,11 @@ instance Unbox n a => MVector (MVec n) (ty a) where {     \
 
 #define primNewIV(ty,con,mcon)                             \
 instance Unbox n a => IVector (Vec n) (ty a)  where {          \
-; unsafeFreeze (mcon v)   = con  `liftM` unsafeFreeze v \
-; unsafeThaw   (con  v)   = mcon `liftM` unsafeThaw   v \
+; basicUnsafeFreeze (mcon v)   = con  `liftM` basicUnsafeFreeze v \
+; basicUnsafeThaw   (con  v)   = mcon `liftM` basicUnsafeThaw   v \
 ; unsafeIndex  (con  v) i = ty (unsafeIndex v i)             \
-; {-# INLINE unsafeFreeze #-}                           \
-; {-# INLINE unsafeThaw   #-}                           \
+; {-# INLINE basicUnsafeFreeze #-}                           \
+; {-# INLINE basicUnsafeThaw   #-}                           \
 ; {-# INLINE unsafeIndex  #-}                           \
 }
 
@@ -406,11 +406,11 @@ instance Arity n => MVector (MVec n) ty where {     \
 
 #define primNewMonoIV(ty,con,mcon)                             \
 instance Arity n => IVector (Vec n) ty where {          \
-; unsafeFreeze (mcon v)   = con  `liftM` unsafeFreeze v \
-; unsafeThaw   (con  v)   = mcon `liftM` unsafeThaw   v \
+; basicUnsafeFreeze (mcon v)   = con  `liftM` basicUnsafeFreeze v \
+; basicUnsafeThaw   (con  v)   = mcon `liftM` basicUnsafeThaw   v \
 ; unsafeIndex  (con  v) i = ty (unsafeIndex v i)             \
-; {-# INLINE unsafeFreeze #-}                           \
-; {-# INLINE unsafeThaw   #-}                           \
+; {-# INLINE basicUnsafeFreeze #-}                           \
+; {-# INLINE basicUnsafeThaw   #-}                           \
 ; {-# INLINE unsafeIndex  #-}                           \
 }
 
