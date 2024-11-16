@@ -78,15 +78,18 @@ deriving via ViaFixed (Vec n) a instance (Arity n, Monoid    a) => Monoid    (Ve
 deriving via ViaFixed (Vec n) a instance (Arity n, Storable  a) => Storable  (Vec n a)
 
 instance (Arity n) => MVector (MVec n) a where
-  basicNew = do
-    v <- newSmallArray (peanoToInt (proxy# @(Peano n))) uninitialised
-    return $ MVec v
-  {-# INLINE basicNew         #-}    
-  basicCopy (MVec dst) (MVec src) = copySmallMutableArray dst 0 src 0 (peanoToInt (proxy# @(Peano n)))
-  {-# INLINE basicCopy        #-}
+  basicNew =
+    MVec <$> newSmallArray (peanoToInt (proxy# @(Peano n))) uninitialised
+  basicReplicate a =
+    MVec <$> newSmallArray (peanoToInt (proxy# @(Peano n))) a
+  basicCopy (MVec dst) (MVec src) =
+    copySmallMutableArray dst 0 src 0 (peanoToInt (proxy# @(Peano n)))
   basicUnsafeRead  (MVec v) i   = readSmallArray  v i
-  {-# INLINE basicUnsafeRead  #-}
   basicUnsafeWrite (MVec v) i x = writeSmallArray v i x
+  {-# INLINE basicNew         #-}
+  {-# INLINE basicReplicate   #-}
+  {-# INLINE basicCopy        #-}
+  {-# INLINE basicUnsafeRead  #-}
   {-# INLINE basicUnsafeWrite #-}
 
 instance (Arity n) => IVector (Vec n) a where
