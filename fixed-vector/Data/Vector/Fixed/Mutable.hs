@@ -76,11 +76,19 @@ class (ArityPeano (DimM v)) => MVector v a where
     v <- basicNew
     forI v $ \i -> basicUnsafeWrite v i a
     pure v
+  -- | Create copy of existing vector. Shouldn't be used
+  --   directly, use 'clone' instead.
+  basicClone :: v s a -> ST s (v s a)
+  {-# INLINE basicClone #-}
+  basicClone src = do
+    dst <- basicNew
+    basicCopy dst src
+    pure src
   -- | Read value at index without bound checks. Shouldn't be used
-  --   directly, use 'new' instead.
+  --   directly, use 'unsafeRead' instead.
   basicUnsafeRead  :: v s a -> Int -> ST s a
   -- | Write value at index without bound checks. Shouldn't be used
-  --   directly, use 'new' instead.
+  --   directly, use 'unsafeWrite' instead.
   basicUnsafeWrite :: v s a -> Int -> a -> ST s ()
 
 -- | Length of mutable vector. Function doesn't evaluate its argument.
@@ -115,10 +123,7 @@ copy tgt src = stToPrim $ basicCopy tgt src
 --   [2,100,100]
 clone :: (PrimMonad m, MVector v a) => v (PrimState m) a -> m (v (PrimState m) a)
 {-# INLINE clone #-}
-clone v = do
-  u <- new
-  copy u v
-  return u
+clone = stToPrim . basicClone
 
 -- | Read value at index without bound checks.
 unsafeRead  :: (MVector v a, PrimMonad m) => v (PrimState m) a -> Int -> m a
