@@ -30,7 +30,7 @@ import Foreign.Storable         (Storable)
 import GHC.TypeLits
 import GHC.Exts (proxy#)
 import Prelude (Show(..),Eq(..),Ord(..),Num(..))
-import Prelude (($),($!),undefined,seq)
+import Prelude (($),($!),undefined,seq,(<$>))
 
 
 import Data.Vector.Fixed hiding (index)
@@ -88,12 +88,12 @@ instance (Arity n, Prim a) => MVector (MVec n) a where
   {-# INLINE basicUnsafeWrite #-}
 
 instance (Arity n, Prim a) => IVector (Vec n) a where
-  basicUnsafeFreeze (MVec v)   = do { a <- unsafeFreezeByteArray v; return $! Vec  a }
-  basicUnsafeThaw   (Vec  v)   = do { a <- unsafeThawByteArray   v; return $! MVec a }
-  unsafeIndex  (Vec  v) i = indexByteArray v i
+  basicUnsafeFreeze (MVec v) = do { a <- unsafeFreezeByteArray v; return $! Vec  a }
+  basicThaw         (Vec  v) = MVec <$> thawByteArray v 0 (peanoToInt (proxy# @(Peano n)))
+  unsafeIndex       (Vec  v) i = indexByteArray v i
   {-# INLINE basicUnsafeFreeze #-}
-  {-# INLINE basicUnsafeThaw   #-}
-  {-# INLINE unsafeIndex  #-}
+  {-# INLINE basicThaw         #-}
+  {-# INLINE unsafeIndex       #-}
 
 instance (Arity n, Prim a) => Vector (Vec n) a where
   construct  = constructVec

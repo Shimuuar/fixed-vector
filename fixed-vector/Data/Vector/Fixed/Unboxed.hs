@@ -115,10 +115,10 @@ instance Arity n => MVector (MVec n) () where
 
 instance Arity n => IVector (Vec n) () where
   basicUnsafeFreeze _   = return V_Unit
-  basicUnsafeThaw   _   = return MV_Unit
+  basicThaw   _   = return MV_Unit
   unsafeIndex  _ _ = ()
   {-# INLINE basicUnsafeFreeze #-}
-  {-# INLINE basicUnsafeThaw   #-}
+  {-# INLINE basicThaw   #-}
   {-# INLINE unsafeIndex  #-}
 
 
@@ -143,10 +143,10 @@ instance Arity n => MVector (MVec n) Bool where
 
 instance Arity n => IVector (Vec n) Bool where
   basicUnsafeFreeze (MV_Bool v) = V_Bool  `liftM` basicUnsafeFreeze v
-  basicUnsafeThaw   (V_Bool  v) = MV_Bool `liftM` basicUnsafeThaw   v
+  basicThaw   (V_Bool  v) = MV_Bool `liftM` basicThaw   v
   unsafeIndex  (V_Bool  v) = toBool . unsafeIndex v
   {-# INLINE basicUnsafeFreeze #-}
-  {-# INLINE basicUnsafeThaw   #-}
+  {-# INLINE basicThaw   #-}
   {-# INLINE unsafeIndex  #-}
 
 
@@ -178,10 +178,10 @@ instance Arity n => MVector (MVec n) ty where {     \
 #define primIV(ty,con,mcon)                             \
 instance Arity n => IVector (Vec n) ty where {          \
 ; basicUnsafeFreeze (mcon v)   = con  `liftM` basicUnsafeFreeze v \
-; basicUnsafeThaw   (con  v)   = mcon `liftM` basicUnsafeThaw   v \
+; basicThaw   (con  v)   = mcon `liftM` basicThaw   v \
 ; unsafeIndex  (con  v) i = unsafeIndex v i             \
 ; {-# INLINE basicUnsafeFreeze #-}                           \
-; {-# INLINE basicUnsafeThaw   #-}                           \
+; {-# INLINE basicThaw   #-}                           \
 ; {-# INLINE unsafeIndex  #-}                           \
 }
 
@@ -233,8 +233,8 @@ instance (Arity n, MVector (MVec n) a) => MVector (MVec n) (Complex a) where
 instance (Arity n, IVector (Vec n) a) => IVector (Vec n) (Complex a) where
   basicUnsafeFreeze (MV_Complex v) = V_Complex `liftM` basicUnsafeFreeze v
   {-# INLINE basicUnsafeFreeze #-}
-  basicUnsafeThaw   (V_Complex  v) = MV_Complex `liftM` basicUnsafeThaw v
-  {-# INLINE basicUnsafeThaw   #-}
+  basicThaw   (V_Complex  v) = MV_Complex `liftM` basicThaw v
+  {-# INLINE basicThaw   #-}
   unsafeIndex (V_Complex v) i =
     case unsafeIndex v i of (a,b) -> a :+ b
   {-# INLINE unsafeIndex  #-}
@@ -270,10 +270,10 @@ instance ( Arity n
                                       bs <- basicUnsafeFreeze w
                                       return $ V_2 as bs
   {-# INLINE basicUnsafeFreeze #-}
-  basicUnsafeThaw   (V_2  v w)   = do as <- basicUnsafeThaw v
-                                      bs <- basicUnsafeThaw w
-                                      return $ MV_2 as bs
-  {-# INLINE basicUnsafeThaw   #-}
+  basicThaw   (V_2  v w)   = do as <- basicThaw v
+                                bs <- basicThaw w
+                                return $ MV_2 as bs
+  {-# INLINE basicThaw   #-}
   unsafeIndex  (V_2  v w) i = (unsafeIndex v i, unsafeIndex w i)
   {-# INLINE unsafeIndex  #-}
 
@@ -313,11 +313,11 @@ instance ( Arity n
                                       cs <- basicUnsafeFreeze u
                                       return $ V_3 as bs cs
   {-# INLINE basicUnsafeFreeze #-}
-  basicUnsafeThaw   (V_3  v w u) = do as <- basicUnsafeThaw v
-                                      bs <- basicUnsafeThaw w
-                                      cs <- basicUnsafeThaw u
-                                      return $ MV_3 as bs cs
-  {-# INLINE basicUnsafeThaw   #-}
+  basicThaw   (V_3  v w u) = do as <- basicThaw v
+                                bs <- basicThaw w
+                                cs <- basicThaw u
+                                return $ MV_3 as bs cs
+  {-# INLINE basicThaw   #-}
   unsafeIndex  (V_3 v w u) i
     = (unsafeIndex v i, unsafeIndex w i, unsafeIndex u i)
   {-# INLINE unsafeIndex  #-}
@@ -351,10 +351,10 @@ instance Unbox n a => MVector (MVec n) (ty a) where {     \
 #define primNewIV(ty,con,mcon)                             \
 instance Unbox n a => IVector (Vec n) (ty a)  where {          \
 ; basicUnsafeFreeze (mcon v)   = con  `liftM` basicUnsafeFreeze v \
-; basicUnsafeThaw   (con  v)   = mcon `liftM` basicUnsafeThaw   v \
+; basicThaw   (con  v)   = mcon `liftM` basicThaw   v \
 ; unsafeIndex  (con  v) i = ty (unsafeIndex v i)             \
 ; {-# INLINE basicUnsafeFreeze #-}                           \
-; {-# INLINE basicUnsafeThaw   #-}                           \
+; {-# INLINE basicThaw   #-}                           \
 ; {-# INLINE unsafeIndex  #-}                           \
 }
 

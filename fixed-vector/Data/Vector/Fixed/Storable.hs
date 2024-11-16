@@ -38,7 +38,7 @@ import GHC.ForeignPtr       ( unsafeWithForeignPtr )
 #endif
 import Foreign.ForeignPtr   ( ForeignPtr, withForeignPtr )
 import Prelude ( Show(..),Eq(..),Ord(..),Num(..),Monad(..),IO,Int
-               , ($),undefined,seq)
+               , ($),undefined,seq,pure)
 
 import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, index, new,unsafeFreeze)
@@ -124,14 +124,17 @@ instance (Arity n, Storable a) => MVector (MVec n) a where
   {-# INLINE basicUnsafeWrite #-}
 
 instance (Arity n, Storable a) => IVector (Vec n) a where
-  basicUnsafeFreeze (MVec fp)   = return $ Vec  fp
-  basicUnsafeThaw   (Vec  fp)   = return $ MVec fp
+  basicUnsafeFreeze (MVec fp) = return $ Vec  fp
+  basicThaw         (Vec  fp) = do
+    mv <- basicNew
+    basicCopy mv (MVec fp)
+    pure mv
   unsafeIndex  (Vec  fp) i
     = unsafeInlineIO
     $ unsafeWithForeignPtr fp (`peekElemOff` i)
   {-# INLINE basicUnsafeFreeze #-}
-  {-# INLINE basicUnsafeThaw   #-}
-  {-# INLINE unsafeIndex  #-}
+  {-# INLINE basicThaw         #-}
+  {-# INLINE unsafeIndex       #-}
 
 instance (Arity n, Storable a) => Vector (Vec n) a where
   construct  = constructVec

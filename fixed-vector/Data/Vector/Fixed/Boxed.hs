@@ -96,11 +96,12 @@ instance (Arity n) => MVector (MVec n) a where
   {-# INLINE basicUnsafeWrite #-}
 
 instance (Arity n) => IVector (Vec n) a where
-  basicUnsafeFreeze (MVec v)   = do { a <- unsafeFreezeSmallArray v; return $! Vec  a }
-  basicUnsafeThaw   (Vec  v)   = do { a <- unsafeThawSmallArray   v; return $! MVec a }
+  basicUnsafeFreeze (MVec v) = do { a <- unsafeFreezeSmallArray v; return $! Vec  a }
+  basicThaw         (Vec  v) =
+    MVec <$> thawSmallArray v 0 (peanoToInt (proxy# @(Peano n)))
   unsafeIndex  (Vec  v) i = indexSmallArray v i
   {-# INLINE basicUnsafeFreeze #-}
-  {-# INLINE basicUnsafeThaw   #-}
+  {-# INLINE basicThaw   #-}
   {-# INLINE unsafeIndex  #-}
 
 instance (Arity n) => Vector (Vec n) a where

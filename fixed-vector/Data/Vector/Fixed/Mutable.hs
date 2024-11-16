@@ -31,7 +31,6 @@ module Data.Vector.Fixed.Mutable (
   , freeze
   , thaw
   , unsafeFreeze
-  , unsafeThaw
     -- * Vector API
   , constructVec
   , inspectVec
@@ -199,33 +198,8 @@ class (Dim v ~ DimM (Mutable v), MVector (Mutable v) a) => IVector v a where
   -- | Convert vector to immutable state. Mutable vector must not be
   --   modified afterwards.
   basicUnsafeFreeze :: Mutable v s a -> ST s (v a)
-  -- | /O(1)/ Unsafely convert immutable vector to mutable without
-  --   copying.  Note that this is a very dangerous function and
-  --   generally it's only safe to read from the resulting vector. In
-  --   this case, the immutable vector could be used safely as well.
-  --
-  -- Problems with mutation happen because GHC has a lot of freedom to
-  -- introduce sharing. As a result mutable vectors produced by
-  -- @unsafeThaw@ may or may not share the same underlying buffer. For
-  -- example:
-  --
-  -- > foo = do
-  -- >   let vec = F.generate 10 id
-  -- >   mvec <- M.unsafeThaw vec
-  -- >   do_something mvec
-  --
-  -- Here GHC could lift @vec@ outside of foo which means that all calls to
-  -- @do_something@ will use same buffer with possibly disastrous
-  -- results. Whether such aliasing happens or not depends on the program in
-  -- question, optimization levels, and GHC flags.
-  --
-  -- All in all, attempts to modify a vector produced by @unsafeThaw@
-  -- fall out of domain of software engineering and into realm of
-  -- black magic, dark rituals, and unspeakable horrors. The only
-  -- advice that could be given is: "Don't attempt to mutate a vector
-  -- produced by @unsafeThaw@ unless you know how to prevent GHC from
-  -- aliasing buffers accidentally. We don't."
-  basicUnsafeThaw :: v a -> ST s (Mutable v s a)
+  -- | Convert immutable vector to mutable by copying it.
+  basicThaw :: v a -> ST s (Mutable v s a)
   -- | Get element at specified index without bounds check.
   unsafeIndex :: v a -> Int -> a
 
@@ -235,37 +209,6 @@ class (Dim v ~ DimM (Mutable v), MVector (Mutable v) a) => IVector v a where
 unsafeFreeze :: (IVector v a, PrimMonad m) => Mutable v (PrimState m) a -> m (v a)
 {-# INLINE unsafeFreeze #-}
 unsafeFreeze = stToPrim . basicUnsafeFreeze
-
--- | /O(1)/ Unsafely convert immutable vector to mutable without
---   copying.  Note that this is a very dangerous function and
---   generally it's only safe to read from the resulting vector. In
---   this case, the immutable vector could be used safely as well.
---
--- Problems with mutation happen because GHC has a lot of freedom to
--- introduce sharing. As a result mutable vectors produced by
--- @unsafeThaw@ may or may not share the same underlying buffer. For
--- example:
---
--- > foo = do
--- >   let vec = F.generate 10 id
--- >   mvec <- M.unsafeThaw vec
--- >   do_something mvec
---
--- Here GHC could lift @vec@ outside of foo which means that all calls to
--- @do_something@ will use same buffer with possibly disastrous
--- results. Whether such aliasing happens or not depends on the program in
--- question, optimization levels, and GHC flags.
---
--- All in all, attempts to modify a vector produced by @unsafeThaw@
--- fall out of domain of software engineering and into realm of
--- black magic, dark rituals, and unspeakable horrors. The only
--- advice that could be given is: "Don't attempt to mutate a vector
--- produced by @unsafeThaw@ unless you know how to prevent GHC from
--- aliasing buffers accidentally. We don't."
-unsafeThaw :: PrimMonad m => v a -> m (Mutable v (PrimState m) a)
-{-# INLINE unsafeThaw #-}
-unsafeThaw = stToPrim . unsafeThaw
-
 
 index :: IVector v a => v a -> Int -> a
 {-# INLINE index #-}
@@ -281,7 +224,7 @@ freeze v = unsafeFreeze =<< clone v
 -- | Safely convert immutable vector to mutable.
 thaw :: (PrimMonad m, IVector v a) => v a -> m (Mutable v (PrimState m) a)
 {-# INLINE thaw #-}
-thaw v = clone =<< unsafeThaw v
+thaw = stToPrim . basicThaw
 
 
 
