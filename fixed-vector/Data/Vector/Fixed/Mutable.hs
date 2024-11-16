@@ -11,9 +11,13 @@ module Data.Vector.Fixed.Mutable (
   , DimM
   , MVector(..)
   , lengthM
+  , new
+  , clone
+  , copy
   , read
   , write
-  , clone
+  , unsafeRead
+  , unsafeWrite
     -- * Creation
   , replicate
   , replicateM
@@ -54,24 +58,39 @@ type family DimM (v :: Type -> Type -> Type) :: PeanoNum
 
 -- | Type class for mutable vectors.
 class (ArityPeano (DimM v)) => MVector v a where
-  -- | Copy vector. The two vectors may not overlap. Since vectors'
-  --   length is encoded in the type there is no need in runtime
-  --   checks of length.
-  copy :: PrimMonad m
-       => v (PrimState m) a    -- ^ Target
-       -> v (PrimState m) a    -- ^ Source
-       -> m ()
-  -- | Allocate new vector
-  new   :: PrimMonad m => m (v (PrimState m) a)
-  -- | Read value at index without bound checks.
-  unsafeRead  :: PrimMonad m => v (PrimState m) a -> Int -> m a
-  -- | Write value at index without bound checks.
-  unsafeWrite :: PrimMonad m => v (PrimState m) a -> Int -> a -> m ()
-
+  -- | Copy vector. The two vectors may not overlap. Shouldn't be used
+  --   directly, use 'copy' instead.
+  basicCopy :: v s a    -- ^ Target
+            -> v s a    -- ^ Source
+            -> ST s ()
+  -- | Allocate new uninitialized vector. Shouldn't be used
+  --   directly, use 'new' instead.
+  basicNew :: ST s (v s a)
+  -- | Read value at index without bound checks. Shouldn't be used
+  --   directly, use 'new' instead.
+  basicUnsafeRead  :: v s a -> Int -> ST s a
+  -- | Write value at index without bound checks. Shouldn't be used
+  --   directly, use 'new' instead.
+  basicUnsafeWrite :: v s a -> Int -> a -> ST s ()
 
 -- | Length of mutable vector. Function doesn't evaluate its argument.
 lengthM :: forall v s a. (ArityPeano (DimM v)) => v s a -> Int
 lengthM _ = peanoToInt (proxy# @(DimM v))
+
+-- | Create new uninitialized  mutable vector.
+new :: (MVector v a, PrimMonad m) => m (v (PrimState m) a)
+new = stToPrim basicNew
+{-# INLINE new #-}
+
+-- | Copy vector. The two vectors may not overlap. Since vectors'
+--   length is encoded in the type there is no need in runtime
+--   checks of length.
+copy :: (MVector v a, PrimMonad m)
+     => v (PrimState m) a    -- ^ Target
+     -> v (PrimState m) a    -- ^ Source
+     -> m ()
+{-# INLINE copy #-}
+copy tgt src = stToPrim $ basicCopy tgt src
 
 -- | Create copy of vector.
 --
@@ -90,6 +109,16 @@ clone v = do
   u <- new
   copy u v
   return u
+
+-- | Read value at index without bound checks.
+unsafeRead  :: (MVector v a, PrimMonad m) => v (PrimState m) a -> Int -> m a
+{-# INLINE unsafeRead #-}
+unsafeRead v i = stToPrim $ basicUnsafeRead v i
+
+-- | Write value at index without bound checks.
+unsafeWrite :: (MVector v a, PrimMonad m) => v (PrimState m) a -> Int -> a -> m ()
+{-# INLINE unsafeWrite #-}
+unsafeWrite v i a = stToPrim $ basicUnsafeWrite v i a
 
 -- | Read value at index with bound checks.
 read  :: (PrimMonad m, MVector v a) => v (PrimState m) a -> Int -> m a

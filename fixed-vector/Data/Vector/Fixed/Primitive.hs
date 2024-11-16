@@ -75,17 +75,17 @@ deriving via ViaFixed (Vec n) a instance (Arity n, Prim a, Monoid    a) => Monoi
 deriving via ViaFixed (Vec n) a instance (Arity n, Prim a, Storable  a) => Storable  (Vec n a)
 
 instance (Arity n, Prim a) => MVector (MVec n) a where
-  new = do
+  basicNew = do
     v <- newByteArray $! peanoToInt (proxy# @(Peano n))
                        * sizeOf (undefined :: a)
     return $ MVec v
-  {-# INLINE new         #-}
-  copy (MVec dst) (MVec src) = copyMutableByteArray dst 0 src 0 (peanoToInt (proxy# @(Peano n)))
-  {-# INLINE copy        #-}
-  unsafeRead  (MVec v) i   = readByteArray  v i
-  {-# INLINE unsafeRead  #-}
-  unsafeWrite (MVec v) i x = writeByteArray v i x
-  {-# INLINE unsafeWrite #-}
+  {-# INLINE basicNew         #-}
+  basicCopy (MVec dst) (MVec src) = copyMutableByteArray dst 0 src 0 (peanoToInt (proxy# @(Peano n)))
+  {-# INLINE basicCopy        #-}
+  basicUnsafeRead  (MVec v) i   = readByteArray  v i
+  {-# INLINE basicUnsafeRead  #-}
+  basicUnsafeWrite (MVec v) i x = writeByteArray v i x
+  {-# INLINE basicUnsafeWrite #-}
 
 instance (Arity n, Prim a) => IVector (Vec n) a where
   unsafeFreeze (MVec v)   = do { a <- unsafeFreezeByteArray v; return $! Vec  a }

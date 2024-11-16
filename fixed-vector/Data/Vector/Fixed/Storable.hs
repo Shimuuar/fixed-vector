@@ -41,7 +41,7 @@ import Prelude ( Show(..),Eq(..),Ord(..),Num(..),Monad(..),IO,Int
                , ($),undefined,seq)
 
 import Data.Vector.Fixed hiding (index)
-import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, index)
+import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, index, new)
 import qualified Data.Vector.Fixed.Cont     as C
 import           Data.Vector.Fixed.Cont     (Peano,ArityPeano(..))
 
@@ -104,24 +104,24 @@ deriving via ViaFixed (Vec n) a instance (Arity n, Storable a, Semigroup a) => S
 deriving via ViaFixed (Vec n) a instance (Arity n, Storable a, Monoid    a) => Monoid    (Vec n a)
 
 instance (Arity n, Storable a) => MVector (MVec n) a where
-  new = unsafePrimToPrim $ do
+  basicNew = unsafePrimToPrim $ do
     fp <- mallocVector (peanoToInt (proxy# @(Peano n)))
     return $ MVec fp
-  {-# INLINE new         #-}
-  copy (MVec fp) (MVec fq)
+  {-# INLINE basicNew         #-}
+  basicCopy (MVec fp) (MVec fq)
     = unsafePrimToPrim
     $ unsafeWithForeignPtr fp $ \p ->
       unsafeWithForeignPtr fq $ \q ->
       copyArray p q (peanoToInt (proxy# @(Peano n)))
-  {-# INLINE copy        #-}
-  unsafeRead (MVec fp) i
+  {-# INLINE basicCopy        #-}
+  basicUnsafeRead (MVec fp) i
     = unsafePrimToPrim
     $ unsafeWithForeignPtr fp (`peekElemOff` i)
-  {-# INLINE unsafeRead  #-}
-  unsafeWrite (MVec fp) i x
+  {-# INLINE basicUnsafeRead  #-}
+  basicUnsafeWrite (MVec fp) i x
     = unsafePrimToPrim
     $ unsafeWithForeignPtr fp $ \p -> pokeElemOff p i x
-  {-# INLINE unsafeWrite #-}
+  {-# INLINE basicUnsafeWrite #-}
 
 instance (Arity n, Storable a) => IVector (Vec n) a where
   unsafeFreeze (MVec fp)   = return $ Vec  fp
