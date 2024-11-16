@@ -329,24 +329,8 @@ instance ( Arity n
 newtype instance MVec n s (Const a b) = MV_Const (MVec n s a)
 newtype instance Vec  n   (Const a b) = V_Const  (Vec  n   a)
 instance Unbox n a => Unbox n (Const a b)
-
-instance (Unbox n a) => MVector (MVec n) (Const a b) where
-  basicNew                                  = MV_Const `liftM` basicNew
-  basicCopy (MV_Const v) (MV_Const w)       = basicCopy v w
-  basicUnsafeRead  (MV_Const v) i           = Const `liftM` basicUnsafeRead v i
-  basicUnsafeWrite (MV_Const v) i (Const x) = basicUnsafeWrite v i x
-  {-# INLINE basicNew         #-}
-  {-# INLINE basicCopy        #-}
-  {-# INLINE basicUnsafeRead  #-}
-  {-# INLINE basicUnsafeWrite #-}
-
-instance (Unbox n a) => IVector (Vec n) (Const a b) where
-  basicUnsafeFreeze (MV_Const v)   = V_Const  `liftM` basicUnsafeFreeze v
-  basicUnsafeThaw   (V_Const  v)   = MV_Const `liftM` basicUnsafeThaw   v
-  unsafeIndex  (V_Const  v) i = Const (unsafeIndex v i)
-  {-# INLINE basicUnsafeFreeze #-}
-  {-# INLINE basicUnsafeThaw   #-}
-  {-# INLINE unsafeIndex  #-}
+deriving newtype instance (Unbox n a) => MVector (MVec n) (Const a b)
+deriving newtype instance (Unbox n a) => IVector (Vec n)  (Const a b)
 
 
 ----------------------------------------------------------------
@@ -392,34 +376,15 @@ primNewWrap(Product, V_Product, MV_Product)
 ----------------------------------------------------------------
 -- Monomorphic newtype wrappers
 
-#define primNewMonoMV(ty,con)                         \
-instance Arity n => MVector (MVec n) ty where {     \
-; basicNew = con `liftM` basicNew                             \
-; basicCopy (con v) (con w) = basicCopy v w                   \
-; basicUnsafeRead  (con v) i = ty `liftM` basicUnsafeRead v i            \
-; basicUnsafeWrite (con v) i (ty x) = basicUnsafeWrite v i x       \
-; {-# INLINE basicNew         #-}                        \
-; {-# INLINE basicCopy        #-}                        \
-; {-# INLINE basicUnsafeRead  #-}                        \
-; {-# INLINE basicUnsafeWrite #-}                        \
-}
 
-#define primNewMonoIV(ty,con,mcon)                             \
-instance Arity n => IVector (Vec n) ty where {          \
-; basicUnsafeFreeze (mcon v)   = con  `liftM` basicUnsafeFreeze v \
-; basicUnsafeThaw   (con  v)   = mcon `liftM` basicUnsafeThaw   v \
-; unsafeIndex  (con  v) i = ty (unsafeIndex v i)             \
-; {-# INLINE basicUnsafeFreeze #-}                           \
-; {-# INLINE basicUnsafeThaw   #-}                           \
-; {-# INLINE unsafeIndex  #-}                           \
-}
+newtype instance MVec n s Any = MV_Any (MVec n s Bool)
+newtype instance Vec  n   Any = V_Any  (Vec  n   Bool)
+instance Arity n => Unbox n Any
+deriving newtype instance Arity n => IVector (Vec  n) Any
+deriving newtype instance Arity n => MVector (MVec n) Any
 
-#define primNewMonoWrap(ty,repr,con,mcon) \
-newtype instance MVec n s ty = mcon (MVec n s repr) ; \
-newtype instance Vec  n   ty = con  (Vec  n   repr) ; \
-instance Arity n => Unbox n ty ; \
-primNewMonoMV(ty, mcon     )          ; \
-primNewMonoIV(ty, con, mcon)
-
-primNewMonoWrap(Any, Bool, V_Any, MV_Any)
-primNewMonoWrap(All, Bool, V_All, MV_All)
+newtype instance MVec n s All = MV_All (MVec n s Bool)
+newtype instance Vec  n   All = V_All  (Vec  n   Bool)
+instance Arity n => Unbox n All
+deriving newtype instance Arity n => IVector (Vec  n) All
+deriving newtype instance Arity n => MVector (MVec n) All
