@@ -55,14 +55,9 @@ type family DimM (v :: Type -> Type -> Type) :: PeanoNum
 -- | Type class for mutable vectors.
 class (ArityPeano (DimM v)) => MVector v a where
   -- | Copy vector. The two vectors may not overlap. Since vectors'
-  --   length is encoded in the type there is no need in runtime checks.
+  --   length is encoded in the type there is no need in runtime
+  --   checks of length.
   copy :: PrimMonad m
-       => v (PrimState m) a    -- ^ Target
-       -> v (PrimState m) a    -- ^ Source
-       -> m ()
-  -- | Copy vector. The two vectors may overlap. Since vectors' length
-  --   is encoded in the type there is no need in runtime checks.
-  move :: PrimMonad m
        => v (PrimState m) a    -- ^ Target
        -> v (PrimState m) a    -- ^ Source
        -> m ()
@@ -93,7 +88,7 @@ clone :: (PrimMonad m, MVector v a) => v (PrimState m) a -> m (v (PrimState m) a
 {-# INLINE clone #-}
 clone v = do
   u <- new
-  move u v
+  copy u v
   return u
 
 -- | Read value at index with bound checks.

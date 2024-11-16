@@ -107,8 +107,6 @@ instance Arity n => MVector (MVec n) () where
   new          = return MV_Unit
   {-# INLINE new         #-}
   copy _ _     = return ()
-  {-# INLINE move        #-}
-  move _ _     = return ()
   {-# INLINE copy        #-}
   unsafeRead  _ _   = return ()
   {-# INLINE unsafeRead  #-}
@@ -138,8 +136,6 @@ instance Arity n => MVector (MVec n) Bool where
   {-# INLINE new         #-}
   copy (MV_Bool v) (MV_Bool w) = copy v w
   {-# INLINE copy        #-}
-  move (MV_Bool v) (MV_Bool w) = move v w
-  {-# INLINE move        #-}
   unsafeRead  (MV_Bool v) i   = toBool `liftM` unsafeRead v i
   {-# INLINE unsafeRead  #-}
   unsafeWrite (MV_Bool v) i b = unsafeWrite v i (fromBool b)
@@ -171,11 +167,9 @@ toBool _ = True
 instance Arity n => MVector (MVec n) ty where {     \
 ; new = con `liftM` new                             \
 ; copy (con v) (con w) = copy v w                   \
-; move (con v) (con w) = move v w                   \
 ; unsafeRead  (con v) i = unsafeRead v i            \
 ; unsafeWrite (con v) i x = unsafeWrite v i x       \
 ; {-# INLINE new         #-}                        \
-; {-# INLINE move        #-}                        \
 ; {-# INLINE copy        #-}                        \
 ; {-# INLINE unsafeRead  #-}                        \
 ; {-# INLINE unsafeWrite #-}                        \
@@ -230,8 +224,6 @@ instance (Arity n, MVector (MVec n) a) => MVector (MVec n) (Complex a) where
   {-# INLINE new #-}
   copy (MV_Complex v) (MV_Complex w) = copy v w
   {-# INLINE copy        #-}
-  move (MV_Complex v) (MV_Complex w) = move v w
-  {-# INLINE move        #-}
   unsafeRead (MV_Complex v) i = do (a,b) <- unsafeRead v i
                                    return (a :+ b)
   {-# INLINE unsafeRead  #-}
@@ -263,8 +255,6 @@ instance (Arity n, MVector (MVec n) a, MVector (MVec n) b) => MVector (MVec n) (
   {-# INLINE new #-}
   copy (MV_2 va vb) (MV_2 wa wb) = copy va wa >> copy vb wb
   {-# INLINE copy        #-}
-  move (MV_2 va vb) (MV_2 wa wb) = move va wa >> move vb wb
-  {-# INLINE move        #-}
   unsafeRead  (MV_2 v w) i = do a <- unsafeRead v i
                                 b <- unsafeRead w i
                                 return (a,b)
@@ -305,9 +295,6 @@ instance (Arity n, MVector (MVec n) a, MVector (MVec n) b, MVector (MVec n) c
   copy (MV_3 va vb vc) (MV_3 wa wb wc)
     = copy va wa >> copy vb wb >> copy vc wc
   {-# INLINE copy        #-}
-  move (MV_3 va vb vc) (MV_3 wa wb wc)
-    = move va wa >> move vb wb >> move vc wc
-  {-# INLINE move        #-}
   unsafeRead  (MV_3 v w u) i = do a <- unsafeRead v i
                                   b <- unsafeRead w i
                                   c <- unsafeRead u i
@@ -346,11 +333,9 @@ instance Unbox n a => Unbox n (Const a b)
 instance (Unbox n a) => MVector (MVec n) (Const a b) where
   new                                  = MV_Const `liftM` new
   copy (MV_Const v) (MV_Const w)       = copy v w
-  move (MV_Const v) (MV_Const w)       = move v w
   unsafeRead  (MV_Const v) i           = Const `liftM` unsafeRead v i
   unsafeWrite (MV_Const v) i (Const x) = unsafeWrite v i x
   {-# INLINE new         #-}
-  {-# INLINE move        #-}
   {-# INLINE copy        #-}
   {-# INLINE unsafeRead  #-}
   {-# INLINE unsafeWrite #-}
@@ -371,11 +356,9 @@ instance (Unbox n a) => IVector (Vec n) (Const a b) where
 instance Unbox n a => MVector (MVec n) (ty a) where {     \
 ; new = con `liftM` new                             \
 ; copy (con v) (con w) = copy v w                   \
-; move (con v) (con w) = move v w                   \
 ; unsafeRead  (con v) i = ty `liftM` unsafeRead v i            \
 ; unsafeWrite (con v) i (ty x) = unsafeWrite v i x       \
 ; {-# INLINE new         #-}                        \
-; {-# INLINE move        #-}                        \
 ; {-# INLINE copy        #-}                        \
 ; {-# INLINE unsafeRead  #-}                        \
 ; {-# INLINE unsafeWrite #-}                        \
@@ -413,11 +396,9 @@ primNewWrap(Product, V_Product, MV_Product)
 instance Arity n => MVector (MVec n) ty where {     \
 ; new = con `liftM` new                             \
 ; copy (con v) (con w) = copy v w                   \
-; move (con v) (con w) = move v w                   \
 ; unsafeRead  (con v) i = ty `liftM` unsafeRead v i            \
 ; unsafeWrite (con v) i (ty x) = unsafeWrite v i x       \
 ; {-# INLINE new         #-}                        \
-; {-# INLINE move        #-}                        \
 ; {-# INLINE copy        #-}                        \
 ; {-# INLINE unsafeRead  #-}                        \
 ; {-# INLINE unsafeWrite #-}                        \

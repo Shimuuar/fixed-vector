@@ -114,12 +114,6 @@ instance (Arity n, Storable a) => MVector (MVec n) a where
       unsafeWithForeignPtr fq $ \q ->
       copyArray p q (peanoToInt (proxy# @(Peano n)))
   {-# INLINE copy        #-}
-  move (MVec fp) (MVec fq)
-    = unsafePrimToPrim
-    $ unsafeWithForeignPtr fp $ \p ->
-      unsafeWithForeignPtr fq $ \q ->
-      moveArray p q (peanoToInt (proxy# @(Peano n)))
-  {-# INLINE move        #-}
   unsafeRead (MVec fp) i
     = unsafePrimToPrim
     $ unsafeWithForeignPtr fp (`peekElemOff` i)

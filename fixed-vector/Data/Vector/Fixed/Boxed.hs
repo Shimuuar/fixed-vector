@@ -81,11 +81,9 @@ instance (Arity n) => MVector (MVec n) a where
   new = do
     v <- newSmallArray (peanoToInt (proxy# @(Peano n))) uninitialised
     return $ MVec v
-  {-# INLINE new         #-}
-  copy = move
+  {-# INLINE new         #-}    
+  copy (MVec dst) (MVec src) = copySmallMutableArray dst 0 src 0 (peanoToInt (proxy# @(Peano n)))
   {-# INLINE copy        #-}
-  move (MVec dst) (MVec src) = copySmallMutableArray dst 0 src 0 (peanoToInt (proxy# @(Peano n)))
-  {-# INLINE move        #-}
   unsafeRead  (MVec v) i   = readSmallArray  v i
   {-# INLINE unsafeRead  #-}
   unsafeWrite (MVec v) i x = writeSmallArray v i x

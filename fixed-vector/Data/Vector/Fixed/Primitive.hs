@@ -80,10 +80,8 @@ instance (Arity n, Prim a) => MVector (MVec n) a where
                        * sizeOf (undefined :: a)
     return $ MVec v
   {-# INLINE new         #-}
-  copy                       = move
+  copy (MVec dst) (MVec src) = copyMutableByteArray dst 0 src 0 (peanoToInt (proxy# @(Peano n)))
   {-# INLINE copy        #-}
-  move (MVec dst) (MVec src) = copyMutableByteArray dst 0 src 0 (peanoToInt (proxy# @(Peano n)))
-  {-# INLINE move        #-}
   unsafeRead  (MVec v) i   = readByteArray  v i
   {-# INLINE unsafeRead  #-}
   unsafeWrite (MVec v) i x = writeByteArray v i x
