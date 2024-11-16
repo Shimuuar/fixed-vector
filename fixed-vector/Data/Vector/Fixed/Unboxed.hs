@@ -336,35 +336,12 @@ deriving newtype instance (Unbox n a) => IVector (Vec n)  (Const a b)
 ----------------------------------------------------------------
 -- Newtype wrappers with kind * -> *
 
-#define primNewMV(ty,con)                         \
-instance Unbox n a => MVector (MVec n) (ty a) where {     \
-; basicNew = con `liftM` basicNew                             \
-; basicCopy (con v) (con w) = basicCopy v w                   \
-; basicUnsafeRead  (con v) i = ty `liftM` basicUnsafeRead v i            \
-; basicUnsafeWrite (con v) i (ty x) = basicUnsafeWrite v i x       \
-; {-# INLINE basicNew         #-}                        \
-; {-# INLINE basicCopy        #-}                        \
-; {-# INLINE basicUnsafeRead  #-}                        \
-; {-# INLINE basicUnsafeWrite #-}                        \
-}
-
-#define primNewIV(ty,con,mcon)                             \
-instance Unbox n a => IVector (Vec n) (ty a)  where {          \
-; basicUnsafeFreeze (mcon v)   = con  `liftM` basicUnsafeFreeze v \
-; basicThaw   (con  v)   = mcon `liftM` basicThaw   v \
-; unsafeIndex  (con  v) i = ty (unsafeIndex v i)             \
-; {-# INLINE basicUnsafeFreeze #-}                           \
-; {-# INLINE basicThaw   #-}                           \
-; {-# INLINE unsafeIndex  #-}                           \
-}
-
 #define primNewWrap(ty,con,mcon) \
 newtype instance MVec n s (ty a) = mcon (MVec n s a) ; \
 newtype instance Vec  n   (ty a) = con  (Vec  n   a) ; \
 instance Unbox n a => Unbox n (ty a) ; \
-primNewMV(ty, mcon     )          ; \
-primNewIV(ty, con, mcon)
-
+deriving newtype instance Unbox n a => MVector (MVec n) (ty a); \
+deriving newtype instance Unbox n a => IVector (Vec  n) (ty a)
 
 primNewWrap(Identity, V_Identity, MV_Identity)
 primNewWrap(Down, V_Down, MV_Down)
