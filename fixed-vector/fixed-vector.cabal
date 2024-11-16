@@ -1,3 +1,6 @@
+Cabal-Version:  3.0
+Build-Type:     Simple
+
 Name:           fixed-vector
 Version:        1.2.3.0
 Synopsis:       Generic vectors with statically known size.
@@ -42,15 +45,13 @@ Description:
   * Data.Vector.Fixed.Primitive
   Unboxed vectors based on pritimive package.
 
-Cabal-Version:  >= 1.10
-License:        BSD3
+License:        BSD-3-Clause
 License-File:   LICENSE
 Author:         Aleksey Khudyakov <alexey.skladnoy@gmail.com>
 Maintainer:     Aleksey Khudyakov <alexey.skladnoy@gmail.com>
 Bug-reports:    https://github.com/Shimuuar/fixed-vector/issues
 Category:       Data
-Build-Type:     Simple
-extra-source-files:
+extra-doc-files:
   ChangeLog.md
 
 tested-with:
@@ -66,14 +67,12 @@ source-repository head
   type:     git
   location: http://github.com/Shimuuar/fixed-vector
 
-Library
+common language
   Ghc-options:          -Wall -Wno-incomplete-uni-patterns
   Default-Language:     Haskell2010
   Default-Extensions:
     -- GHC2021 sans PolyKinds
     BangPatterns
-    BinaryLiterals
-    ConstrainedClassMethods
     ConstraintKinds
     DataKinds
     DeriveDataTypeable
@@ -89,7 +88,6 @@ Library
     EmptyDataDecls
     EmptyDataDeriving
     ExistentialQuantification
-    ExplicitForAll
     ExplicitNamespaces
     FlexibleContexts
     FlexibleInstances
@@ -97,7 +95,6 @@ Library
     GADTs
     GADTSyntax
     GeneralisedNewtypeDeriving
-    HexFloatLiterals
     ImplicitPrelude
     ImportQualifiedPost
     InstanceSigs
@@ -117,8 +114,6 @@ Library
     ScopedTypeVariables
     StandaloneDeriving
     StandaloneKindSignatures
-    StarIsType
-    TraditionalRecordSyntax
     TupleSections
     TypeApplications
     TypeOperators
@@ -128,6 +123,10 @@ Library
     PatternSynonyms
     ViewPatterns
     TypeFamilies
+
+
+Library
+  import:        language
   Build-Depends: base      >=4.14 && <5
                , primitive >=0.6.2
                , deepseq

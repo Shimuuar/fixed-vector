@@ -16,8 +16,6 @@ main = do
 exts :: [String]
 exts =
   [ "-XBangPatterns"
-  , "-XBinaryLiterals"
-  , "-XConstrainedClassMethods"
   , "-XConstraintKinds"
   , "-XDataKinds"
   , "-XDeriveDataTypeable"
@@ -33,7 +31,6 @@ exts =
   , "-XEmptyDataDecls"
   , "-XEmptyDataDeriving"
   , "-XExistentialQuantification"
-  , "-XExplicitForAll"
   , "-XExplicitNamespaces"
   , "-XFlexibleContexts"
   , "-XFlexibleInstances"
@@ -41,7 +38,6 @@ exts =
   , "-XGADTs"
   , "-XGADTSyntax"
   , "-XGeneralisedNewtypeDeriving"
-  , "-XHexFloatLiterals"
   , "-XImplicitPrelude"
   , "-XImportQualifiedPost"
   , "-XInstanceSigs"
@@ -61,8 +57,6 @@ exts =
   , "-XScopedTypeVariables"
   , "-XStandaloneDeriving"
   , "-XStandaloneKindSignatures"
-  , "-XStarIsType"
-  , "-XTraditionalRecordSyntax"
   , "-XTupleSections"
   , "-XTypeApplications"
   , "-XTypeOperators"
