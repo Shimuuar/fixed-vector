@@ -10,10 +10,11 @@ module Data.Vector.Fixed.Instances.Binary where
 
 import           Data.Vector.Fixed             (Arity,ArityPeano,ViaFixed(..),Vector)
 import qualified Data.Vector.Fixed           as F
-import qualified Data.Vector.Fixed.Boxed     as B
-import qualified Data.Vector.Fixed.Unboxed   as U
-import qualified Data.Vector.Fixed.Primitive as P
-import qualified Data.Vector.Fixed.Storable  as S
+import qualified Data.Vector.Fixed.Boxed     as FB
+import qualified Data.Vector.Fixed.Strict    as FF
+import qualified Data.Vector.Fixed.Unboxed   as FU
+import qualified Data.Vector.Fixed.Primitive as FP
+import qualified Data.Vector.Fixed.Storable  as FS
 import           Data.Binary                   (Binary(..))
 
 instance (Vector v a, Binary a) => Binary (ViaFixed v a) where
@@ -22,10 +23,11 @@ instance (Vector v a, Binary a) => Binary (ViaFixed v a) where
   {-# INLINE put #-}
   {-# INLINE get #-}
 
-deriving via ViaFixed (B.Vec n) a instance (Arity n, Binary a)               => Binary (B.Vec n a)
-deriving via ViaFixed (P.Vec n) a instance (Arity n, Binary a, P.Prim a)     => Binary (P.Vec n a)
-deriving via ViaFixed (S.Vec n) a instance (Arity n, Binary a, S.Storable a) => Binary (S.Vec n a)
-deriving via ViaFixed (U.Vec n) a instance (Arity n, Binary a, U.Unbox n a)  => Binary (U.Vec n a)
+deriving via ViaFixed (FB.Vec n) a instance (Arity n, Binary a)                => Binary (FB.Vec n a)
+deriving via ViaFixed (FF.Vec n) a instance (Arity n, Binary a)                => Binary (FF.Vec n a)
+deriving via ViaFixed (FP.Vec n) a instance (Arity n, Binary a, FP.Prim a)     => Binary (FP.Vec n a)
+deriving via ViaFixed (FS.Vec n) a instance (Arity n, Binary a, FS.Storable a) => Binary (FS.Vec n a)
+deriving via ViaFixed (FU.Vec n) a instance (Arity n, Binary a, FU.Unbox n a)  => Binary (FU.Vec n a)
 
 deriving via ViaFixed (F.VecList  n) a instance (Arity n,      Binary a) => Binary (F.VecList  n a)
 deriving via ViaFixed (F.VecPeano n) a instance (ArityPeano n, Binary a) => Binary (F.VecPeano n a)
