@@ -138,6 +138,7 @@ Library
     -- Arrays
     Data.Vector.Fixed.Mutable
     Data.Vector.Fixed.Boxed
+    Data.Vector.Fixed.Strict
     Data.Vector.Fixed.Primitive
     Data.Vector.Fixed.Unboxed
     Data.Vector.Fixed.Storable
