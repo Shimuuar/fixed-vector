@@ -39,6 +39,9 @@ module Data.Vector.Fixed (
   , ArityPeano
   , Fun(..)
   , length
+    -- ** Synonyms
+  , PeanoNum(..)
+  , C.N1, C.N2, C.N3, C.N4, C.N5, C.N6, C.N7, C.N8
     -- * Constructors
     -- $construction
     -- ** Small dimensions
@@ -79,7 +82,7 @@ module Data.Vector.Fixed (
   , concat
   , reverse
     -- ** Indexing & lenses
-  -- , C.Index
+  , C.Index
   , (!)
   , index
   , set
