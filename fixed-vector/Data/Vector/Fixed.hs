@@ -184,9 +184,6 @@ module Data.Vector.Fixed (
   , defaultPoke
     -- ** NFData
   , defaultRnf
-    -- * Deprecations
-  , StorableViaFixed
-  , pattern StorableViaFixed
   ) where
 
 import Control.Applicative (Applicative(..))
@@ -480,16 +477,6 @@ pattern V4 t x y z <- (convert -> (t,x,y,z)) where
 {-# INLINE   V4 #-}
 {-# COMPLETE V4 #-}
 #endif
-
-----------------------------------------------------------------
--- Deprecation
-----------------------------------------------------------------
-
-type StorableViaFixed v a = ViaFixed v a
-pattern StorableViaFixed :: v a -> ViaFixed v a
-pattern StorableViaFixed v = ViaFixed v
-{-# DEPRECATED StorableViaFixed "Use ViaFixed" #-}
-
 
 -- $setup
 --

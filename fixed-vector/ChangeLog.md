@@ -18,7 +18,7 @@ Changes in 1.3.0.0
   * Show instance now has form `[...]` instead of `fromList [...]`
 
   * `ViaFixed` newtype wrapper for deriving instances is
-    added. `StorableViaFixed` is deprecated
+    added. `StorableViaFixed` is removed
 
   * `Data.Vector.Fixed.Storable.unsafeWith` ensures that pointer won't
     get GC'd while function runs
