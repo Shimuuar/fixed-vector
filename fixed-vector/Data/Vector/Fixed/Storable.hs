@@ -43,7 +43,7 @@ import Prelude ( Show(..),Eq(..),Ord(..),Num(..),Monad(..),IO,Int
 import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, index, new,unsafeFreeze)
 import qualified Data.Vector.Fixed.Cont     as C
-import           Data.Vector.Fixed.Cont     (Peano,ArityPeano(..))
+import           Data.Vector.Fixed.Cont     (ArityPeano(..))
 
 
 

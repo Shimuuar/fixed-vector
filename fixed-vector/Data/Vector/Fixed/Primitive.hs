@@ -36,7 +36,7 @@ import Prelude (($),($!),undefined,seq,(<$>))
 import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, index)
 import qualified Data.Vector.Fixed.Cont     as C
-import           Data.Vector.Fixed.Cont     (Peano,ArityPeano(..))
+import           Data.Vector.Fixed.Cont     (ArityPeano(..))
 
 
 ----------------------------------------------------------------
