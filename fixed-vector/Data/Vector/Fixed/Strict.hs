@@ -1,18 +1,7 @@
 {-# LANGUAGE MagicHash            #-}
 {-# LANGUAGE UndecidableInstances #-}
 -- |
--- Vector which could hold any value.
-module Data.Vector.Fixed.Boxed (
-    -- * Immutable
-    Vec
-  , Vec1
-  , Vec2
-  , Vec3
-  , Vec4
-  , Vec5
-    -- * Mutable
-  , MVec
-  ) where
+module Data.Vector.Fixed.Strict where
 
 import Control.Applicative  (Applicative(..))
 import Control.DeepSeq      (NFData(..))
@@ -38,7 +27,8 @@ import           Data.Vector.Fixed.Cont     (Peano,ArityPeano(..))
 -- Data type
 ----------------------------------------------------------------
 
--- | Vector with fixed length which can hold any value.
+-- | Vector with fixed length which can hold any value. It's strict in
+--   its elements
 newtype Vec (n :: Nat) a = Vec (SmallArray a)
 
 -- | Mutable unboxed vector with fixed length
@@ -59,7 +49,7 @@ type instance DimM    (MVec n) = Peano n
 -- Instances
 ----------------------------------------------------------------
 
-deriving via ViaFixed (Vec n) instance Arity n => Functor    (Vec n)
+deriving via ViaFixed (Vec n) instance Arity n => Functor     (Vec n)
 deriving via ViaFixed (Vec n) instance Arity n => Applicative (Vec n)
 deriving via ViaFixed (Vec n) instance Arity n => F.Foldable  (Vec n)
 
@@ -86,8 +76,8 @@ instance (Arity n) => MVector (MVec n) a where
     copySmallMutableArray dst 0 src 0 (peanoToInt (proxy# @(Peano n)))
   basicClone (MVec src) =
     MVec <$> cloneSmallMutableArray src 0 (peanoToInt (proxy# @(Peano n)))
-  basicUnsafeRead  (MVec v) i   = readSmallArray  v i
-  basicUnsafeWrite (MVec v) i x = writeSmallArray v i x
+  basicUnsafeRead  (MVec v) i    = readSmallArray  v i
+  basicUnsafeWrite (MVec v) i !x = writeSmallArray v i x
   {-# INLINE basicNew         #-}
   {-# INLINE basicReplicate   #-}
   {-# INLINE basicCopy        #-}
@@ -119,10 +109,10 @@ instance (Typeable n, Arity n, Data a) => Data (Vec n a) where
   dataTypeOf _ = ty_Vec
 
 ty_Vec :: DataType
-ty_Vec  = mkDataType "Data.Vector.Fixed.Boxed.Vec" [con_Vec]
+ty_Vec  = mkDataType "Data.Vector.Fixed.Strict.Vec" [con_Vec]
 
 con_Vec :: Constr
 con_Vec = mkConstr ty_Vec "Vec" [] Prefix
 
 uninitialised :: a
-uninitialised = error "Data.Vector.Fixed.Boxed: uninitialised element"
+uninitialised = error "Data.Vector.Fixed.Strict: uninitialised element"
