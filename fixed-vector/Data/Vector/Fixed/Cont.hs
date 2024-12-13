@@ -173,8 +173,9 @@ type family Fn (n :: PeanoNum) (a :: Type) (b :: Type) where
   Fn 'Z     a b = b
   Fn ('S n) a b = a -> Fn n a b
 
--- | Newtype wrapper which is used to make 'Fn' injective. It's also a
---   reader monad.
+-- | Newtype wrapper which is used to make 'Fn' injective. It's a
+--   function which takes @n@ parameters of type @a@ and returns value
+--   of type @b@.
 newtype Fun n a b = Fun { unFun :: Fn n a b }
 
 
@@ -196,6 +197,7 @@ instance ArityPeano n => Applicative (Fun n a) where
   {-# INLINE pure  #-}
   {-# INLINE (<*>) #-}
 
+-- | Reader
 instance ArityPeano n => Monad (Fun n a) where
   return  = pure
   f >>= g = shuffleFun g <*> f
@@ -210,9 +212,10 @@ data T_ap a b c n = T_ap (Fn n a b) (Fn n a c)
 -- Generic operations of N-ary functions
 ----------------------------------------------------------------
 
+-- | Synonym for writing constrains using type level naturals.
 type Arity n = ArityPeano (Peano n)
 
--- | Type class for handling /n/-ary functions.
+-- | Type class for defining and applying /n/-ary functions.
 class ArityPeano n where
   -- | Left fold over /n/ elements exposed as n-ary function. These
   --   elements are supplied as arguments to the function.
@@ -409,12 +412,12 @@ newtype T_shuffle x a r n = T_shuffle (x -> Fn n a r)
 -- Type class for fixed vectors
 ----------------------------------------------------------------
 
--- | Size of vector expressed as type-level natural.
+-- | Size of vector expressed as Peano natural.
 type family Dim (v :: Type -> Type) :: PeanoNum
 
 -- | Type class for vectors with fixed length. Instance should provide
---   two functions: one to create vector and another for vector
---   deconstruction. They must obey following law:
+--   two functions: one to create vector from @N@ elements and another
+--   for vector deconstruction. They must obey following law:
 --
 --   > inspect v construct = v
 --
@@ -427,9 +430,11 @@ type family Dim (v :: Type -> Type) :: PeanoNum
 --   >   construct                = Fun V2
 --   >   inspect (V2 a b) (Fun f) = f a b
 class ArityPeano (Dim v) => Vector v a where
-  -- | N-ary function for creation of vectors.
+  -- | N-ary function for creation of vectors. It takes @N@ elements
+  --   of array as parameters and return vector.
   construct :: Fun (Dim v) a (v a)
-  -- | Deconstruction of vector.
+  -- | Deconstruction of vector. It takes N-ary function as parameters
+  --   and applies vector's elements to it.
   inspect   :: v a -> Fun (Dim v) a b -> b
   -- | Optional more efficient implementation of indexing. Shouldn't
   --   be used directly, use 'Data.Vector.Fixed.!' instead.

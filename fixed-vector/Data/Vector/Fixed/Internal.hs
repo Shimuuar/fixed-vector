@@ -69,7 +69,7 @@ mk8 a1 a2 a3 a4 a5 a6 a7 a8 = vector $ C.mk8 a1 a2 a3 a4 a5 a6 a7 a8
 --
 --   or using @TypeApplications@ syntax:
 --
---   > v = mkN (Proxy @ (Int,Int,Int)) 1 2 3
+--   > v = mkN (Proxy @(Int,Int,Int)) 1 2 3
 --
 --   or if type of @v@ is fixed elsewhere
 --
