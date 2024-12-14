@@ -124,8 +124,12 @@ import Data.Data             (Data)
 import Data.Kind             (Type)
 import Data.Functor.Identity (Identity(..))
 import Data.Typeable         (Proxy(..))
-import qualified Data.Foldable    as F
-import qualified Data.Traversable as T
+import Data.Foldable         qualified as F
+import Data.Traversable      qualified as T
+#if MIN_VERSION_base(4,18,0)
+import Data.List.NonEmpty    qualified as NE
+import Data.Foldable1        qualified as F1
+#endif
 import Unsafe.Coerce       (unsafeCoerce)
 import GHC.TypeLits
 import GHC.Exts       (Proxy#, proxy#)
@@ -527,6 +531,35 @@ instance (ArityPeano n) => F.Foldable (ContVec n) where
   length = length
   {-# INLINE length #-}
 #endif
+
+
+instance (ArityPeano n, n ~ S k) => F1.Foldable1 (ContVec n) where
+  -- fold1 :: Semigroup m => t m -> m
+  -- foldMap1 :: Semigroup m => (a -> m) -> t a -> m
+  -- foldMap1' :: Semigroup m => (a -> m) -> t a -> m
+  toNonEmpty v = head v NE.:| toList (tail v)
+  maximum = maximum
+  minimum = minimum
+  head = head
+  last = error "XXX"
+  -- foldrMap1 :: (a -> b) -> (a -> b -> b) -> t a -> b
+  -- foldlMap1' :: (a -> b) -> (b -> a -> b) -> t a -> b
+  -- foldlMap1 :: (a -> b) -> (b -> a -> b) -> t a -> b
+  -- foldrMap1' :: (a -> b) -> (a -> b -> b) -> t a -> b
+  
+  -- {-# INLINE fold1 #-}
+  -- {-# INLINE foldMap1 #-}
+  -- {-# INLINE foldMap1' #-}
+  -- {-# INLINE toNonEmpty #-}
+  {-# INLINE maximum #-}
+  {-# INLINE minimum #-}
+  {-# INLINE head #-}
+  {-# INLINE last #-}
+  -- {-# INLINE foldrMap1 #-}
+  -- {-# INLINE foldlMap1' #-}
+  -- {-# INLINE foldlMap1 #-}
+  -- {-# INLINE foldrMap1' #-}
+
 
 instance (ArityPeano n) => T.Traversable (ContVec n) where
   sequence  = sequence
