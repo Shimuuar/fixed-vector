@@ -129,6 +129,7 @@ import GHC.Exts       (Proxy#, proxy#)
 import Prelude hiding ( replicate,map,zipWith,zipWith3,maximum,minimum,and,or,any,all
                       , foldl,foldr,foldl1,length,sum,reverse,scanl,scanl1
                       , head,tail,mapM,mapM_,sequence,sequence_,concat
+                      , Foldable(..), Traversable(..)
                       )
 
 
@@ -508,18 +509,14 @@ instance (ArityPeano n) => F.Foldable (ContVec n) where
   {-# INLINE foldr #-}
 
 instance (ArityPeano n) => F.Traversable (ContVec n) where
-  sequenceA v = inspect v $ sequenceAF construct
+  sequence  = sequence
+  sequenceA = sequence
+  traverse  = mapM
+  mapM      = mapM
+  {-# INLINE sequence  #-}
   {-# INLINE sequenceA #-}
-
-sequenceAF :: forall f n a b. (Applicative f, ArityPeano n)
-     => Fun n a b -> Fun n (f a) (f b)
-{-# INLINE sequenceAF #-}
-sequenceAF (Fun f0)
-  = accum (\(T_sequenceA f) a -> T_sequenceA (f <*> a))
-          (\(T_sequenceA f)   -> f)
-          (T_sequenceA (pure f0) :: T_sequenceA f a b n)
-
-newtype T_sequenceA f a b n = T_sequenceA (f (Fn n a b))
+  {-# INLINE mapM      #-}
+  {-# INLINE traverse  #-}
 
 
 
