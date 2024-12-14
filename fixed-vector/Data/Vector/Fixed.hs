@@ -286,8 +286,14 @@ deriving via ViaFixed (VecList n) instance (Arity n) => Applicative (VecList n)
 deriving via ViaFixed (VecList n) instance (Arity n) => F.Foldable  (VecList n)
 
 instance Arity n => T.Traversable (VecList n) where
+  sequence  = sequence
   sequenceA = sequence
-  traverse  = traverse
+  traverse  = mapM
+  mapM      = mapM
+  {-# INLINE sequence  #-}
+  {-# INLINE sequenceA #-}
+  {-# INLINE mapM      #-}
+  {-# INLINE traverse  #-}
 
 deriving via ViaFixed (VecList n) a instance (Arity n, Show      a) => Show      (VecList n a)
 deriving via ViaFixed (VecList n) a instance (Arity n, Eq        a) => Eq        (VecList n a)
@@ -304,8 +310,14 @@ deriving via ViaFixed (VecPeano n) instance (ArityPeano n) => Applicative (VecPe
 deriving via ViaFixed (VecPeano n) instance (ArityPeano n) => F.Foldable  (VecPeano n)
 
 instance ArityPeano n => T.Traversable (VecPeano n) where
+  sequence  = sequence
   sequenceA = sequence
-  traverse  = traverse
+  traverse  = mapM
+  mapM      = mapM
+  {-# INLINE sequence  #-}
+  {-# INLINE sequenceA #-}
+  {-# INLINE mapM      #-}
+  {-# INLINE traverse  #-}
 
 deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, Show      a) => Show      (VecPeano n a)
 deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, Eq        a) => Eq        (VecPeano n a)
