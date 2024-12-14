@@ -122,6 +122,7 @@ module Data.Vector.Fixed (
   , collect
     -- ** Folds
   , foldl
+  , foldl'
   , foldr
   , foldl1
   , fold

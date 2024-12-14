@@ -94,9 +94,11 @@ module Data.Vector.Fixed.Cont (
   , vector
     -- ** Folds
   , foldl
+  , foldl'
   , foldl1
   , foldr
   , ifoldl
+  , ifoldl'
   , ifoldr
   , foldM
   , ifoldM
@@ -958,7 +960,20 @@ data T_lens f a r n = T_lens (Either (Int,(Fn n a r)) (f (Fn n a r)))
 -- | Left fold over continuation vector.
 foldl :: ArityPeano n => (b -> a -> b) -> b -> ContVec n a -> b
 {-# INLINE foldl #-}
-foldl f = ifoldl (\b _ a -> f b a)
+foldl f b0 v
+  = inspect v
+  $ accum (\(T_foldl b) a -> T_foldl (f b a))
+          (\(T_foldl b)   -> b)
+          (T_foldl b0)
+
+-- | Strict left fold over continuation vector.
+foldl' :: ArityPeano n => (b -> a -> b) -> b -> ContVec n a -> b
+{-# INLINE foldl' #-}
+foldl' f b0 v
+  = inspect v
+  $ accum (\(T_foldl !b) a -> T_foldl (f b a))
+          (\(T_foldl b)    -> b)
+          (T_foldl b0)
 
 -- | Left fold over continuation vector.
 ifoldl :: ArityPeano n => (b -> Int -> a -> b) -> b -> ContVec n a -> b
@@ -966,7 +981,16 @@ ifoldl :: ArityPeano n => (b -> Int -> a -> b) -> b -> ContVec n a -> b
 ifoldl f b v
   = inspect v
   $ accum (\(T_ifoldl i r) a -> T_ifoldl (i+1) (f r i a))
-          (\(T_ifoldl _ r) -> r)
+          (\(T_ifoldl _ r)   -> r)
+          (T_ifoldl 0 b)
+
+-- | Strict left fold over continuation vector.
+ifoldl' :: ArityPeano n => (b -> Int -> a -> b) -> b -> ContVec n a -> b
+{-# INLINE ifoldl' #-}
+ifoldl' f b v
+  = inspect v
+  $ accum (\(T_ifoldl i !r) a -> T_ifoldl (i+1) (f r i a))
+          (\(T_ifoldl _ r)    -> r)
           (T_ifoldl 0 b)
 
 -- | Monadic left fold over continuation vector.
@@ -983,7 +1007,8 @@ ifoldM :: (ArityPeano n, Monad m)
 ifoldM f x
   = ifoldl (\m i a -> do{ b <- m; f b i a}) (return x)
 
-data T_ifoldl b n = T_ifoldl !Int b
+newtype T_foldl  b n = T_foldl       b
+data    T_ifoldl b n = T_ifoldl !Int b
 
 -- Implementation of foldl1 is quite ugly. It could be expressed in
 -- terms of foldlF (worker function for foldl)
