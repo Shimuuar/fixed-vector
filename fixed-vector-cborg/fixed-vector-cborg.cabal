@@ -37,17 +37,3 @@ Library
                , serialise
   Exposed-modules:
     Data.Vector.Fixed.Instances.CBOR
-
-Test-Suite test
-  Ghc-options:      -Wall
-  Default-Language: Haskell2010
-  Type:           exitcode-stdio-1.0
-  Hs-source-dirs: test
-  Main-is:        QC.hs
-  Build-Depends:
-    base >=3 && <5,
-    fixed-vector,
-    fixed-vector-cborg,
-    serialise,
-    tasty,
-    tasty-quickcheck

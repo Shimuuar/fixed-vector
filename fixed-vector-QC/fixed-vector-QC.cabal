@@ -1,10 +1,10 @@
-Name:           fixed-vector-binary
+Name:           fixed-vector-QC
 Version:        1.0.0.2
-Synopsis:       Binary instances for fixed-vector
+Synopsis:       QuickCheck instances for fixed-vector
 Description:
-  This package contains Binary instances for data types defined in
+  This package contains Arbitrary instances for data types defined in
   fixed-vector package.
-  
+
 Cabal-Version:  >= 1.10
 License:        BSD3
 License-File:   LICENSE
@@ -33,6 +33,6 @@ Library
   Default-Language:     Haskell2010
   Build-Depends:        base         >=4.8 && <5
                       , fixed-vector >=1.0
-                      , binary
+                      , QuickCheck   >=2.13
   Exposed-modules:
-    Data.Vector.Fixed.Instances.Binary
+    Data.Vector.Fixed.Instances.QuickCheck
