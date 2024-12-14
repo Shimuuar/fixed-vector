@@ -1,7 +1,8 @@
 {-# LANGUAGE MagicHash            #-}
 {-# LANGUAGE UndecidableInstances #-}
 -- |
--- Vector which could hold any value.
+-- Lazy vector which could hold any value. For strict variant see
+-- "Data.Vector.Fixed.Strict".
 module Data.Vector.Fixed.Boxed (
     -- * Immutable
     Vec
@@ -38,7 +39,8 @@ import           Data.Vector.Fixed.Cont     (ArityPeano(..))
 -- Data type
 ----------------------------------------------------------------
 
--- | Vector with fixed length which can hold any value.
+-- | Vector with fixed length which can hold any value. It's lazy and
+--   doesn't evaluate elements.
 newtype Vec (n :: Nat) a = Vec (SmallArray a)
 
 -- | Mutable unboxed vector with fixed length
