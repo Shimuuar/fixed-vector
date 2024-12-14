@@ -1025,17 +1025,16 @@ ifoldM f x
 newtype T_foldl  b n = T_foldl       b
 data    T_ifoldl b n = T_ifoldl !Int b
 
+-- | Left fold without base case. It's total because it requires vector to be nonempty
+foldl1 :: (ArityPeano n, n ~ 'S k) => (a -> a -> a) -> ContVec n a -> a
+{-# INLINE foldl1 #-}
 -- Implementation of foldl1 is quite ugly. It could be expressed in
 -- terms of foldlF (worker function for foldl)
 --
--- > foldl1F f = Fun $ \a -> case foldlF f a :: Fun n a a of Fun g -> g
+-- > foldl1F f = uncurryFirst $ \a -> foldlF f a
 --
 -- But it require constraint `ArityPeano n` whereas `Vector v a` gives
--- `Arity (S n)`.  Latter imply former but GHC cannot infer it.
-
--- | Left fold.
-foldl1 :: (ArityPeano n, n ~ 'S k) => (a -> a -> a) -> ContVec n a -> a
-{-# INLINE foldl1 #-}
+-- `ArityPeano (S n)`. Latter imply former but GHC cannot infer it.
 foldl1 f
   = runContVec
   $ accum (\(Const r       ) a -> Const $ Just $ maybe a (flip f a) r)
