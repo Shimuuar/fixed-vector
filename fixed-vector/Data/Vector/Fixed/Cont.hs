@@ -124,7 +124,7 @@ import Data.Kind             (Type)
 import Data.Functor.Identity (Identity(..))
 import Data.Typeable         (Proxy(..))
 import qualified Data.Foldable    as F
-import qualified Data.Traversable as F
+import qualified Data.Traversable as T
 import Unsafe.Coerce       (unsafeCoerce)
 import GHC.TypeLits
 import GHC.Exts       (Proxy#, proxy#)
@@ -507,10 +507,25 @@ instance (ArityPeano n) => Applicative (ContVec n) where
   {-# INLINE (<*>) #-}
 
 instance (ArityPeano n) => F.Foldable (ContVec n) where
-  foldr = foldr
-  {-# INLINE foldr #-}
+  foldMap' f = foldl' (\ acc a -> acc <> f a) mempty
+  foldr      = foldr
+  foldl      = foldl
+  foldl'     = foldl'
+  toList     = toList
+  length     = length
+  sum        = sum
+  product    = foldl' (*) 0
+  {-# INLINE foldMap' #-}
+  {-# INLINE foldr    #-}
+  {-# INLINE foldl    #-}
+  {-# INLINE foldl'   #-}
+  {-# INLINE toList   #-}
+  {-# INLINE length   #-}
+  {-# INLINE sum      #-}
+  {-# INLINE product  #-}
 
-instance (ArityPeano n) => F.Traversable (ContVec n) where
+
+instance (ArityPeano n) => T.Traversable (ContVec n) where
   sequence  = sequence
   sequenceA = sequence
   traverse  = mapM

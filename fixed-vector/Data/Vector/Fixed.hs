@@ -204,7 +204,7 @@ import Data.Vector.Fixed.Cont     (Vector(..),Dim,length,ContVec,PeanoNum(..),
 import Data.Vector.Fixed.Cont     qualified as C
 import Data.Vector.Fixed.Internal as I
 
-import Prelude (Show(..),Eq(..),Ord(..),Functor(..),id,(.),($),(<$>),undefined)
+import Prelude (Show(..),Eq(..),Ord(..),Num(..),Functor(..),id,(.),($),(<$>))
 
 
 -- $construction
@@ -435,13 +435,22 @@ instance (forall a. Vector v a) => Applicative (ViaFixed v) where
   {-# INLINE liftA2 #-}
 
 instance (forall a. Vector v a) => F.Foldable (ViaFixed v) where
-  foldr    = foldr
-  {-# INLINE foldr  #-}
--- GHC<9.2 fails to compile this
-#if MIN_VERSION_base(4,16,0)
-  length _ = length (undefined :: v ())
-  {-# INLINE length #-}
-#endif
+  foldMap' f = foldl' (\ acc a -> acc <> f a) mempty
+  foldr      = foldr
+  foldl      = foldl
+  foldl'     = foldl'
+  toList     = toList
+  length     = length
+  sum        = sum
+  product    = foldl' (*) 0
+  {-# INLINE foldMap' #-}
+  {-# INLINE foldr    #-}
+  {-# INLINE foldl    #-}
+  {-# INLINE foldl'   #-}
+  {-# INLINE toList   #-}
+  {-# INLINE length   #-}
+  {-# INLINE sum      #-}
+  {-# INLINE product  #-}
 
 
 ----------------------------------------------------------------
