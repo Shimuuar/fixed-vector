@@ -1,6 +1,7 @@
-{-# LANGUAGE MagicHash             #-}
-{-# LANGUAGE PolyKinds             #-}
-{-# LANGUAGE UndecidableInstances  #-}
+{-# LANGUAGE CPP                  #-}
+{-# LANGUAGE MagicHash            #-}
+{-# LANGUAGE PolyKinds            #-}
+{-# LANGUAGE UndecidableInstances #-}
 -- |
 -- API for Church-encoded vectors. Implementation of function from
 -- "Data.Vector.Fixed" module uses these function internally in order
@@ -512,7 +513,6 @@ instance (ArityPeano n) => F.Foldable (ContVec n) where
   foldl      = foldl
   foldl'     = foldl'
   toList     = toList
-  length     = length
   sum        = sum
   product    = foldl' (*) 0
   {-# INLINE foldMap' #-}
@@ -520,10 +520,13 @@ instance (ArityPeano n) => F.Foldable (ContVec n) where
   {-# INLINE foldl    #-}
   {-# INLINE foldl'   #-}
   {-# INLINE toList   #-}
-  {-# INLINE length   #-}
   {-# INLINE sum      #-}
   {-# INLINE product  #-}
-
+-- GHC<9.2 fails to compile this
+#if MIN_VERSION_base(4,16,0)
+  length = length
+  {-# INLINE length #-}
+#endif
 
 instance (ArityPeano n) => T.Traversable (ContVec n) where
   sequence  = sequence

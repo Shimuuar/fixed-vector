@@ -452,7 +452,6 @@ instance (forall a. Vector v a) => F.Foldable (ViaFixed v) where
   foldl      = foldl
   foldl'     = foldl'
   toList     = toList
-  length     = length
   sum        = sum
   product    = foldl' (*) 0
   {-# INLINE foldMap' #-}
@@ -460,9 +459,13 @@ instance (forall a. Vector v a) => F.Foldable (ViaFixed v) where
   {-# INLINE foldl    #-}
   {-# INLINE foldl'   #-}
   {-# INLINE toList   #-}
-  {-# INLINE length   #-}
   {-# INLINE sum      #-}
   {-# INLINE product  #-}
+-- GHC<9.2 fails to compile this
+#if MIN_VERSION_base(4,16,0)
+  length = length
+  {-# INLINE length #-}
+#endif
 
 
 ----------------------------------------------------------------
