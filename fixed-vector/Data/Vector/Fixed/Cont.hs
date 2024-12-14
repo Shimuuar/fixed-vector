@@ -126,10 +126,10 @@ import qualified Data.Traversable as F
 import Unsafe.Coerce       (unsafeCoerce)
 import GHC.TypeLits
 import GHC.Exts       (Proxy#, proxy#)
-import Prelude hiding ( replicate,map,zipWith,zipWith3,maximum,minimum,and,or,any,all
-                      , foldl,foldr,foldl1,length,sum,reverse,scanl,scanl1
-                      , head,tail,mapM,mapM_,sequence,sequence_,concat
-                      , Foldable(..), Traversable(..)
+import Prelude        ( Bool(..), Int, Maybe(..), Either(..)
+                      , Eq(..), Ord(..), Num(..), Functor(..), Applicative(..), Monad(..)
+                      , Semigroup(..), Monoid(..)
+                      , (.), ($), (&&), (||), (<$>), const, id, flip, error, otherwise, fst, maybe
                       )
 
 
