@@ -494,7 +494,8 @@ scanl1 f = vector . C.scanl1 f . C.cvec
 sequenceA :: (Vector v a, Vector v (f a), Applicative f)
           => v (f a) -> f (v a)
 {-# INLINE sequenceA #-}
-sequenceA = fmap vector . T.sequenceA . C.cvec
+sequenceA = sequence
+{-# DEPRECATED sequenceA "Use sequence instead" #-}
 
 -- | Analog of 'T.traverse' from 'T.Traversable'.
 traverse :: (Vector v a, Vector v b, Applicative f)

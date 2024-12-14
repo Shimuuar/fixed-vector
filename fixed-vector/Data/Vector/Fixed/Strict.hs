@@ -56,7 +56,7 @@ deriving via ViaFixed (Vec n) instance Arity n => Applicative (Vec n)
 deriving via ViaFixed (Vec n) instance Arity n => F.Foldable  (Vec n)
 
 instance Arity n => T.Traversable (Vec n) where
-  sequenceA = sequenceA
+  sequenceA = sequence
   traverse  = traverse
   {-# INLINE sequenceA #-}
   {-# INLINE traverse #-}

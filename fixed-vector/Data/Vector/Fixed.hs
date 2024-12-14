@@ -117,7 +117,6 @@ module Data.Vector.Fixed (
   , scanl1
   , sequence
   , sequence_
-  , sequenceA
   , traverse
   , distribute
   , collect
@@ -184,6 +183,8 @@ module Data.Vector.Fixed (
   , defaultPoke
     -- ** NFData
   , defaultRnf
+    -- * Deprecated functions
+  , sequenceA
   ) where
 
 import Control.Applicative (Applicative(..))
@@ -284,7 +285,7 @@ deriving via ViaFixed (VecList n) instance (Arity n) => Applicative (VecList n)
 deriving via ViaFixed (VecList n) instance (Arity n) => F.Foldable  (VecList n)
 
 instance Arity n => T.Traversable (VecList n) where
-  sequenceA = sequenceA
+  sequenceA = sequence
   traverse  = traverse
 
 deriving via ViaFixed (VecList n) a instance (Arity n, Show      a) => Show      (VecList n a)
@@ -302,7 +303,7 @@ deriving via ViaFixed (VecPeano n) instance (ArityPeano n) => Applicative (VecPe
 deriving via ViaFixed (VecPeano n) instance (ArityPeano n) => F.Foldable  (VecPeano n)
 
 instance ArityPeano n => T.Traversable (VecPeano n) where
-  sequenceA = sequenceA
+  sequenceA = sequence
   traverse  = traverse
 
 deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, Show      a) => Show      (VecPeano n a)

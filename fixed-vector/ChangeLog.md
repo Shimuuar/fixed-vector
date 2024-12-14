@@ -23,6 +23,9 @@ Changes in 1.3.0.0
   * `Data.Vector.Fixed.Storable.unsafeWith` ensures that pointer won't
     get GC'd while function runs
 
+  * `Data.Vector.Fixed.sequenceA` is deprecated in favor of `sequence`
+
+
 Changes in 1.2.3.0
 
   * Pattern `V1` added
