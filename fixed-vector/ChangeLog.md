@@ -27,6 +27,8 @@ Changes in 1.3.0.0
 
   * `foldl'` and `ifoldl'` functions added.
 
+  * Implement `sum` as in terms of `foldl'`.
+
 
 Changes in 1.2.3.0
 

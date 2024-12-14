@@ -1059,7 +1059,7 @@ data T_ifoldr b n = T_ifoldr Int (b -> b)
 
 -- | Sum all elements in the vector.
 sum :: (Num a, ArityPeano n) => ContVec n a -> a
-sum = foldl (+) 0
+sum = foldl' (+) 0
 {-# INLINE sum #-}
 
 -- | Minimal element of vector.
