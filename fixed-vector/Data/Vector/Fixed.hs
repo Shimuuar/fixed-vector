@@ -192,9 +192,9 @@ import Data.Coerce
 import Data.Data           (Data)
 import Data.Monoid         (Monoid(..))
 import Data.Semigroup      (Semigroup(..))
-import qualified Data.Foldable    as F
-import qualified Data.Traversable as T
-import Foreign.Storable (Storable(..))
+import Data.Foldable       qualified as F
+import Data.Traversable    qualified as T
+import Foreign.Storable    (Storable(..))
 import GHC.TypeLits
 
 import Data.Vector.Fixed.Cont     (Vector(..),Dim,length,ContVec,PeanoNum(..),
