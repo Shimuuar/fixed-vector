@@ -48,7 +48,7 @@
 --
 -- This could be solved either by switching to @ContVec@ manually:
 --
--- >>> ((vector . map (==1) . cvec) ((1, 2) :: Tuple2 Int) :: Tuple2 Bool
+-- >>> (vector . map (==1) . cvec) ((1, 2) :: Tuple2 Int) :: Tuple2 Bool
 -- (True,False)
 --
 -- or by using functions genereic in vector type from module
@@ -173,7 +173,7 @@ module Data.Vector.Fixed (
   , ContVec
   , empty
   , vector
-  , C.cvec
+  , cvec
     -- * Instance deriving
   , ViaFixed(..)
     -- ** Storable
@@ -198,8 +198,8 @@ import Foreign.Storable (Storable(..))
 import GHC.TypeLits
 
 import Data.Vector.Fixed.Cont     (Vector(..),Dim,length,ContVec,PeanoNum(..),
-                                   vector,empty,Arity,ArityPeano,Fun(..),accum,apply,vector)
-import qualified Data.Vector.Fixed.Cont as C
+                                   vector,cvec,empty,Arity,ArityPeano,Fun(..),accum,apply)
+import Data.Vector.Fixed.Cont     qualified as C
 import Data.Vector.Fixed.Internal as I
 
 import Prelude (Show(..),Eq(..),Ord(..),Functor(..),id,(.),($),(<$>),undefined)
@@ -481,3 +481,4 @@ pattern V4 t x y z <- (convert -> (t,x,y,z)) where
 -- $setup
 --
 -- >>> import Data.Char
+-- >>> import Prelude (Int,Bool(..))
