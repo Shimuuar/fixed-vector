@@ -1,6 +1,8 @@
 {-# LANGUAGE MagicHash            #-}
 {-# LANGUAGE UndecidableInstances #-}
 -- |
+-- Strict boxed vector which could hold any value. For lazy variant see
+-- "Data.Vector.Fixed.Boxed".
 module Data.Vector.Fixed.Strict where
 
 import Control.Applicative  (Applicative(..))
@@ -20,15 +22,15 @@ import Prelude ( Show(..),Eq(..),Ord(..),Functor(..),Monad(..)
 import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, index)
 import qualified Data.Vector.Fixed.Cont     as C
-import           Data.Vector.Fixed.Cont     (Peano,ArityPeano(..))
+import           Data.Vector.Fixed.Cont     (ArityPeano(..))
 
 
 ----------------------------------------------------------------
 -- Data type
 ----------------------------------------------------------------
 
--- | Vector with fixed length which can hold any value. It's strict in
---   its elements
+-- | Vector with fixed length which can hold any value. It's strict
+--   and ensures that elements are evaluated to WHNF.
 newtype Vec (n :: Nat) a = Vec (SmallArray a)
 
 -- | Mutable unboxed vector with fixed length

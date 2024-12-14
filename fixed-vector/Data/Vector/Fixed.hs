@@ -3,19 +3,41 @@
 {-# LANGUAGE QuantifiedConstraints #-}
 {-# LANGUAGE UndecidableInstances  #-}
 -- |
--- Generic API for vectors with fixed length.
+-- @fixed-vector@ library provides general API for working with short
+-- N-element arrays. Functions in this module work on data types which
+-- are instances of 'Vector' type class. We provide instances for data
+-- types from @base@: tuples, 'Data.Complex.Complex', and few others.
+-- There are several length polymorphic arrays:
 --
--- For encoding of vector size library uses Peano naturals defined in
--- the library. At come point in the future it would make sense to
--- switch to new GHC type level numerals.
+--  * Lazy boxed arrays "Data.Vector.Fixed.Boxed".
 --
--- [@Common pitfalls@]
+--  * Strict boxed arrays "Data.Vector.Fixed.Strict".
 --
--- Library provide instances for tuples. But there's a catch. Tuples
--- are monomorphic in element type. Let consider 2-tuple @(Int,Int)@.
--- Vector type @v@ is @(,) Int@ and only allowed element type is
--- @Int@.  Because of that we cannot change element type and following
--- code will fail:
+--  * Arrays backed by single @ByteArray@: "Data.Vector.Fixed.Primitive".
+--
+--  * Arrays backed by pinned memory: "Data.Vector.Fixed.Storable".
+--
+--  * Arrays which infer array representation from element data type:
+--    "Data.Vector.Fixed.Unboxed"
+--
+--  * Continuation based 'Data.Vector.Fixed.Cont.ContVec' which used
+--    by library internally.
+--
+-- Type level naturals don't have support for induction so all type
+-- level computation with length and indices are done using Peano
+-- numerals ('PeanoNum'). Type level naturals are only used as type
+-- parameters for defining length of arrays.
+--
+-- [@Instances for tuples@]
+--
+-- Library provides instances for tuples. They however come with caveat.
+-- Let look at 'Vector' instance for 2-tuple:
+--
+-- > instance b ~ a => Vector ((,) b) a
+--
+-- Tuple could only be @Vector@ instance if all elements have same
+-- type.  so first element fixes type of second one. Thus functions
+-- which change element type like 'map' won't work:
 --
 -- > >>> map (== 1) ((1,2) :: (Int,Int))
 -- >
@@ -24,25 +46,29 @@
 -- >     In the expression: F.map (== 1) ((1, 2) :: (Int, Int))
 -- >     In an equation for `it': it = map (== 1) ((1, 2) :: (Int, Int))
 --
--- To make it work we need to change vector type as well. Functions
--- from module "Data.Vector.Fixed.Generic" provide this functionality.
+-- This could be solved either by switching to @ContVec@ manually:
 --
--- > >>> map (== 1) ((1,2) :: (Int,Int)) :: (Bool,Bool)
--- > (True,False)
+-- >>> (vector . map (==1) . cvec) ((1, 2) :: Tuple2 Int) :: Tuple2 Bool
+-- (True,False)
+--
+-- or by using functions genereic in vector type from module
+-- "Data.Vector.Fixed.Generic".
 module Data.Vector.Fixed (
     -- * Vector type class
-    -- ** Vector size
-    Dim
-    -- ** Type class
-  , Vector(..)
+    Vector(..)
+  , Dim
   , Arity
   , ArityPeano
   , Fun(..)
   , length
-    -- * Constructors
+    -- ** Peano numbers
+  , PeanoNum(..)
+  , C.Peano
+  , C.N1, C.N2, C.N3, C.N4, C.N5, C.N6, C.N7, C.N8
+    -- * Construction and destructions
     -- $construction
-    -- ** Small dimensions
-    -- $smallDim
+
+    -- ** Constructors
   , mk0
   , mk1
   , mk2
@@ -53,24 +79,19 @@ module Data.Vector.Fixed (
   , mk7
   , mk8
   , mkN
-    -- ** Pattern for low-dimension vectors
+    -- ** Pattern synonyms
   , pattern V1
   , pattern V2
   , pattern V3
   , pattern V4
-    -- ** Continuation-based vectors
-  , ContVec
-  , empty
-  , vector
-  , C.cvec
-    -- ** Functions
+    -- * Functions
+    -- ** Creation
   , replicate
   , replicateM
   , generate
   , generateM
   , unfoldr
   , basis
-    -- * Modifying vectors
     -- ** Transformations
   , head
   , tail
@@ -79,15 +100,12 @@ module Data.Vector.Fixed (
   , concat
   , reverse
     -- ** Indexing & lenses
-  -- , C.Index
+  , C.Index
   , (!)
   , index
   , set
   , element
   , elementTy
-    -- ** Comparison
-  , eq
-  , ord
     -- ** Maps
   , map
   , mapM
@@ -103,7 +121,7 @@ module Data.Vector.Fixed (
   , traverse
   , distribute
   , collect
-    -- * Folding
+    -- ** Folds
   , foldl
   , foldr
   , foldl1
@@ -113,7 +131,7 @@ module Data.Vector.Fixed (
   , ifoldr
   , foldM
   , ifoldM
-    -- ** Special folds
+    -- *** Special folds
   , sum
   , maximum
   , minimum
@@ -122,7 +140,7 @@ module Data.Vector.Fixed (
   , all
   , any
   , find
-    -- * Zips
+    -- ** Zips
   , zipWith
   , zipWith3
   , zipWithM
@@ -131,17 +149,10 @@ module Data.Vector.Fixed (
   , izipWith3
   , izipWithM
   , izipWithM_
-    -- * Deriving and default implementations
-  , ViaFixed(..)
-    -- ** Storable
-    -- $storable
-  , defaultAlignemnt
-  , defaultSizeOf
-  , defaultPeek
-  , defaultPoke
-    -- ** NFData
-  , defaultRnf
-    -- * Conversion
+    -- *** Special zips
+  , eq
+  , ord
+    -- ** Conversion
   , convert
   , toList
   , fromList
@@ -158,9 +169,21 @@ module Data.Vector.Fixed (
   , Tuple3
   , Tuple4
   , Tuple5
-    -- * Deprecations
-  , StorableViaFixed
-  , pattern StorableViaFixed
+    -- ** Continuation-based vectors
+  , ContVec
+  , empty
+  , vector
+  , cvec
+    -- * Instance deriving
+  , ViaFixed(..)
+    -- ** Storable
+    -- $storable
+  , defaultAlignemnt
+  , defaultSizeOf
+  , defaultPeek
+  , defaultPoke
+    -- ** NFData
+  , defaultRnf
   ) where
 
 import Control.Applicative (Applicative(..))
@@ -169,14 +192,14 @@ import Data.Coerce
 import Data.Data           (Data)
 import Data.Monoid         (Monoid(..))
 import Data.Semigroup      (Semigroup(..))
-import qualified Data.Foldable    as F
-import qualified Data.Traversable as T
-import Foreign.Storable (Storable(..))
+import Data.Foldable       qualified as F
+import Data.Traversable    qualified as T
+import Foreign.Storable    (Storable(..))
 import GHC.TypeLits
 
 import Data.Vector.Fixed.Cont     (Vector(..),Dim,length,ContVec,PeanoNum(..),
-                                   vector,empty,Arity,ArityPeano,Fun(..),accum,apply,vector)
-import qualified Data.Vector.Fixed.Cont as C
+                                   vector,cvec,empty,Arity,ArityPeano,Fun(..),accum,apply)
+import Data.Vector.Fixed.Cont     qualified as C
 import Data.Vector.Fixed.Internal as I
 
 import Prelude (Show(..),Eq(..),Ord(..),Functor(..),id,(.),($),(<$>),undefined)
@@ -191,28 +214,26 @@ import Prelude (Show(..),Eq(..),Ord(..),Functor(..),id,(.),($),(<$>),undefined)
 -- >>> mk3 'a' 'b' 'c' :: (Char,Char,Char)
 -- ('a','b','c')
 --
--- Alternatively one could use 'mkN'. See its documentation for
--- examples.
+-- Another way is to use pattern synonyms for construction and
+-- inspection of vectors:
 --
--- Another option is to create tuple and 'convert' it to desired
--- vector type. For example:
+-- >>> V2 'a' 'b' :: (Char,Char)
+-- ('a','b')
+--
+-- >>> case ('a','b') of V2 a b -> [a,b]
+-- "ab"
+--
+-- Last option is to use 'convert' to convert between different vector
+-- types of same length. For example
 --
 -- > v = convert (x,y,z)
 --
--- It will work on if type of @v@ is know from elsewhere. Same trick
--- could be used to pattern match on the vector with opaque
--- representation using view patterns
+-- This could be used in view patterns as well:
 --
--- > function :: Vec N3 Double -> ...
--- > function (convert -> (x,y,z)) = ...
+-- > foo :: Vec3 Double -> Foo
+-- > foo (convert -> (x,y,z)) = ...
 --
--- For small vectors pattern synonyms @V2@, @V3$, @V4@ are provided
--- that use same trick internally.
-
-
--- $smallDim
---
--- Constructors for vectors with small dimensions.
+-- Pattern synonyms use this trick internally.
 
 
 -- $storable
@@ -351,7 +372,7 @@ type Tuple5 a = (a,a,a,a,a)
 
 -- | Newtype for deriving instance for data types which has instance
 --   of 'Vector'. It supports 'Eq', 'Ord', 'Semigroup', 'Monoid',
---   'Storable', 'NFData'.
+--   'Storable', 'NFData', 'Functor', 'Applicative', 'Foldable'.
 newtype ViaFixed v a = ViaFixed (v a)
 
 type instance Dim (ViaFixed v) = Dim v
@@ -457,16 +478,7 @@ pattern V4 t x y z <- (convert -> (t,x,y,z)) where
 {-# COMPLETE V4 #-}
 #endif
 
-----------------------------------------------------------------
--- Deprecation
-----------------------------------------------------------------
-
-type StorableViaFixed v a = ViaFixed v a
-pattern StorableViaFixed :: v a -> ViaFixed v a
-pattern StorableViaFixed v = ViaFixed v
-{-# DEPRECATED StorableViaFixed "Use ViaFixed" #-}
-
-
 -- $setup
 --
 -- >>> import Data.Char
+-- >>> import Prelude (Int,Bool(..))
