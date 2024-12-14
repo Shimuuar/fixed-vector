@@ -122,6 +122,7 @@ module Data.Vector.Fixed (
   , collect
     -- ** Folds
   , foldl
+  , foldl'
   , foldr
   , foldl1
   , fold
@@ -203,7 +204,7 @@ import Data.Vector.Fixed.Cont     (Vector(..),Dim,length,ContVec,PeanoNum(..),
 import Data.Vector.Fixed.Cont     qualified as C
 import Data.Vector.Fixed.Internal as I
 
-import Prelude (Show(..),Eq(..),Ord(..),Functor(..),id,(.),($),(<$>),undefined)
+import Prelude (Show(..),Eq(..),Ord(..),Num(..),Functor(..),id,(.),($),(<$>))
 
 
 -- $construction
@@ -285,8 +286,14 @@ deriving via ViaFixed (VecList n) instance (Arity n) => Applicative (VecList n)
 deriving via ViaFixed (VecList n) instance (Arity n) => F.Foldable  (VecList n)
 
 instance Arity n => T.Traversable (VecList n) where
+  sequence  = sequence
   sequenceA = sequence
-  traverse  = traverse
+  traverse  = mapM
+  mapM      = mapM
+  {-# INLINE sequence  #-}
+  {-# INLINE sequenceA #-}
+  {-# INLINE mapM      #-}
+  {-# INLINE traverse  #-}
 
 deriving via ViaFixed (VecList n) a instance (Arity n, Show      a) => Show      (VecList n a)
 deriving via ViaFixed (VecList n) a instance (Arity n, Eq        a) => Eq        (VecList n a)
@@ -303,8 +310,14 @@ deriving via ViaFixed (VecPeano n) instance (ArityPeano n) => Applicative (VecPe
 deriving via ViaFixed (VecPeano n) instance (ArityPeano n) => F.Foldable  (VecPeano n)
 
 instance ArityPeano n => T.Traversable (VecPeano n) where
+  sequence  = sequence
   sequenceA = sequence
-  traverse  = traverse
+  traverse  = mapM
+  mapM      = mapM
+  {-# INLINE sequence  #-}
+  {-# INLINE sequenceA #-}
+  {-# INLINE mapM      #-}
+  {-# INLINE traverse  #-}
 
 deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, Show      a) => Show      (VecPeano n a)
 deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, Eq        a) => Eq        (VecPeano n a)
@@ -434,11 +447,23 @@ instance (forall a. Vector v a) => Applicative (ViaFixed v) where
   {-# INLINE liftA2 #-}
 
 instance (forall a. Vector v a) => F.Foldable (ViaFixed v) where
-  foldr    = foldr
-  {-# INLINE foldr  #-}
+  foldMap' f = foldl' (\ acc a -> acc <> f a) mempty
+  foldr      = foldr
+  foldl      = foldl
+  foldl'     = foldl'
+  toList     = toList
+  sum        = sum
+  product    = foldl' (*) 0
+  {-# INLINE foldMap' #-}
+  {-# INLINE foldr    #-}
+  {-# INLINE foldl    #-}
+  {-# INLINE foldl'   #-}
+  {-# INLINE toList   #-}
+  {-# INLINE sum      #-}
+  {-# INLINE product  #-}
 -- GHC<9.2 fails to compile this
 #if MIN_VERSION_base(4,16,0)
-  length _ = length (undefined :: v ())
+  length = length
   {-# INLINE length #-}
 #endif
 

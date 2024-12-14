@@ -1,6 +1,7 @@
-{-# LANGUAGE MagicHash             #-}
-{-# LANGUAGE PolyKinds             #-}
-{-# LANGUAGE UndecidableInstances  #-}
+{-# LANGUAGE CPP                  #-}
+{-# LANGUAGE MagicHash            #-}
+{-# LANGUAGE PolyKinds            #-}
+{-# LANGUAGE UndecidableInstances #-}
 -- |
 -- API for Church-encoded vectors. Implementation of function from
 -- "Data.Vector.Fixed" module uses these function internally in order
@@ -94,9 +95,11 @@ module Data.Vector.Fixed.Cont (
   , vector
     -- ** Folds
   , foldl
+  , foldl'
   , foldl1
   , foldr
   , ifoldl
+  , ifoldl'
   , ifoldr
   , foldM
   , ifoldM
@@ -122,7 +125,7 @@ import Data.Kind             (Type)
 import Data.Functor.Identity (Identity(..))
 import Data.Typeable         (Proxy(..))
 import qualified Data.Foldable    as F
-import qualified Data.Traversable as F
+import qualified Data.Traversable as T
 import Unsafe.Coerce       (unsafeCoerce)
 import GHC.TypeLits
 import GHC.Exts       (Proxy#, proxy#)
@@ -505,10 +508,27 @@ instance (ArityPeano n) => Applicative (ContVec n) where
   {-# INLINE (<*>) #-}
 
 instance (ArityPeano n) => F.Foldable (ContVec n) where
-  foldr = foldr
-  {-# INLINE foldr #-}
+  foldMap' f = foldl' (\ acc a -> acc <> f a) mempty
+  foldr      = foldr
+  foldl      = foldl
+  foldl'     = foldl'
+  toList     = toList
+  sum        = sum
+  product    = foldl' (*) 0
+  {-# INLINE foldMap' #-}
+  {-# INLINE foldr    #-}
+  {-# INLINE foldl    #-}
+  {-# INLINE foldl'   #-}
+  {-# INLINE toList   #-}
+  {-# INLINE sum      #-}
+  {-# INLINE product  #-}
+-- GHC<9.2 fails to compile this
+#if MIN_VERSION_base(4,16,0)
+  length = length
+  {-# INLINE length #-}
+#endif
 
-instance (ArityPeano n) => F.Traversable (ContVec n) where
+instance (ArityPeano n) => T.Traversable (ContVec n) where
   sequence  = sequence
   sequenceA = sequence
   traverse  = mapM
@@ -958,7 +978,20 @@ data T_lens f a r n = T_lens (Either (Int,(Fn n a r)) (f (Fn n a r)))
 -- | Left fold over continuation vector.
 foldl :: ArityPeano n => (b -> a -> b) -> b -> ContVec n a -> b
 {-# INLINE foldl #-}
-foldl f = ifoldl (\b _ a -> f b a)
+foldl f b0 v
+  = inspect v
+  $ accum (\(T_foldl b) a -> T_foldl (f b a))
+          (\(T_foldl b)   -> b)
+          (T_foldl b0)
+
+-- | Strict left fold over continuation vector.
+foldl' :: ArityPeano n => (b -> a -> b) -> b -> ContVec n a -> b
+{-# INLINE foldl' #-}
+foldl' f b0 v
+  = inspect v
+  $ accum (\(T_foldl !b) a -> T_foldl (f b a))
+          (\(T_foldl b)    -> b)
+          (T_foldl b0)
 
 -- | Left fold over continuation vector.
 ifoldl :: ArityPeano n => (b -> Int -> a -> b) -> b -> ContVec n a -> b
@@ -966,7 +999,16 @@ ifoldl :: ArityPeano n => (b -> Int -> a -> b) -> b -> ContVec n a -> b
 ifoldl f b v
   = inspect v
   $ accum (\(T_ifoldl i r) a -> T_ifoldl (i+1) (f r i a))
-          (\(T_ifoldl _ r) -> r)
+          (\(T_ifoldl _ r)   -> r)
+          (T_ifoldl 0 b)
+
+-- | Strict left fold over continuation vector.
+ifoldl' :: ArityPeano n => (b -> Int -> a -> b) -> b -> ContVec n a -> b
+{-# INLINE ifoldl' #-}
+ifoldl' f b v
+  = inspect v
+  $ accum (\(T_ifoldl i !r) a -> T_ifoldl (i+1) (f r i a))
+          (\(T_ifoldl _ r)    -> r)
           (T_ifoldl 0 b)
 
 -- | Monadic left fold over continuation vector.
@@ -983,19 +1025,19 @@ ifoldM :: (ArityPeano n, Monad m)
 ifoldM f x
   = ifoldl (\m i a -> do{ b <- m; f b i a}) (return x)
 
-data T_ifoldl b n = T_ifoldl !Int b
+newtype T_foldl  b n = T_foldl       b
+data    T_ifoldl b n = T_ifoldl !Int b
 
+-- | Left fold without base case. It's total because it requires vector to be nonempty
+foldl1 :: (ArityPeano n, n ~ 'S k) => (a -> a -> a) -> ContVec n a -> a
+{-# INLINE foldl1 #-}
 -- Implementation of foldl1 is quite ugly. It could be expressed in
 -- terms of foldlF (worker function for foldl)
 --
--- > foldl1F f = Fun $ \a -> case foldlF f a :: Fun n a a of Fun g -> g
+-- > foldl1F f = uncurryFirst $ \a -> foldlF f a
 --
 -- But it require constraint `ArityPeano n` whereas `Vector v a` gives
--- `Arity (S n)`.  Latter imply former but GHC cannot infer it.
-
--- | Left fold.
-foldl1 :: (ArityPeano n, n ~ 'S k) => (a -> a -> a) -> ContVec n a -> a
-{-# INLINE foldl1 #-}
+-- `ArityPeano (S n)`. Latter imply former but GHC cannot infer it.
 foldl1 f
   = runContVec
   $ accum (\(Const r       ) a -> Const $ Just $ maybe a (flip f a) r)
@@ -1020,7 +1062,7 @@ data T_ifoldr b n = T_ifoldr Int (b -> b)
 
 -- | Sum all elements in the vector.
 sum :: (Num a, ArityPeano n) => ContVec n a -> a
-sum = foldl (+) 0
+sum = foldl' (+) 0
 {-# INLINE sum #-}
 
 -- | Minimal element of vector.

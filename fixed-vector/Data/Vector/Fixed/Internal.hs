@@ -283,6 +283,12 @@ foldl :: Vector v a => (b -> a -> b) -> b -> v a -> b
 foldl f x = C.foldl f x
           . C.cvec
 
+-- | Strict left fold over vector
+foldl' :: Vector v a => (b -> a -> b) -> b -> v a -> b
+{-# INLINE foldl' #-}
+foldl' f x = C.foldl' f x
+           . C.cvec
+
 -- | Right fold over vector
 foldr :: Vector v a => (a -> b -> b) -> b -> v a -> b
 {-# INLINE foldr #-}
@@ -322,6 +328,13 @@ ifoldl :: Vector v a => (b -> Int -> a -> b) -> b -> v a -> b
 {-# INLINE ifoldl #-}
 ifoldl f z = C.ifoldl f z
            . C.cvec
+
+-- | Strict left fold over vector. Function is applied to each element
+--   and its index.
+ifoldl' :: Vector v a => (b -> Int -> a -> b) -> b -> v a -> b
+{-# INLINE ifoldl' #-}
+ifoldl' f z = C.ifoldl' f z
+            . C.cvec
 
 -- | Monadic fold over vector.
 foldM :: (Vector v a, Monad m) => (b -> a -> m b) -> b -> v a -> m b
