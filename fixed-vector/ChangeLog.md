@@ -25,6 +25,8 @@ Changes in 1.3.0.0
 
   * `Data.Vector.Fixed.sequenceA` is deprecated in favor of `sequence`
 
+  * `foldl'` and `ifoldl'` functions added.
+
 
 Changes in 1.2.3.0
 
