@@ -1,0 +1,38 @@
+Name:           fixed-vector-QC
+Version:        1.0.0.2
+Synopsis:       QuickCheck instances for fixed-vector
+Description:
+  This package contains Arbitrary instances for data types defined in
+  fixed-vector package.
+
+Cabal-Version:  >= 1.10
+License:        BSD3
+License-File:   LICENSE
+Author:         Aleksey Khudyakov <alexey.skladnoy@gmail.com>
+Maintainer:     Aleksey Khudyakov <alexey.skladnoy@gmail.com>
+Bug-reports:    https://github.com/Shimuuar/fixed-vector/issues
+Category:       Data
+Build-Type:     Simple
+extra-source-files:
+  ChangeLog.md
+
+tested-with:
+    GHC ==7.10.3
+     || ==8.0.2
+     || ==8.2.2
+     || ==8.4.4
+     || ==8.6.5
+     || ==8.8.1
+
+source-repository head
+  type:     git
+  location: http://github.com/Shimuuar/fixed-vector
+
+Library
+  Ghc-options:          -Wall
+  Default-Language:     Haskell2010
+  Build-Depends:        base         >=4.8 && <5
+                      , fixed-vector >=1.0
+                      , QuickCheck   >=2.13
+  Exposed-modules:
+    Data.Vector.Fixed.Instances.QuickCheck
