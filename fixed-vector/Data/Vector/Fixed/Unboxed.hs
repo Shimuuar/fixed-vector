@@ -23,6 +23,7 @@ import Data.Complex
 import Data.Coerce
 import Data.Data
 import Data.Kind
+import Data.Proxy
 import Data.Functor.Identity (Identity(..))
 import Data.Int              (Int8, Int16, Int32, Int64 )
 import Data.Monoid           (Monoid(..),Dual(..),Sum(..),Product(..),All(..),Any(..))
@@ -32,13 +33,14 @@ import Data.Word             (Word,Word8,Word16,Word32,Word64)
 import Foreign.Storable      (Storable(..))
 import GHC.TypeLits
 import GHC.Exts              (Proxy#, proxy#)
-import Prelude               ( Show(..),Eq(..),Ord(..),Int,Double,Float,Char,Bool(..)
+import Prelude               ( Show(..),Eq(..),Ord(..),Applicative(..)
+                             , Int,Double,Float,Char,Bool(..)
                              , ($),(.),id)
 
 import Data.Vector.Fixed (Dim,Vector(..),ViaFixed(..))
 import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, Arity, index)
 import qualified Data.Vector.Fixed.Cont      as C
-import           Data.Vector.Fixed.Cont      (Peano)
+import           Data.Vector.Fixed.Cont      (Peano,Arity,ArityPeano,Fun)
 import qualified Data.Vector.Fixed.Primitive as P
 
 import qualified Data.Vector.Fixed as F
@@ -48,7 +50,7 @@ import qualified Prelude
 -- Data type
 ----------------------------------------------------------------
 
-newtype Vec (n :: Nat) a = Vec { getRepr :: VecRepr a n (EltRepr a) }
+newtype Vec (n :: Nat) a = Vec { getRepr :: VecRepr n a (EltRepr a) }
 
 type Vec1 = Vec 1
 type Vec2 = Vec 2
@@ -57,11 +59,11 @@ type Vec4 = Vec 4
 type Vec5 = Vec 5
 
 
-class ( Dim    (VecRepr a n) ~ Peano n
-      , Vector (VecRepr a n) (EltRepr a)
+class ( Dim    (VecRepr n a) ~ Peano n
+      , Vector (VecRepr n a) (EltRepr a)
       ) => Unbox n a where
-  type VecRepr a :: Nat -> Type -> Type
-  type EltRepr a :: Type
+  type VecRepr n a :: Type -> Type
+  type EltRepr   a :: Type
   toEltRepr   :: Proxy# n -> a -> EltRepr a
   fromEltRepr :: Proxy# n -> EltRepr a -> a
 
@@ -73,9 +75,10 @@ instance (Arity n, Unbox n a) => Vector (Vec n) a where
       (C.dimapFun (fromEltRepr (proxy# @n)) id f)
   construct
     = C.dimapFun (toEltRepr (proxy# @n)) Vec
-      (construct @(VecRepr a n) @(EltRepr a))
+      (construct @(VecRepr n a) @(EltRepr a))
   {-# INLINE inspect   #-}
   {-# INLINE construct #-}
+
 
 
 ----------------------------------------------------------------
@@ -107,19 +110,26 @@ con_Vec = mkConstr ty_Vec "Vec" [] Prefix
 -- Data instances
 ----------------------------------------------------------------
 
--- -- Unit type
--- data instance MVec n s () = MV_Unit
--- data instance Vec  n   () = V_Unit
+instance F.Arity n => Unbox n () where
+  type VecRepr n () = VecUnit n
+  type EltRepr   () = ()
+  toEltRepr   _ = id
+  fromEltRepr _ = id
+  {-# INLINE toEltRepr   #-}
+  {-# INLINE fromEltRepr #-}
 
--- instance Arity n => Unbox n ()
+data VecUnit (n :: Nat) a = VecUnit
 
--- instance Arity n => IVector (Vec n) () where
---   basicUnsafeFreeze _   = return V_Unit
---   basicThaw   _   = return MV_Unit
---   unsafeIndex  _ _ = ()
---   {-# INLINE basicUnsafeFreeze #-}
---   {-# INLINE basicThaw   #-}
---   {-# INLINE unsafeIndex  #-}
+type instance Dim (VecUnit n) = Peano n
+
+instance F.Arity n => Vector (VecUnit n) () where
+  inspect _ fun
+    = C.runContVec fun
+    $ C.apply (\Proxy -> ((),Proxy)) Proxy
+  construct
+    = pure VecUnit
+  {-# INLINE inspect   #-}
+  {-# INLINE construct #-}
 
 
 
@@ -128,8 +138,8 @@ con_Vec = mkConstr ty_Vec "Vec" [] Prefix
 
 -- FIXME: Do I want more efficient representation? Word64? 64 is enough for everyone?
 instance Arity n => Unbox n Bool where
-  type VecRepr Bool = P.Vec
-  type EltRepr Bool = Word8
+  type VecRepr n Bool = P.Vec n
+  type EltRepr   Bool = Word8
   toEltRepr   _ True  = 1
   toEltRepr   _ False = 0
   {-# INLINE toEltRepr #-}
@@ -146,8 +156,8 @@ newtype UnboxViaPrim a = UnboxViaPrim a
   deriving newtype P.Prim
 
 instance (C.Arity n, P.Prim a) => Unbox n (UnboxViaPrim a) where
-  type VecRepr (UnboxViaPrim a) = P.Vec
-  type EltRepr (UnboxViaPrim a) = a
+  type VecRepr n (UnboxViaPrim a) = P.Vec n
+  type EltRepr   (UnboxViaPrim a) = a
   toEltRepr   _ = coerce
   fromEltRepr _ = coerce
   
@@ -182,8 +192,37 @@ deriving newtype instance Arity n => Unbox n All
 deriving newtype instance Arity n => Unbox n Any
 
 
--- ----------------------------------------------------------------
--- -- Complex
+----------------------------------------------------------------
+-- Tuples
+----------------------------------------------------------------
+
+data T2 n a b = T2 !(Vec n a) !(Vec n b)
+
+-- type Dim (T2 n a b) =
+
+inspectT2 :: (Unbox n a, Unbox n b) => T2 n a b -> Fun (Peano n) (a,b) r -> r
+inspectT2 (T2 vA vB) fun = inspect vB (inspect vA (zipF (,) fun))
+
+constructT2 :: (Unbox n a, Unbox n b) => Fun (Peano n) (a,b) (T2 n a b)
+constructT2 = zipWithF T2 construct construct
+
+zipF :: ArityPeano n => (a -> b -> c) -> Fun n c r -> Fun n a (Fun n b r)
+zipF = Prelude.undefined -- FIXME: inspect depends critically on
+
+zipWithF
+  :: ArityPeano n
+  => (x -> y -> z)
+  -> Fun n a x
+  -> Fun n b y
+  -> Fun n (a,b) z
+zipWithF = Prelude.undefined
+
+
+----------------------------------------------------------------
+-- Complex
+
+
+
 -- newtype instance MVec n s (Complex a) = MV_Complex (MVec n s (a,a))
 -- newtype instance Vec  n   (Complex a) = V_Complex  (Vec  n   (a,a))
 
