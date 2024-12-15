@@ -17,7 +17,6 @@ module Data.Vector.Fixed.Unboxed(
   ) where
 
 import Control.Applicative   (Const(..))
-import Control.Monad
 import Control.DeepSeq       (NFData(..))
 import Data.Complex
 import Data.Coerce
@@ -32,23 +31,22 @@ import Data.Word             (Word,Word8,Word16,Word32,Word64)
 import Foreign.Storable      (Storable(..))
 import GHC.TypeLits
 import GHC.Exts              (Proxy#, proxy#)
-import Prelude               ( Show(..),Eq(..),Ord(..),Int,Double,Float,Char,Bool(..)
-                             , ($),(.),id)
+import Prelude               ( Show(..),Eq(..),Ord(..),Applicative(..)
+                             , Int,Double,Float,Char,Bool(..),($),id)
 
-import Data.Vector.Fixed (Dim,Vector(..),ViaFixed(..))
-import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, Arity, index)
-import qualified Data.Vector.Fixed.Cont      as C
-import           Data.Vector.Fixed.Cont      (Peano)
-import qualified Data.Vector.Fixed.Primitive as P
+import Data.Vector.Fixed           (Dim,Vector(..),ViaFixed(..))
+import Data.Vector.Fixed           qualified as F
+import Data.Vector.Fixed.Cont      qualified as C
+import Data.Vector.Fixed.Cont      (Peano,Arity,ArityPeano,Fun(..),curryFirst)
+import Data.Vector.Fixed.Primitive qualified as P
 
-import qualified Data.Vector.Fixed as F
-import qualified Prelude
+
 
 ----------------------------------------------------------------
 -- Data type
 ----------------------------------------------------------------
 
-newtype Vec (n :: Nat) a = Vec { getRepr :: VecRepr a n (EltRepr a) }
+newtype Vec (n :: Nat) a = Vec { getRepr :: VecRepr n a (EltRepr a) }
 
 type Vec1 = Vec 1
 type Vec2 = Vec 2
@@ -57,11 +55,11 @@ type Vec4 = Vec 4
 type Vec5 = Vec 5
 
 
-class ( Dim    (VecRepr a n) ~ Peano n
-      , Vector (VecRepr a n) (EltRepr a)
+class ( Dim    (VecRepr n a) ~ Peano n
+      , Vector (VecRepr n a) (EltRepr a)
       ) => Unbox n a where
-  type VecRepr a :: Nat -> Type -> Type
-  type EltRepr a :: Type
+  type VecRepr n a :: Type -> Type
+  type EltRepr   a :: Type
   toEltRepr   :: Proxy# n -> a -> EltRepr a
   fromEltRepr :: Proxy# n -> EltRepr a -> a
 
@@ -73,9 +71,10 @@ instance (Arity n, Unbox n a) => Vector (Vec n) a where
       (C.dimapFun (fromEltRepr (proxy# @n)) id f)
   construct
     = C.dimapFun (toEltRepr (proxy# @n)) Vec
-      (construct @(VecRepr a n) @(EltRepr a))
+      (construct @(VecRepr n a) @(EltRepr a))
   {-# INLINE inspect   #-}
   {-# INLINE construct #-}
+
 
 
 ----------------------------------------------------------------
@@ -107,19 +106,26 @@ con_Vec = mkConstr ty_Vec "Vec" [] Prefix
 -- Data instances
 ----------------------------------------------------------------
 
--- -- Unit type
--- data instance MVec n s () = MV_Unit
--- data instance Vec  n   () = V_Unit
+instance F.Arity n => Unbox n () where
+  type VecRepr n () = VecUnit n
+  type EltRepr   () = ()
+  toEltRepr   _ = id
+  fromEltRepr _ = id
+  {-# INLINE toEltRepr   #-}
+  {-# INLINE fromEltRepr #-}
 
--- instance Arity n => Unbox n ()
+data VecUnit (n :: Nat) a = VecUnit
 
--- instance Arity n => IVector (Vec n) () where
---   basicUnsafeFreeze _   = return V_Unit
---   basicThaw   _   = return MV_Unit
---   unsafeIndex  _ _ = ()
---   {-# INLINE basicUnsafeFreeze #-}
---   {-# INLINE basicThaw   #-}
---   {-# INLINE unsafeIndex  #-}
+type instance Dim (VecUnit n) = Peano n
+
+instance F.Arity n => Vector (VecUnit n) () where
+  inspect _ fun
+    = C.runContVec fun
+    $ C.apply (\Proxy -> ((),Proxy)) Proxy
+  construct
+    = pure VecUnit
+  {-# INLINE inspect   #-}
+  {-# INLINE construct #-}
 
 
 
@@ -128,8 +134,8 @@ con_Vec = mkConstr ty_Vec "Vec" [] Prefix
 
 -- FIXME: Do I want more efficient representation? Word64? 64 is enough for everyone?
 instance Arity n => Unbox n Bool where
-  type VecRepr Bool = P.Vec
-  type EltRepr Bool = Word8
+  type VecRepr n Bool = P.Vec n
+  type EltRepr   Bool = Word8
   toEltRepr   _ True  = 1
   toEltRepr   _ False = 0
   {-# INLINE toEltRepr #-}
@@ -146,8 +152,8 @@ newtype UnboxViaPrim a = UnboxViaPrim a
   deriving newtype P.Prim
 
 instance (C.Arity n, P.Prim a) => Unbox n (UnboxViaPrim a) where
-  type VecRepr (UnboxViaPrim a) = P.Vec
-  type EltRepr (UnboxViaPrim a) = a
+  type VecRepr n (UnboxViaPrim a) = P.Vec n
+  type EltRepr   (UnboxViaPrim a) = a
   toEltRepr   _ = coerce
   fromEltRepr _ = coerce
   
@@ -182,112 +188,87 @@ deriving newtype instance Arity n => Unbox n All
 deriving newtype instance Arity n => Unbox n Any
 
 
--- ----------------------------------------------------------------
--- -- Complex
--- newtype instance MVec n s (Complex a) = MV_Complex (MVec n s (a,a))
--- newtype instance Vec  n   (Complex a) = V_Complex  (Vec  n   (a,a))
+----------------------------------------------------------------
+-- Tuples
+----------------------------------------------------------------
 
--- instance (Unbox n a) => Unbox n (Complex a)
+-- | Representation for vector of 2-tuple as two vectors.
+data T2 n a b x = T2 !(Vec n a) !(Vec n b)
 
--- instance (Arity n, MVector (MVec n) a) => MVector (MVec n) (Complex a) where
---   basicNew = MV_Complex `liftM` basicNew
---   {-# INLINE basicNew #-}
---   basicCopy (MV_Complex v) (MV_Complex w) = basicCopy v w
---   {-# INLINE basicCopy        #-}
---   basicUnsafeRead (MV_Complex v) i = do (a,b) <- basicUnsafeRead v i
---                                         return (a :+ b)
---   {-# INLINE basicUnsafeRead  #-}
---   basicUnsafeWrite (MV_Complex v) i (a :+ b) = basicUnsafeWrite v i (a,b)
---   {-# INLINE basicUnsafeWrite #-}
+type instance Dim (T2 n a b) = Peano n
 
--- instance (Arity n, IVector (Vec n) a) => IVector (Vec n) (Complex a) where
---   basicUnsafeFreeze (MV_Complex v) = V_Complex `liftM` basicUnsafeFreeze v
---   {-# INLINE basicUnsafeFreeze #-}
---   basicThaw   (V_Complex  v) = MV_Complex `liftM` basicThaw v
---   {-# INLINE basicThaw   #-}
---   unsafeIndex (V_Complex v) i =
---     case unsafeIndex v i of (a,b) -> a :+ b
---   {-# INLINE unsafeIndex  #-}
+instance (Arity n, Unbox n a, Unbox n b) => Vector (T2 n a b) (a,b) where
+  inspect (T2 vA vB)
+    = inspect (C.zipWith (,) cvA cvB)
+    where
+      cvA = C.ContVec $ inspect vA
+      cvB = C.ContVec $ inspect vB
+  construct = pairF T2 construct construct
+  {-# INLINE construct #-}
+  {-# INLINE inspect   #-}
 
+pairF
+  :: ArityPeano n
+  => (x -> y -> z)
+  -> Fun n a x
+  -> Fun n b y
+  -> Fun n (a,b) z
+{-# INLINE pairF #-}
+pairF g funA funB = C.accum
+  (\(T_pair fA fB) (a,b) -> T_pair (curryFirst fA a) (curryFirst fB b))
+  (\(T_pair (Fun x) (Fun y)) -> g x y)
+  (T_pair funA funB)
 
-
--- ----------------------------------------------------------------
--- -- Tuples
--- data instance MVec n s (a,b) = MV_2 !(MVec n s a) !(MVec n s b)
--- data instance Vec  n   (a,b) = V_2  !(Vec  n   a) !(Vec  n   b)
-
--- instance (Unbox n a, Unbox n b) => Unbox n (a,b)
-
--- instance (Arity n, MVector (MVec n) a, MVector (MVec n) b) => MVector (MVec n) (a,b) where
---   basicNew = do as <- basicNew
---                 bs <- basicNew
---                 return $ MV_2 as bs
---   {-# INLINE basicNew #-}
---   basicCopy (MV_2 va vb) (MV_2 wa wb) = basicCopy va wa >> basicCopy vb wb
---   {-# INLINE basicCopy        #-}
---   basicUnsafeRead  (MV_2 v w) i = do a <- basicUnsafeRead v i
---                                      b <- basicUnsafeRead w i
---                                      return (a,b)
---   {-# INLINE basicUnsafeRead  #-}
---   basicUnsafeWrite (MV_2 v w) i (a,b) = basicUnsafeWrite v i a >> basicUnsafeWrite w i b
---   {-# INLINE basicUnsafeWrite #-}
+data T_pair a b x y n = T_pair (Fun n a x) (Fun n b y)
 
 
--- instance ( Arity n
---          , IVector (Vec n) a, IVector (Vec n) b
---          ) => IVector (Vec n) (a,b) where
---   basicUnsafeFreeze (MV_2 v w)   = do as <- basicUnsafeFreeze v
---                                       bs <- basicUnsafeFreeze w
---                                       return $ V_2 as bs
---   {-# INLINE basicUnsafeFreeze #-}
---   basicThaw   (V_2  v w)   = do as <- basicThaw v
---                                 bs <- basicThaw w
---                                 return $ MV_2 as bs
---   {-# INLINE basicThaw   #-}
---   unsafeIndex  (V_2  v w) i = (unsafeIndex v i, unsafeIndex w i)
---   {-# INLINE unsafeIndex  #-}
+-- | Representation for vector of 2-tuple as two vectors.
+data T3 n a b c x = T3 !(Vec n a) !(Vec n b) !(Vec n c)
+
+type instance Dim (T3 n a b c) = Peano n
+
+instance (Arity n, Unbox n a, Unbox n b, Unbox n c) => Vector (T3 n a b c) (a,b,c) where
+  inspect (T3 vA vB vC)
+    = inspect (C.zipWith3 (,,) cvA cvB cvC)
+    where
+      cvA = C.ContVec $ inspect vA
+      cvB = C.ContVec $ inspect vB
+      cvC = C.ContVec $ inspect vC
+  construct = pair3F T3 construct construct construct
+  {-# INLINE construct #-}
+  {-# INLINE inspect   #-}
+
+pair3F
+  :: ArityPeano n
+  => (x -> y -> z -> r)
+  -> Fun n a x
+  -> Fun n b y
+  -> Fun n c z
+  -> Fun n (a,b,c) r
+{-# INLINE pair3F #-}
+pair3F g funA funB funC = C.accum
+  (\(T_pair3 fA fB fC) (a,b,c) -> T_pair3 (curryFirst fA a)
+                                          (curryFirst fB b)
+                                          (curryFirst fC c))
+  (\(T_pair3 (Fun x) (Fun y) (Fun z)) -> g x y z)
+  (T_pair3 funA funB funC)
+
+data T_pair3 a b c x y z n = T_pair3 (Fun n a x) (Fun n b y) (Fun n c z)
 
 
 
+instance (Unbox n a, Unbox n b) => Unbox n (a,b) where
+  type VecRepr n (a,b) = T2 n a b
+  type EltRepr   (a,b) = (a,b)
+  toEltRepr   _ = id
+  fromEltRepr _ = id
 
--- data instance MVec n s (a,b,c) = MV_3 !(MVec n s a) !(MVec n s b) !(MVec n s c)
--- data instance Vec  n   (a,b,c) = V_3  !(Vec  n   a) !(Vec  n   b) !(Vec  n   c)
-
--- instance (Unbox n a, Unbox n b, Unbox n c) => Unbox n (a,b,c)
-
--- instance (Arity n, MVector (MVec n) a, MVector (MVec n) b, MVector (MVec n) c
---          ) => MVector (MVec n) (a,b,c) where
---   basicNew = do as <- basicNew
---                 bs <- basicNew
---                 cs <- basicNew
---                 return $ MV_3 as bs cs
---   {-# INLINE basicNew #-}
---   basicCopy (MV_3 va vb vc) (MV_3 wa wb wc)
---     = basicCopy va wa >> basicCopy vb wb >> basicCopy vc wc
---   {-# INLINE basicCopy        #-}
---   basicUnsafeRead  (MV_3 v w u) i = do a <- basicUnsafeRead v i
---                                        b <- basicUnsafeRead w i
---                                        c <- basicUnsafeRead u i
---                                        return (a,b,c)
---   {-# INLINE basicUnsafeRead  #-}
---   basicUnsafeWrite (MV_3 v w u) i (a,b,c)
---     = basicUnsafeWrite v i a >> basicUnsafeWrite w i b >> basicUnsafeWrite u i c
---   {-# INLINE basicUnsafeWrite #-}
-
--- instance ( Arity n
---          , Vector  (Vec n) a, Vector  (Vec n) b, Vector  (Vec n) c
---          , IVector (Vec n) a, IVector (Vec n) b, IVector (Vec n) c
---          ) => IVector (Vec n) (a,b,c) where
---   basicUnsafeFreeze (MV_3 v w u) = do as <- basicUnsafeFreeze v
---                                       bs <- basicUnsafeFreeze w
---                                       cs <- basicUnsafeFreeze u
---                                       return $ V_3 as bs cs
---   {-# INLINE basicUnsafeFreeze #-}
---   basicThaw   (V_3  v w u) = do as <- basicThaw v
---                                 bs <- basicThaw w
---                                 cs <- basicThaw u
---                                 return $ MV_3 as bs cs
---   {-# INLINE basicThaw   #-}
---   unsafeIndex  (V_3 v w u) i
---     = (unsafeIndex v i, unsafeIndex w i, unsafeIndex u i)
---   {-# INLINE unsafeIndex  #-}
+instance (Unbox n a) => Unbox n (Complex a) where
+  -- NOTE: It would be nice to have ability to use single buffer say
+  --       for `Complex Double`. But buffers seems to be opaque
+  type VecRepr n (Complex a) = T2 n a a
+  type EltRepr   (Complex a) = (a,a)
+  toEltRepr   _ (r :+ i) = (r,i)
+  fromEltRepr _ (r,i)    = r :+ i
+  {-# INLINE toEltRepr   #-}
+  {-# INLINE fromEltRepr #-}
