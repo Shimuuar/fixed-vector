@@ -258,6 +258,8 @@ class ArityPeano n where
            => (forall b x. Data b => c (b -> x) -> c x)
            -> T_gunfold c r a n -> c r
 
+  zipF :: (a -> b -> c) -> Fun n c r -> Fun n a (Fun n b r)
+
 newtype T_gunfold c r a n = T_gunfold (c (Fn n a r))
 
 
@@ -300,6 +302,9 @@ instance ArityPeano 'Z where
   gunfoldF _ (T_gunfold c) = c
   {-# INLINE reverseF    #-}
   {-# INLINE gunfoldF    #-}
+  zipF _ = coerce
+  {-# INLINE zipF #-}
+
 
 instance ArityPeano n => ArityPeano ('S n) where
   accum     f g t = Fun $ \a -> unFun $ accum f g (f t a)
@@ -318,6 +323,12 @@ instance ArityPeano n => ArityPeano ('S n) where
   gunfoldF f c = gunfoldF f (apGunfold f c)
   {-# INLINE reverseF    #-}
   {-# INLINE gunfoldF    #-}
+  zipF f fun
+    = fmap uncurryFirst
+    $ uncurryFirst
+    $ \a -> shuffleFun $ \b -> zipF f (curryFirst fun (f a b))
+  {-# INLINE zipF #-}
+
 
 instance ArityPeano n => Index 'Z ('S n) where
   getF  _       = uncurryFirst pure
@@ -832,7 +843,8 @@ reverse (ContVec cont) = ContVec $ cont . reverseF
 zipWith :: (ArityPeano n) => (a -> b -> c)
         -> ContVec n a -> ContVec n b -> ContVec n c
 {-# INLINE zipWith #-}
-zipWith = izipWith . const
+zipWith f (ContVec contA) (ContVec contB) = ContVec $ \funC ->
+  contB (contA (zipF f funC))
 
 -- | Zip three vectors together
 zipWith3 :: (ArityPeano n) => (a -> b -> c -> d)
