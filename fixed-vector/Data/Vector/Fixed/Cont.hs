@@ -996,23 +996,29 @@ izipWithF f (Fun g0) =
               (T_izip 0 v g0)
        ) makeList
 
-zipWithF :: (ArityPeano n)
-          => (a -> b -> c) -> Fun n c r -> Fun n a (Fun n b r)
-{-# INLINE zipWithF #-}
-zipWithF f (Fun g0) =
-  fmap (\v -> accum
-              (\(T_zip (a:as) g) b -> T_zip as (g $ f a b))
-              (\(T_zip _      x)   -> x)
-              (T_zip v g0)
-       ) makeList
-
-
 makeList :: ArityPeano n => Fun n a [a]
 {-# INLINE makeList #-}
 makeList = accum
     (\(Const xs) x -> Const (xs . (x:)))
     (\(Const xs) -> xs [])
     (Const id)
+
+
+zipWithF :: (ArityPeano n)
+          => (a -> b -> c) -> Fun n c r -> Fun n a (Fun n b r)
+{-# INLINE zipWithF #-}
+zipWithF f (Fun g0)
+  = makeListZ $ \v -> accum
+      (\(T_zip (a:as) g) b -> T_zip as (g $ f a b))
+      (\(T_zip _      x)   -> x)
+      (T_zip v g0)
+
+makeListZ :: ArityPeano n => ([a] -> b) -> Fun n a b
+{-# INLINE makeListZ #-}
+makeListZ fini = accum
+  (\(Const xs) x -> Const (xs . (x:)))
+  (\(Const xs)   -> fini (xs []))
+  (Const id)
 
 data T_izip a c r n = T_izip Int [a] (Fn n c r)
 data T_zip  a c r n = T_zip      [a] (Fn n c r)
