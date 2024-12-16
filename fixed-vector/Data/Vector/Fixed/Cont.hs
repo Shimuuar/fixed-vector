@@ -115,6 +115,23 @@ module Data.Vector.Fixed.Cont (
     -- ** Data.Data.Data
   , gfoldl
   , gunfold
+  --
+  , zipF_1
+  , zipF_2
+  , zipF_3
+  , zipF_4
+  , zipF_5
+  , zipF_6
+  , zipF_7
+  , zipF_8
+  , zipF_9
+  , zipF_10
+  , zipF_11
+  , zipF_12
+  , zipF_13
+  , zipF_14
+  , zipF_15
+  , zipF_16
   ) where
 
 import Control.Applicative   ((<|>), Const(..))
@@ -342,52 +359,52 @@ zipFStep f fun
   $ \a -> shuffleFun $ \b -> zipF f (curryFirst fun (f a b))
 
 zipF_1 :: (a -> b -> c) -> Fun N1 c r -> Fun N1 a (Fun N1 b r)
-zipF_1 = zipFStep
+zipF_1 f fun = zipFStep f fun
 {-# INLINE zipF_1 #-}
 zipF_2 :: (a -> b -> c) -> Fun N2 c r -> Fun N2 a (Fun N2 b r)
-zipF_2 = zipFStep
+zipF_2 f fun = zipFStep f fun
 {-# INLINE zipF_2 #-}
 zipF_3 :: (a -> b -> c) -> Fun N3 c r -> Fun N3 a (Fun N3 b r)
-zipF_3 = zipFStep
+zipF_3 f fun = zipFStep f fun
 {-# INLINE zipF_3 #-}
 zipF_4 :: (a -> b -> c) -> Fun N4 c r -> Fun N4 a (Fun N4 b r)
-zipF_4 = zipFStep
+zipF_4 f fun = zipFStep f fun
 {-# INLINE zipF_4 #-}
 zipF_5 :: (a -> b -> c) -> Fun N5 c r -> Fun N5 a (Fun N5 b r)
-zipF_5 = zipFStep
+zipF_5 f fun = zipFStep f fun
 {-# INLINE zipF_5 #-}
 zipF_6 :: (a -> b -> c) -> Fun N6 c r -> Fun N6 a (Fun N6 b r)
-zipF_6 = zipFStep
+zipF_6 f fun = zipFStep f fun
 {-# INLINE zipF_6 #-}
 zipF_7 :: (a -> b -> c) -> Fun N7 c r -> Fun N7 a (Fun N7 b r)
-zipF_7 = zipFStep
+zipF_7 f fun = zipFStep f fun
 {-# INLINE zipF_7 #-}
 zipF_8 :: (a -> b -> c) -> Fun N8 c r -> Fun N8 a (Fun N8 b r)
-zipF_8 = zipFStep
+zipF_8 f fun = zipFStep f fun
 {-# INLINE zipF_8 #-}
 zipF_9 :: (a -> b -> c) -> Fun N9 c r -> Fun N9 a (Fun N9 b r)
-zipF_9 = zipFStep
+zipF_9 f fun = zipFStep f fun
 {-# INLINE zipF_9 #-}
 zipF_10 :: (a -> b -> c) -> Fun N10 c r -> Fun N10 a (Fun N10 b r)
-zipF_10 = zipFStep
+zipF_10 f fun = zipFStep f fun
 {-# INLINE zipF_10 #-}
 zipF_11 :: (a -> b -> c) -> Fun N11 c r -> Fun N11 a (Fun N11 b r)
-zipF_11 = zipFStep
+zipF_11 f fun = zipFStep f fun
 {-# INLINE zipF_11 #-}
 zipF_12 :: (a -> b -> c) -> Fun N12 c r -> Fun N12 a (Fun N12 b r)
-zipF_12 = zipFStep
+zipF_12 f fun = zipFStep f fun
 {-# INLINE zipF_12 #-}
 zipF_13 :: (a -> b -> c) -> Fun N13 c r -> Fun N13 a (Fun N13 b r)
-zipF_13 = zipFStep
+zipF_13 f fun = zipFStep f fun
 {-# INLINE zipF_13 #-}
 zipF_14 :: (a -> b -> c) -> Fun N14 c r -> Fun N14 a (Fun N14 b r)
-zipF_14 = zipFStep
+zipF_14 f fun = zipFStep f fun
 {-# INLINE zipF_14 #-}
 zipF_15 :: (a -> b -> c) -> Fun N15 c r -> Fun N15 a (Fun N15 b r)
-zipF_15 = zipFStep
+zipF_15 f fun = zipFStep f fun
 {-# INLINE zipF_15 #-}
 zipF_16 :: (a -> b -> c) -> Fun N16 c r -> Fun N16 a (Fun N16 b r)
-zipF_16 = zipFStep
+zipF_16 f fun = zipFStep f fun
 {-# INLINE zipF_16 #-}
 
 
