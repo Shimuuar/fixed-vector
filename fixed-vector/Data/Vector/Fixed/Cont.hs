@@ -323,12 +323,50 @@ instance ArityPeano n => ArityPeano ('S n) where
   gunfoldF f c = gunfoldF f (apGunfold f c)
   {-# INLINE reverseF    #-}
   {-# INLINE gunfoldF    #-}
-  zipF f fun
-    = fmap uncurryFirst
-    $ uncurryFirst
-    $ \a -> shuffleFun $ \b -> zipF f (curryFirst fun (f a b))
-  {-# INLINE zipF #-}
+  zipF = zipFStep
+  {-# INLINE[1] zipF #-}
 
+zipFStep :: (ArityPeano n) => (a -> b -> c) -> Fun (S n) c r -> Fun (S n) a (Fun (S n) b r)
+{-# INLINE zipFStep #-}
+zipFStep f fun
+  = fmap uncurryFirst
+  $ uncurryFirst
+  $ \a -> shuffleFun $ \b -> zipF f (curryFirst fun (f a b))
+
+zipF_1 :: (a -> b -> c) -> Fun N1 c r -> Fun N1 a (Fun N1 b r)
+zipF_1 = zipFStep
+{-# INLINE zipF_1 #-}
+zipF_2 :: (a -> b -> c) -> Fun N2 c r -> Fun N2 a (Fun N2 b r)
+zipF_2 = zipFStep
+{-# INLINE zipF_2 #-}
+zipF_3 :: (a -> b -> c) -> Fun N3 c r -> Fun N3 a (Fun N3 b r)
+zipF_3 = zipFStep
+{-# INLINE zipF_3 #-}
+zipF_4 :: (a -> b -> c) -> Fun N4 c r -> Fun N4 a (Fun N4 b r)
+zipF_4 = zipFStep
+{-# INLINE zipF_4 #-}
+
+zipF_5 :: (a -> b -> c) -> Fun N5 c r -> Fun N5 a (Fun N5 b r)
+zipF_5 = zipFStep
+{-# INLINE zipF_5 #-}
+zipF_6 :: (a -> b -> c) -> Fun N6 c r -> Fun N6 a (Fun N6 b r)
+zipF_6 = zipFStep
+{-# INLINE zipF_6 #-}
+zipF_7 :: (a -> b -> c) -> Fun N7 c r -> Fun N7 a (Fun N7 b r)
+zipF_7 = zipFStep
+{-# INLINE zipF_7 #-}
+zipF_8 :: (a -> b -> c) -> Fun N8 c r -> Fun N8 a (Fun N8 b r)
+zipF_8 = zipFStep
+{-# INLINE zipF_8 #-}
+
+{-# RULES "zipF/1" zipF = zipF_1 #-}
+{-# RULES "zipF/2" zipF = zipF_2 #-}
+{-# RULES "zipF/3" zipF = zipF_3 #-}
+{-# RULES "zipF/4" zipF = zipF_4 #-}
+{-# RULES "zipF/5" zipF = zipF_5 #-}
+{-# RULES "zipF/6" zipF = zipF_6 #-}
+{-# RULES "zipF/7" zipF = zipF_7 #-}
+{-# RULES "zipF/8" zipF = zipF_8 #-}
 
 instance ArityPeano n => Index 'Z ('S n) where
   getF  _       = uncurryFirst pure
