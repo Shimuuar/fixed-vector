@@ -939,7 +939,7 @@ zipWith :: (ArityPeano n) => (a -> b -> c)
         -> ContVec n a -> ContVec n b -> ContVec n c
 {-# INLINE zipWith #-}
 zipWith f (ContVec contA) (ContVec contB) = ContVec $ \funC ->
-  contB (contA (zipF f funC))
+  contB (contA (zipWithF f funC))
 
 -- | Zip three vectors together
 zipWith3 :: (ArityPeano n) => (a -> b -> c -> d)
@@ -996,6 +996,16 @@ izipWithF f (Fun g0) =
               (T_izip 0 v g0)
        ) makeList
 
+zipWithF :: (ArityPeano n)
+          => (a -> b -> c) -> Fun n c r -> Fun n a (Fun n b r)
+{-# INLINE zipWithF #-}
+zipWithF f (Fun g0) =
+  fmap (\v -> accum
+              (\(T_zip (a:as) g) b -> T_zip as (g $ f a b))
+              (\(T_zip _      x)   -> x)
+              (T_zip v g0)
+       ) makeList
+
 
 makeList :: ArityPeano n => Fun n a [a]
 {-# INLINE makeList #-}
@@ -1005,6 +1015,7 @@ makeList = accum
     (Const id)
 
 data T_izip a c r n = T_izip Int [a] (Fn n c r)
+data T_zip  a c r n = T_zip      [a] (Fn n c r)
 
 
 
