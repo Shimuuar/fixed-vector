@@ -677,7 +677,8 @@ mk8 a1 a2 a3 a4 a5 a6 a7 a8 = ContVec $ \(Fun f) -> f a1 a2 a3 a4 a5 a6 a7 a8
 -- | Map over vector. Synonym for 'fmap'
 map :: (ArityPeano n) => (a -> b) -> ContVec n a -> ContVec n b
 {-# INLINE map #-}
-map = imap . const
+map f (ContVec contA) = ContVec $
+  contA . mapF f
 
 -- | Apply function to every element of the vector and its index.
 imap :: (ArityPeano n) => (Int -> a -> b) -> ContVec n a -> ContVec n b
@@ -688,7 +689,9 @@ imap f (ContVec contA) = ContVec $
 -- | Effectful map over vector.
 mapM :: (ArityPeano n, Applicative f) => (a -> f b) -> ContVec n a -> f (ContVec n b)
 {-# INLINE mapM #-}
-mapM = imapM . const
+mapM f v
+ = inspect v
+ $ mapMF f construct
 
 -- | Apply monadic function to every element of the vector and its index.
 imapM :: (ArityPeano n, Applicative f)
@@ -710,25 +713,45 @@ imapM_ :: (ArityPeano n, Applicative f) => (Int -> a -> f b) -> ContVec n a -> f
 imapM_ f = ifoldl (\m i a -> m *> f i a *> pure ()) (pure ())
 
 
+
+mapMF :: (ArityPeano n, Applicative f)
+      => (a -> f b) -> Fun n b r -> Fun n a (f r)
+{-# INLINE mapMF #-}
+mapMF f (Fun funB) =
+  accum (\(T_mapM m) a -> T_mapM (($) <$> m <*> f a))
+        (\(T_mapM m) -> m)
+        (T_mapM (pure funB))
+
 imapMF :: (ArityPeano n, Applicative f)
        => (Int -> a -> f b) -> Fun n b r -> Fun n a (f r)
 {-# INLINE imapMF #-}
 imapMF f (Fun funB) =
-  accum (\(T_mapM i m) a -> T_mapM (i+1) $ ($) <$> m <*> f i a)
-        (\(T_mapM _ m) -> m)
-        (T_mapM 0 (pure funB))
+  accum (\(T_imapM i m) a -> T_imapM (i+1) $ ($) <$> m <*> f i a)
+        (\(T_imapM _ m) -> m)
+        (T_imapM 0 (pure funB))
 
-data T_mapM a m r n = T_mapM Int (m (Fn n a r))
+newtype T_mapM  a m r n = T_mapM      (m (Fn n a r))
+data    T_imapM a m r n = T_imapM Int (m (Fn n a r))
+
+
+mapF :: ArityPeano n
+     => (a -> b) -> Fun n b r -> Fun n a r
+{-# INLINE mapF #-}
+mapF f (Fun funB) =
+  accum (\(T_map g) b -> T_map (g (f b)))
+        (\(T_map r)   -> r)
+        (  T_map funB)
 
 imapF :: ArityPeano n
       => (Int -> a -> b) -> Fun n b r -> Fun n a r
 {-# INLINE imapF #-}
 imapF f (Fun funB) =
-  accum (\(T_map i g) b -> T_map (i+1) (g (f i b)))
-        (\(T_map _ r)   -> r)
-        (  T_map 0 funB)
+  accum (\(T_imap i g) b -> T_imap (i+1) (g (f i b)))
+        (\(T_imap _ r)   -> r)
+        (  T_imap 0 funB)
 
-data T_map a r n = T_map Int (Fn n a r)
+newtype T_map  a r n = T_map      (Fn n a r)
+data    T_imap a r n = T_imap Int (Fn n a r)
 
 -- | Left scan over vector
 scanl :: (ArityPeano n) => (b -> a -> b) -> b -> ContVec n a -> ContVec ('S n) b
