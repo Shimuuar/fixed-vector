@@ -38,6 +38,16 @@ fuse_zipWith_self n = F.sum $ F.zipWith (*) u u
   where u :: FU.Vec3 Int
         u = F.replicate n
 
+-- More involved example with zipWith. It stresses optimizer and could be
+-- used as a benchmark for optimization of compilation speed.
+fuse_zipWithParam :: FP.Vec 3 Int -> FP.Vec 3 Int -> FP.Vec 3 Int -> Int
+fuse_zipWithParam v1 v2 v3 = F.sum v12 + F.sum v13 + F.sum v23 where
+  v12 = F.zipWith (*) v1 v2
+  v13 = F.zipWith (*) v1 v3
+  v23 = F.zipWith (*) v2 v3
+
+
+
 main :: IO ()
 main = defaultMain $ testGroup "inspect"
   [ $(inspectObligations [ hasNoTypeClasses
@@ -59,4 +69,7 @@ main = defaultMain $ testGroup "inspect"
                          -- FIXME: Does not fuse when used nonlinearly
                          -- , noArrayAlloc
                          ] 'fuse_zipWith_self)
+  , $(inspectObligations [ hasNoTypeClasses
+                         , noArrayAlloc
+                         ] 'fuse_zipWithParam)
   ]
