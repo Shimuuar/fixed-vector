@@ -154,6 +154,14 @@ type N5 = S N4
 type N6 = S N5
 type N7 = S N6
 type N8 = S N7
+type N9 = S N8
+type N10 = S N9
+type N11 = S N10
+type N12 = S N11
+type N13 = S N12
+type N14 = S N13
+type N15 = S N14
+type N16 = S N15
 
 
 -- | Convert type level natural to Peano representation
@@ -345,7 +353,6 @@ zipF_3 = zipFStep
 zipF_4 :: (a -> b -> c) -> Fun N4 c r -> Fun N4 a (Fun N4 b r)
 zipF_4 = zipFStep
 {-# INLINE zipF_4 #-}
-
 zipF_5 :: (a -> b -> c) -> Fun N5 c r -> Fun N5 a (Fun N5 b r)
 zipF_5 = zipFStep
 {-# INLINE zipF_5 #-}
@@ -358,6 +365,31 @@ zipF_7 = zipFStep
 zipF_8 :: (a -> b -> c) -> Fun N8 c r -> Fun N8 a (Fun N8 b r)
 zipF_8 = zipFStep
 {-# INLINE zipF_8 #-}
+zipF_9 :: (a -> b -> c) -> Fun N9 c r -> Fun N9 a (Fun N9 b r)
+zipF_9 = zipFStep
+{-# INLINE zipF_9 #-}
+zipF_10 :: (a -> b -> c) -> Fun N10 c r -> Fun N10 a (Fun N10 b r)
+zipF_10 = zipFStep
+{-# INLINE zipF_10 #-}
+zipF_11 :: (a -> b -> c) -> Fun N11 c r -> Fun N11 a (Fun N11 b r)
+zipF_11 = zipFStep
+{-# INLINE zipF_11 #-}
+zipF_12 :: (a -> b -> c) -> Fun N12 c r -> Fun N12 a (Fun N12 b r)
+zipF_12 = zipFStep
+{-# INLINE zipF_12 #-}
+zipF_13 :: (a -> b -> c) -> Fun N13 c r -> Fun N13 a (Fun N13 b r)
+zipF_13 = zipFStep
+{-# INLINE zipF_13 #-}
+zipF_14 :: (a -> b -> c) -> Fun N14 c r -> Fun N14 a (Fun N14 b r)
+zipF_14 = zipFStep
+{-# INLINE zipF_14 #-}
+zipF_15 :: (a -> b -> c) -> Fun N15 c r -> Fun N15 a (Fun N15 b r)
+zipF_15 = zipFStep
+{-# INLINE zipF_15 #-}
+zipF_16 :: (a -> b -> c) -> Fun N16 c r -> Fun N16 a (Fun N16 b r)
+zipF_16 = zipFStep
+{-# INLINE zipF_16 #-}
+
 
 {-# RULES "zipF/1" zipF = zipF_1 #-}
 {-# RULES "zipF/2" zipF = zipF_2 #-}
@@ -367,6 +399,14 @@ zipF_8 = zipFStep
 {-# RULES "zipF/6" zipF = zipF_6 #-}
 {-# RULES "zipF/7" zipF = zipF_7 #-}
 {-# RULES "zipF/8" zipF = zipF_8 #-}
+{-# RULES "zipF/9" zipF = zipF_9 #-}
+{-# RULES "zipF/10" zipF = zipF_10 #-}
+{-# RULES "zipF/11" zipF = zipF_11 #-}
+{-# RULES "zipF/12" zipF = zipF_12 #-}
+{-# RULES "zipF/13" zipF = zipF_13 #-}
+{-# RULES "zipF/14" zipF = zipF_14 #-}
+{-# RULES "zipF/15" zipF = zipF_15 #-}
+{-# RULES "zipF/16" zipF = zipF_16 #-}
 
 instance ArityPeano n => Index 'Z ('S n) where
   getF  _       = uncurryFirst pure

@@ -130,7 +130,6 @@ Library
   Build-Depends: base      >=4.14 && <5
                , primitive >=0.6.2
                , deepseq
-  ghc-options: -fsimpl-tick-factor=500
   Exposed-modules:
     -- API
     Data.Vector.Fixed.Cont
