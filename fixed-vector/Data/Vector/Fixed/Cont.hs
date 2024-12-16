@@ -832,7 +832,10 @@ reverse (ContVec cont) = ContVec $ cont . reverseF
 zipWith :: (ArityPeano n) => (a -> b -> c)
         -> ContVec n a -> ContVec n b -> ContVec n c
 {-# INLINE zipWith #-}
-zipWith = izipWith . const
+zipWith f vecA vecB = ContVec $ \funC ->
+    inspect vecB
+  $ inspect vecA
+  $ zipWithF f funC
 
 -- | Zip three vectors together
 zipWith3 :: (ArityPeano n) => (a -> b -> c -> d)
@@ -904,6 +907,15 @@ izipWithM_ f xs ys = sequence_ (izipWith f xs ys)
 -- It turns out easiest way is materialize list and then deconstruct.
 -- GHC is able to eliminate it and it's very hard to beat this approach
 
+zipWithF :: (ArityPeano n)
+          => (a -> b -> c) -> Fun n c r -> Fun n a (Fun n b r)
+{-# INLINE zipWithF #-}
+zipWithF f (Fun g0)
+  = makeList
+  $ \v -> accum (\(T_zip (a:as) g) b -> T_zip as (g $ f a b))
+                (\(T_zip _      x)   -> x)
+                (T_zip v g0)
+
 izipWithF :: (ArityPeano n)
           => (Int -> a -> b -> c) -> Fun n c r -> Fun n a (Fun n b r)
 {-# INLINE izipWithF #-}
@@ -921,6 +933,7 @@ makeList cont = accum
     (Const id)
 
 data T_izip a c r n = T_izip Int [a] (Fn n c r)
+data T_zip  a c r n = T_zip      [a] (Fn n c r)
 
 
 
