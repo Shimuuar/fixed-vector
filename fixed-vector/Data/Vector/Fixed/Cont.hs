@@ -879,6 +879,31 @@ izipWithM_ :: (ArityPeano n, Applicative f)
 {-# INLINE izipWithM_ #-}
 izipWithM_ f xs ys = sequence_ (izipWith f xs ys)
 
+-- NOTE: [zipWith]
+-- ~~~~~~~~~~~~~~~
+--
+-- It turns out it's very difficult to implement zipWith using
+-- accum/apply. Key problem is we need to implement:
+--
+-- > zipF :: Fun n (a,b) r → Fun n a (Fun b r)
+--
+-- Induction step would be implementing
+--
+-- > ((a,b) → Fun n (a,b) r) → (a → Fun n a (b → Fun b r))
+--
+-- in terms of zipF above. It will give us `Fun n a (Fun b r)` but
+-- we'll need to move parameter `b` _inside_ `Fun n a`. This requires
+-- `ArityPeano` constraint while accum's parameter has note. Even
+-- worse this implementation has quadratic complexity.
+--
+-- It's possible to make zipF method of ArityPeano but quadratic
+-- complexity won't go away and starts cause slowdown even for modest
+-- values of `n`: 5-6. For n above 10 compilation starts to fail with
+-- "simplifier ticks exhausted error".
+--
+-- It turns out easiest way is materialize list and then deconstruct.
+-- GHC is able to eliminate it and it's very hard to beat this approach
+
 izipWithF :: (ArityPeano n)
           => (Int -> a -> b -> c) -> Fun n c r -> Fun n a (Fun n b r)
 {-# INLINE izipWithF #-}
