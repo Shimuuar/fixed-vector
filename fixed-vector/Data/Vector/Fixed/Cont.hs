@@ -208,6 +208,7 @@ instance ArityPeano n => Monad (Fun n a) where
   {-# INLINE return #-}
   {-# INLINE (>>=)  #-}
 
+newtype T_Flip a b n = T_Flip (Fun n a b)
 data T_ap a b c n = T_ap (Fn n a b) (Fn n a c)
 
 
@@ -344,9 +345,6 @@ apGunfold :: Data a
           -> T_gunfold c r a n
 apGunfold f (T_gunfold c) = T_gunfold $ f c
 {-# INLINE apGunfold #-}
-
-
-newtype T_Flip a b n = T_Flip (Fun n a b)
 
 
 
