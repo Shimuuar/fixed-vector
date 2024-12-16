@@ -907,19 +907,17 @@ izipWithM_ f xs ys = sequence_ (izipWith f xs ys)
 izipWithF :: (ArityPeano n)
           => (Int -> a -> b -> c) -> Fun n c r -> Fun n a (Fun n b r)
 {-# INLINE izipWithF #-}
-izipWithF f (Fun g0) =
-  fmap (\v -> accum
-              (\(T_izip i (a:as) g) b -> T_izip (i+1) as (g $ f i a b))
-              (\(T_izip _ _      x)   -> x)
-              (T_izip 0 v g0)
-       ) makeList
+izipWithF f (Fun g0)
+  = makeList
+  $ \v -> accum (\(T_izip i (a:as) g) b -> T_izip (i+1) as (g $ f i a b))
+                (\(T_izip _ _      x)   -> x)
+                (T_izip 0 v g0)
 
-
-makeList :: ArityPeano n => Fun n a [a]
+makeList :: ArityPeano n => ([a] -> b) -> Fun n a b
 {-# INLINE makeList #-}
-makeList = accum
+makeList cont = accum
     (\(Const xs) x -> Const (xs . (x:)))
-    (\(Const xs) -> xs [])
+    (\(Const xs) -> cont (xs []))
     (Const id)
 
 data T_izip a c r n = T_izip Int [a] (Fn n c r)
