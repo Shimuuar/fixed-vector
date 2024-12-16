@@ -62,14 +62,21 @@ main = defaultMain $ testGroup "inspect"
   , $(inspectObligations [ hasNoTypeClasses
                          , noArrayAlloc
                          ] 'fuse_mapM_)
-  , $(inspectObligations [ hasNoTypeClasses
-                         , noArrayAlloc
-                         ] 'fuse_zipWith)
-  , $(inspectObligations [ hasNoTypeClasses
-                         -- FIXME: Does not fuse when used nonlinearly
-                         -- , noArrayAlloc
-                         ] 'fuse_zipWith_self)
-  , $(inspectObligations [ hasNoTypeClasses
-                         , noArrayAlloc
-                         ] 'fuse_zipWithParam)
+  , testGroup "zipWith"
+    -- NOTE: zipWith uses lists internally but they should get
+    --       optimized away. Thus check that lists don't occur in core
+    [ $(inspectObligations [ hasNoTypeClasses
+                           , flip hasNoType ''[]
+                           , noArrayAlloc
+                           ] 'fuse_zipWith)
+    , $(inspectObligations [ hasNoTypeClasses
+                           , flip hasNoType ''[]
+                           -- FIXME: Does not fuse when used nonlinearly
+                           -- , noArrayAlloc
+                           ] 'fuse_zipWith_self)
+    , $(inspectObligations [ hasNoTypeClasses
+                           , flip hasNoType ''[]
+                           , noArrayAlloc
+                           ] 'fuse_zipWithParam)
+    ]
   ]
