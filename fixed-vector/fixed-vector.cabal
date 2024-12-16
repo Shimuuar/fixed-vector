@@ -142,6 +142,10 @@ Library
     Data.Vector.Fixed.Primitive
     Data.Vector.Fixed.Unboxed
     Data.Vector.Fixed.Storable
+    --
+    FOO4
+    FOO8
+    FOO16
   Other-modules:
     Data.Vector.Fixed.Internal
 
