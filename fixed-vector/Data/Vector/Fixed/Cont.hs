@@ -97,6 +97,7 @@ module Data.Vector.Fixed.Cont (
   , foldl
   , foldl'
   , foldl1
+  , foldl1'
   , foldr
   , ifoldl
   , ifoldl'
@@ -132,7 +133,7 @@ import GHC.Exts       (Proxy#, proxy#)
 import Prelude        ( Bool(..), Int, Maybe(..), Either(..)
                       , Eq(..), Ord(..), Num(..), Functor(..), Applicative(..), Monad(..)
                       , Semigroup(..), Monoid(..)
-                      , (.), ($), (&&), (||), (<$>), const, id, flip, error, otherwise, fst, maybe
+                      , (.), ($), (&&), (||), (<$>), const, id, error, otherwise, fst
                       )
 
 
@@ -258,6 +259,14 @@ class ArityPeano n where
   gunfoldF :: (Data a)
            => (forall b x. Data b => c (b -> x) -> c x)
            -> T_gunfold c r a n -> c r
+  -- | Provide @ArityPeano@ dictionary for previous Peano number. GHC
+  --   cannot infer that when @ArityPeano n@ and @n ~ S k@ we have
+  --   instance for @k@ as well. So we have to provide such dictionary
+  --   manually.
+  --
+  --   It's not possible to have non-⊥ implementation for @Z@ but
+  --   neither it's possible to call it.
+  dictionaryPred :: (n ~ S k) => Proxy# n -> (ArityPeano k => r) -> r
 
 newtype T_gunfold c r a n = T_gunfold (c (Fn n a r))
 
@@ -301,6 +310,7 @@ instance ArityPeano 'Z where
   gunfoldF _ (T_gunfold c) = c
   {-# INLINE reverseF    #-}
   {-# INLINE gunfoldF    #-}
+  dictionaryPred _ _ = error "dictionaryPred: IMPOSSIBLE"
 
 instance ArityPeano n => ArityPeano ('S n) where
   accum     f g t = Fun $ \a -> unFun $ accum f g (f t a)
@@ -319,6 +329,9 @@ instance ArityPeano n => ArityPeano ('S n) where
   gunfoldF f c = gunfoldF f (apGunfold f c)
   {-# INLINE reverseF    #-}
   {-# INLINE gunfoldF    #-}
+  dictionaryPred _ r = r
+  {-# INLINE dictionaryPred #-}
+
 
 instance ArityPeano n => Index 'Z ('S n) where
   getF  _       = uncurryFirst pure
@@ -976,13 +989,12 @@ vector = runContVec construct
 {-# INLINE[1] vector #-}
 
 -- | Finalizer function for getting head of the vector.
-head :: (ArityPeano n, n ~ 'S k) => ContVec n a -> a
+head :: forall n k a. (ArityPeano n, n ~ 'S k) => ContVec n a -> a
 {-# INLINE head #-}
 head
-  = runContVec
-  $ accum (\(Const m) a -> Const $ case m of { Nothing -> Just a; x -> x })
-          (\(Const (Just x)) -> x)
-          (Const Nothing)
+  = dictionaryPred (proxy# @n)
+  $ runContVec
+  $ uncurryFirst pure
 
 
 -- | /O(n)/ Get value at specified index.
@@ -1035,20 +1047,12 @@ data T_lens f a r n = T_lens (Either (Int,(Fn n a r)) (f (Fn n a r)))
 -- | Left fold over continuation vector.
 foldl :: ArityPeano n => (b -> a -> b) -> b -> ContVec n a -> b
 {-# INLINE foldl #-}
-foldl f b0 v
-  = inspect v
-  $ accum (\(T_foldl b) a -> T_foldl (f b a))
-          (\(T_foldl b)   -> b)
-          (T_foldl b0)
+foldl f b0 = runContVec (foldlF f b0)
 
 -- | Strict left fold over continuation vector.
 foldl' :: ArityPeano n => (b -> a -> b) -> b -> ContVec n a -> b
 {-# INLINE foldl' #-}
-foldl' f b0 v
-  = inspect v
-  $ accum (\(T_foldl !b) a -> T_foldl (f b a))
-          (\(T_foldl b)    -> b)
-          (T_foldl b0)
+foldl' f b0 = runContVec (foldlF' f b0)
 
 -- | Left fold over continuation vector.
 ifoldl :: ArityPeano n => (b -> Int -> a -> b) -> b -> ContVec n a -> b
@@ -1082,24 +1086,41 @@ ifoldM :: (ArityPeano n, Monad m)
 ifoldM f x
   = ifoldl (\m i a -> do{ b <- m; f b i a}) (return x)
 
+
+-- | Left fold without base case. It's total because it requires vector to be nonempty
+foldl1 :: forall n k a. (ArityPeano n, n ~ 'S k)
+       => (a -> a -> a) -> ContVec n a -> a
+{-# INLINE foldl1 #-}
+foldl1 f
+  = dictionaryPred (proxy# @n)
+  $ runContVec
+  $ uncurryFirst (foldlF f)
+
+-- | Left fold without base case. It's total because it requires vector to be nonempty
+foldl1' :: forall n k a. (ArityPeano n, n ~ 'S k)
+       => (a -> a -> a) -> ContVec n a -> a
+{-# INLINE foldl1' #-}
+foldl1' f
+  = dictionaryPred (proxy# @n)
+  $ runContVec
+  $ uncurryFirst (foldlF' f)
+
+
+foldlF :: ArityPeano n => (b -> a -> b) -> b -> Fun n a b
+foldlF f b0
+  = accum (\(T_foldl b) a -> T_foldl (f b a))
+          (\(T_foldl b)   -> b)
+          (T_foldl b0)
+
+foldlF' :: ArityPeano n => (b -> a -> b) -> b -> Fun n a b
+foldlF' f b0
+  = accum (\(T_foldl !b) a -> T_foldl (f b a))
+          (\(T_foldl  b)   -> b)
+          (T_foldl b0)
+
 newtype T_foldl  b n = T_foldl       b
 data    T_ifoldl b n = T_ifoldl !Int b
 
--- | Left fold without base case. It's total because it requires vector to be nonempty
-foldl1 :: (ArityPeano n, n ~ 'S k) => (a -> a -> a) -> ContVec n a -> a
-{-# INLINE foldl1 #-}
--- Implementation of foldl1 is quite ugly. It could be expressed in
--- terms of foldlF (worker function for foldl)
---
--- > foldl1F f = uncurryFirst $ \a -> foldlF f a
---
--- But it require constraint `ArityPeano n` whereas `Vector v a` gives
--- `ArityPeano (S n)`. Latter imply former but GHC cannot infer it.
-foldl1 f
-  = runContVec
-  $ accum (\(Const r       ) a -> Const $ Just $ maybe a (flip f a) r)
-          (\(Const (Just x))   -> x)
-          (Const Nothing)
 
 -- | Right fold over continuation vector
 foldr :: ArityPeano n => (a -> b -> b) -> b -> ContVec n a -> b

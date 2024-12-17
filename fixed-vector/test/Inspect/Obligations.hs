@@ -15,3 +15,6 @@ noArrayAlloc nm = doesNotUseAnyOf nm
   [ 'newByteArray#
   , 'newSmallArray# 
   ]
+
+noAllocation :: Name -> Obligation
+noAllocation nm = mkObligation nm NoAllocation

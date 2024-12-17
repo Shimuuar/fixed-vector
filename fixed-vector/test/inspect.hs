@@ -46,7 +46,13 @@ fuse_zipWithParam v1 v2 v3 = F.sum v12 + F.sum v13 + F.sum v23 where
   v13 = F.zipWith (*) v1 v3
   v23 = F.zipWith (*) v2 v3
 
+simple_foldl1 :: FP.Vec 4 Int -> Int
+simple_foldl1 = F.foldl1 (+) . F.map (\n -> n*n)
 
+
+----------------------------------------------------------------
+-- Tests
+----------------------------------------------------------------
 
 main :: IO ()
 main = defaultMain $ testGroup "inspect"
@@ -78,5 +84,8 @@ main = defaultMain $ testGroup "inspect"
                            , flip hasNoType ''[]
                            , noArrayAlloc
                            ] 'fuse_zipWithParam)
+    , $(inspectObligations [ hasNoTypeClasses
+                           , noArrayAlloc
+                           ] 'simple_foldl1)
     ]
   ]
