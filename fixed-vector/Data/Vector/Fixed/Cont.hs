@@ -133,7 +133,7 @@ import GHC.Exts       (Proxy#, proxy#)
 import Prelude        ( Bool(..), Int, Maybe(..), Either(..)
                       , Eq(..), Ord(..), Num(..), Functor(..), Applicative(..), Monad(..)
                       , Semigroup(..), Monoid(..)
-                      , (.), ($), (&&), (||), (<$>), const, id, error, otherwise, fst
+                      , (.), ($), (&&), (||), (<$>), id, error, otherwise, fst
                       )
 
 
@@ -1127,18 +1127,31 @@ data    T_ifoldl b n = T_ifoldl !Int b
 -- | Right fold over continuation vector
 foldr :: ArityPeano n => (a -> b -> b) -> b -> ContVec n a -> b
 {-# INLINE foldr #-}
-foldr = ifoldr . const
+foldr f b0 = runContVec $ foldrF f b0
 
 -- | Right fold over continuation vector
 ifoldr :: ArityPeano n => (Int -> a -> b -> b) -> b -> ContVec n a -> b
 {-# INLINE ifoldr #-}
-ifoldr f z
-  = runContVec
-  $ accum (\(T_ifoldr i g) a -> T_ifoldr (i+1) (g . f i a))
-          (\(T_ifoldr _ g)   -> g z)
-          (T_ifoldr 0 id)
+ifoldr f b0 = runContVec $ ifoldrF f b0
 
+
+foldrF :: ArityPeano n => (a -> b -> b) -> b -> Fun n a b
+{-# INLINE foldrF #-}
+foldrF f b0 = accum
+  (\(T_foldr g) a -> T_foldr (g . f a))
+  (\(T_foldr g)   -> g b0)
+  (T_foldr id)
+
+ifoldrF :: ArityPeano n => (Int -> a -> b -> b) -> b -> Fun n a b
+{-# INLINE ifoldrF #-}
+ifoldrF f b0 = accum
+  (\(T_ifoldr i g) a -> T_ifoldr (i+1) (g . f i a))
+  (\(T_ifoldr _ g)   -> g b0)
+  (T_ifoldr 0 id)
+
+data T_foldr  b n = T_foldr      (b -> b)
 data T_ifoldr b n = T_ifoldr Int (b -> b)
+
 
 -- | Sum all elements in the vector.
 sum :: (Num a, ArityPeano n) => ContVec n a -> a
@@ -1209,11 +1222,10 @@ gfoldlF :: (ArityPeano n, Data a)
         => (forall x y. Data x => c (x -> y) -> x -> c y)
         -> c (Fn n a r) -> Fun n a (c r)
 gfoldlF f c0 = accum
-  (\(T_gfoldl c) x -> T_gfoldl (f c x))
-  (\(T_gfoldl c)   -> c)
-  (T_gfoldl   c0)
+  (\(T_mapM c) x -> T_mapM (f c x))
+  (\(T_mapM c)   -> c)
+  (T_mapM   c0)
 
-newtype T_gfoldl c r a n = T_gfoldl (c (Fn n a r))
 
 
 ----------------------------------------------------------------
