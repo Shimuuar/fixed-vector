@@ -230,6 +230,14 @@ class ArityPeano n where
         -> t n                              -- ^ Initial value
         -> Fun n a b                        -- ^ Reduction function
 
+  -- | Same as @accum@ but allow use @ArityPeano@ at each step Note
+  --   that in general case this will lead to /O(n²)/ compilation time.
+  accumPeano
+    :: (forall k. ArityPeano k => t ('S k) -> a -> t k) -- ^ Fold function
+    -> (t 'Z -> b)                                      -- ^ Extract result of fold
+    -> t n                                              -- ^ Initial value
+    -> Fun n a b                                        -- ^ Reduction function
+
   -- | Apply all parameters to the function.
   applyFun :: (forall k. t ('S k) -> (a, t k))
               -- ^ Get value to apply to function
@@ -249,11 +257,6 @@ class ArityPeano n where
 
   -- | Conver peano number to int
   peanoToInt :: Proxy# n -> Int
-
-  -- | Reverse order of parameters. It's implemented directly in type
-  --   class since expressing it in terms of @accum@ will require
-  --   putting Arity constraint on step funcion
-  reverseF :: Fun n a b -> Fun n a b
 
   -- | Worker function for 'gunfold'
   gunfoldF :: (Data a)
@@ -299,35 +302,34 @@ class Index (k :: PeanoNum) (n :: PeanoNum) where
 
 instance ArityPeano 'Z where
   accum      _ g t = Fun $ g t
+  accumPeano _ g t = Fun $ g t
   applyFun   _ t   = (ContVec unFun, t)
   applyFunM  _ t   = (pure (ContVec unFun), t)
-  peanoToInt _    = 0
+  peanoToInt _     = 0
   {-# INLINE accum      #-}
+  {-# INLINE accumPeano #-}
   {-# INLINE applyFun   #-}
   {-# INLINE applyFunM  #-}
   {-# INLINE peanoToInt #-}
-  reverseF = id
   gunfoldF _ (T_gunfold c) = c
-  {-# INLINE reverseF    #-}
   {-# INLINE gunfoldF    #-}
   dictionaryPred _ _ = error "dictionaryPred: IMPOSSIBLE"
 
 instance ArityPeano n => ArityPeano ('S n) where
-  accum     f g t = Fun $ \a -> unFun $ accum f g (f t a)
-  applyFun  f t   = let (a,t') = f t
-                        (v,tZ) = applyFun f t'
-                    in  (consPeano a v, tZ)
-  applyFunM f t   = let (a,t')   = f t
-                        (vec,t0) = applyFunM f t'
-                    in  (consPeano <$> a <*> vec, t0)
-  peanoToInt _ = 1 + peanoToInt (proxy# @n)
+  accum      f g t = Fun $ \a -> unFun $ accum      f g (f t a)
+  accumPeano f g t = Fun $ \a -> unFun $ accumPeano f g (f t a)
+  applyFun   f t   = let (a,t') = f t
+                         (v,tZ) = applyFun f t'
+                     in  (consPeano a v, tZ)
+  applyFunM  f t   = let (a,t')   = f t
+                         (vec,t0) = applyFunM f t'
+                     in  (consPeano <$> a <*> vec, t0)
+  peanoToInt _     = 1 + peanoToInt (proxy# @n)
   {-# INLINE accum      #-}
   {-# INLINE applyFun   #-}
   {-# INLINE applyFunM  #-}
   {-# INLINE peanoToInt #-}
-  reverseF f   = Fun $ \a -> unFun (reverseF $ apLast f a)
   gunfoldF f c = gunfoldF f (apGunfold f c)
-  {-# INLINE reverseF    #-}
   {-# INLINE gunfoldF    #-}
   dictionaryPred _ r = r
   {-# INLINE dictionaryPred #-}
@@ -861,6 +863,16 @@ concat v u = inspect u
 reverse :: ArityPeano n => ContVec n a -> ContVec n a
 reverse (ContVec cont) = ContVec $ cont . reverseF
 {-# INLINE reverse #-}
+
+reverseF :: forall n a b. ArityPeano n => Fun n a b -> Fun n a b
+reverseF (Fun fun0) = accumPeano
+  step
+  (\(T_map b) -> b)
+  (T_map fun0 :: T_map a b n)
+  where
+    step :: forall k. ArityPeano k => T_map a b (S k) -> a -> T_map a b k
+    step (T_map f) a = T_map $ unFun $ apLast (Fun f :: Fun (S k) a b) a
+
 
 -- | Zip two vector together using function.
 zipWith :: (ArityPeano n) => (a -> b -> c)
