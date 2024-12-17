@@ -258,6 +258,14 @@ class ArityPeano n where
   gunfoldF :: (Data a)
            => (forall b x. Data b => c (b -> x) -> c x)
            -> T_gunfold c r a n -> c r
+  -- | Provide @ArityPeano@ dictionary for previous Peano number. GHC
+  --   cannot infer that when @ArityPeano n@ and @n ~ S k@ we have
+  --   instance for @k@ as well. So we have to provide such dictionary
+  --   manually.
+  --
+  --   It's not possible to have non-⊥ implementation for @Z@ but
+  --   neither it's possible to call it.
+  dictionaryPred :: (n ~ S k) => Proxy# n -> (ArityPeano k => r) -> r
 
 newtype T_gunfold c r a n = T_gunfold (c (Fn n a r))
 
@@ -301,6 +309,7 @@ instance ArityPeano 'Z where
   gunfoldF _ (T_gunfold c) = c
   {-# INLINE reverseF    #-}
   {-# INLINE gunfoldF    #-}
+  dictionaryPred _ _ = error "dictionaryPred: IMPOSSIBLE"
 
 instance ArityPeano n => ArityPeano ('S n) where
   accum     f g t = Fun $ \a -> unFun $ accum f g (f t a)
@@ -319,6 +328,9 @@ instance ArityPeano n => ArityPeano ('S n) where
   gunfoldF f c = gunfoldF f (apGunfold f c)
   {-# INLINE reverseF    #-}
   {-# INLINE gunfoldF    #-}
+  dictionaryPred _ r = r
+  {-# INLINE dictionaryPred #-}
+
 
 instance ArityPeano n => Index 'Z ('S n) where
   getF  _       = uncurryFirst pure
@@ -976,13 +988,12 @@ vector = runContVec construct
 {-# INLINE[1] vector #-}
 
 -- | Finalizer function for getting head of the vector.
-head :: (ArityPeano n, n ~ 'S k) => ContVec n a -> a
+head :: forall n k a. (ArityPeano n, n ~ 'S k) => ContVec n a -> a
 {-# INLINE head #-}
 head
-  = runContVec
-  $ accum (\(Const m) a -> Const $ case m of { Nothing -> Just a; x -> x })
-          (\(Const (Just x)) -> x)
-          (Const Nothing)
+  = dictionaryPred (proxy# @n)
+  $ runContVec
+  $ uncurryFirst pure
 
 
 -- | /O(n)/ Get value at specified index.
