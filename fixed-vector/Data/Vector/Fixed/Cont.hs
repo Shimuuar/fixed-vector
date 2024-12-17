@@ -1214,7 +1214,7 @@ gunfold :: forall con c v a. (Vector v a, Data a)
 gunfold f inj _
   = gunfoldF f gun
   where
-    con = construct                   :: Fun (Dim v) a (v a)
+    con = construct @v @a
     gun = T_gunfold (inj $ unFun con) :: T_gunfold c (v a) a (Dim v)
 
 
