@@ -1107,12 +1107,14 @@ foldl1' f
 
 
 foldlF :: ArityPeano n => (b -> a -> b) -> b -> Fun n a b
+{-# INLINE foldlF #-}
 foldlF f b0
   = accum (\(T_foldl b) a -> T_foldl (f b a))
           (\(T_foldl b)   -> b)
           (T_foldl b0)
 
 foldlF' :: ArityPeano n => (b -> a -> b) -> b -> Fun n a b
+{-# INLINE foldlF' #-}
 foldlF' f b0
   = accum (\(T_foldl !b) a -> T_foldl (f b a))
           (\(T_foldl  b)   -> b)
