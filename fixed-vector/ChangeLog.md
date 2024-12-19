@@ -9,6 +9,9 @@ Changes in 1.3.0.0
 
 	 - `CVecPeano` dropped and `ContVec` is parameterized using Peano numbers.
 
+  * In `ArityPeano` type class methods `reverseF` and `gunfoldF` are replaced
+    with more general `accumPeano` and `reducePeano`.
+
   * `Data.Vector.Fixed.Cont.arity` dropped
 
   * Type of `D.V.F.Cont.withFun` generalized
