@@ -18,6 +18,7 @@ module Data.Vector.Fixed.Unboxed(
 
 import Control.Applicative   (Const(..))
 import Control.DeepSeq       (NFData(..))
+import Data.Bits
 import Data.Complex
 import Data.Coerce
 import Data.Data
@@ -31,7 +32,7 @@ import Data.Word             (Word,Word8,Word16,Word32,Word64)
 import Foreign.Storable      (Storable(..))
 import GHC.TypeLits
 import GHC.Exts              (Proxy#, proxy#)
-import Prelude               ( Show(..),Eq(..),Ord(..),Applicative(..)
+import Prelude               ( Show(..),Eq(..),Ord(..),Num(..),Applicative(..)
                              , Int,Double,Float,Char,Bool(..),($),id)
 
 import Data.Vector.Fixed           (Dim,Vector(..),ViaFixed(..))
@@ -132,14 +133,26 @@ instance F.Arity n => Vector (VecUnit n) () where
 ----------------------------------------------------------------
 -- Boolean
 
+data BitVec (n :: Natural) a = BitVec Word64
+
+type instance Dim (BitVec n) = Peano n
+
+instance (n <= 64, Arity n, a ~ Bool) => Vector (BitVec n) a where
+  inspect (BitVec w) = inspect (C.generate (testBit w))
+  construct = C.accum
+    (\(Const (i,w)) -> \case
+          True  -> Const (i+1, setBit w i)
+          False -> Const (i+1, w))
+    (\(Const (_,w)) -> BitVec w)
+    (Const (0,0))
+
 -- FIXME: Do I want more efficient representation? Word64? 64 is enough for everyone?
-instance Arity n => Unbox n Bool where
-  type VecRepr n Bool = P.Vec n
-  type EltRepr   Bool = Word8
-  toEltRepr   _ True  = 1
-  toEltRepr   _ False = 0
-  {-# INLINE toEltRepr #-}
-  fromEltRepr _ = (/= 0)
+instance (n <= 64, Arity n) => Unbox n Bool where
+  type VecRepr n Bool = BitVec n
+  type EltRepr   Bool = Bool
+  toEltRepr   _ = id
+  fromEltRepr _ = id
+  {-# INLINE toEltRepr   #-}
   {-# INLINE fromEltRepr #-}
 
 
@@ -184,8 +197,8 @@ deriving newtype instance (Unbox n a) => Unbox n (Dual a)
 deriving newtype instance (Unbox n a) => Unbox n (Sum  a)
 deriving newtype instance (Unbox n a) => Unbox n (Product a)
 
-deriving newtype instance Arity n => Unbox n All
-deriving newtype instance Arity n => Unbox n Any
+deriving newtype instance (n <= 64, Arity n) => Unbox n All
+deriving newtype instance (n <= 64, Arity n) => Unbox n Any
 
 
 ----------------------------------------------------------------
