@@ -881,7 +881,8 @@ zipWith f vecA vecB = ContVec $ \funC ->
 zipWith3 :: (ArityPeano n) => (a -> b -> c -> d)
          -> ContVec n a -> ContVec n b -> ContVec n c -> ContVec n d
 {-# INLINE zipWith3 #-}
-zipWith3 f v1 v2 v3 = zipWith (\a (b, c) -> f a b c) v1 (zipWith (,) v2 v3)
+zipWith3 f v1 v2 v3
+  = zipWith ($) (zipWith f v1 v2) v3
 
 -- | Zip two vector together using function which takes element index
 --   as well.
