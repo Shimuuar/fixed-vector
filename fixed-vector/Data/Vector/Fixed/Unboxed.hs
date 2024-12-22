@@ -1,19 +1,27 @@
-{-# LANGUAGE CPP                   #-}
 {-# LANGUAGE MagicHash             #-}
 {-# LANGUAGE QuantifiedConstraints #-}
 {-# LANGUAGE UndecidableInstances  #-}
 -- |
--- Unboxed vectors with fixed length.
+-- Adaptive array type which picks vector representation from type of
+-- element of array. For example arrays of @Double@ are backed by
+-- @ByteArray@, arrays of @Bool@ are represented as bit-vector, arrays
+-- of tuples are products of arrays. 'Unbox' type class is used to
+-- describe representation of an array.
 module Data.Vector.Fixed.Unboxed(
-    -- * Immutable
+    -- * Data type
     Vec(..)
   , Vec1
   , Vec2
   , Vec3
   , Vec4
   , Vec5
-    -- * Type classes
+    -- * Type classes & derivation
   , Unbox
+  , UnboxViaPrim
+    -- * Concrete representations
+  , BitVec
+  , T2(..)
+  , T3(..)
   ) where
 
 import Control.Applicative   (Const(..))
@@ -47,7 +55,9 @@ import Data.Vector.Fixed.Primitive qualified as P
 -- Data type
 ----------------------------------------------------------------
 
-newtype Vec (n :: Nat) a = Vec { getRepr :: VecRepr n a (EltRepr a) }
+-- | Adaptive array of dimension @n@ and containing elements of type
+--   @a@.
+newtype Vec (n :: Nat) a = Vec { getVecRepr :: VecRepr n a (EltRepr a) }
 
 type Vec1 = Vec 1
 type Vec2 = Vec 2
@@ -55,13 +65,23 @@ type Vec3 = Vec 3
 type Vec4 = Vec 4
 type Vec5 = Vec 5
 
-
+-- | Type class which selects internal representation of unboxed vector.
+--
+--   Crucial design constraint is this type class must be
+--   GND-derivable. And this rules out anything mentioning 'Fun',
+--   since all it's parameters has @nominal@ role. Thus 'Vector' is
+--   not GND-derivable and we have to take somewhat roundabout
+--   approach.
 class ( Dim    (VecRepr n a) ~ Peano n
       , Vector (VecRepr n a) (EltRepr a)
       ) => Unbox n a where
+  -- | Vector data type to use as a representation.
   type VecRepr n a :: Type -> Type
+  -- | Element data type to use as a representation.
   type EltRepr   a :: Type
+  -- | Convert element to its representation
   toEltRepr   :: Proxy# n -> a -> EltRepr a
+  -- | Convert element from its representation
   fromEltRepr :: Proxy# n -> EltRepr a -> a
 
 type instance Dim (Vec n) = Peano n
@@ -133,6 +153,9 @@ instance F.Arity n => Vector (VecUnit n) () where
 ----------------------------------------------------------------
 -- Boolean
 
+-- | Bit vector represented as 64-bit word. This puts upper limit on
+--   length of vector. It's not a big problem. 64-element will strain
+--   GHC quite a bit.
 data BitVec (n :: Natural) a = BitVec Word64
 
 type instance Dim (BitVec n) = Peano n
@@ -146,7 +169,6 @@ instance (n <= 64, Arity n, a ~ Bool) => Vector (BitVec n) a where
     (\(Const (_,w)) -> BitVec w)
     (Const (0,0))
 
--- FIXME: Do I want more efficient representation? Word64? 64 is enough for everyone?
 instance (n <= 64, Arity n) => Unbox n Bool where
   type VecRepr n Bool = BitVec n
   type EltRepr   Bool = Bool
@@ -161,6 +183,10 @@ instance (n <= 64, Arity n) => Unbox n Bool where
 -- Primitive wrappers
 ----------------------------------------------------------------
 
+-- | Wrapper for deriving 'Unbox' for data types which are instances
+--   of 'P.Prim' type class:
+--
+-- > deriving via UnboxViaPrim Word instance (C.Arity n) => Unbox n Word
 newtype UnboxViaPrim a = UnboxViaPrim a
   deriving newtype P.Prim
 

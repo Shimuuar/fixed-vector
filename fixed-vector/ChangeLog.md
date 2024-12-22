@@ -12,6 +12,10 @@ Changes in 1.3.0.0
   * In `ArityPeano` type class methods `reverseF` and `gunfoldF` are replaced
     with more general `accumPeano` and `reducePeano`.
 
+  * `Unbox` vector are fully reworked. All uses of data types with `Unbox`
+    instances which are defined in the library except `Bool` should work without
+    changes.
+
   * `Data.Vector.Fixed.Cont.arity` dropped
 
   * Type of `D.V.F.Cont.withFun` generalized
