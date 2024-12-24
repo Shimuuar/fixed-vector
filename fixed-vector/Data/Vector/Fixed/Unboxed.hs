@@ -1,5 +1,6 @@
 {-# LANGUAGE MagicHash             #-}
 {-# LANGUAGE QuantifiedConstraints #-}
+{-# LANGUAGE UnboxedTuples         #-}
 {-# LANGUAGE UndecidableInstances  #-}
 -- |
 -- Adaptive array type which picks vector representation from type of
@@ -156,7 +157,7 @@ instance F.Arity n => Vector (VecUnit n) () where
 -- | Bit vector represented as 64-bit word. This puts upper limit on
 --   length of vector. It's not a big problem. 64-element will strain
 --   GHC quite a bit.
-data BitVec (n :: Natural) a = BitVec Word64
+data BitVec (n :: Nat) a = BitVec Word64
 
 type instance Dim (BitVec n) = Peano n
 
