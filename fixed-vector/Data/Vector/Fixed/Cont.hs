@@ -29,6 +29,7 @@ module Data.Vector.Fixed.Cont (
   , apLast
   , shuffleFun
   , withFun
+  , dimapFun
     -- * Vector type class
   , Dim
   , Vector(..)
@@ -416,6 +417,15 @@ shuffleFun f0
           (T_shuffle (fmap unFun f0))
 
 newtype T_shuffle x a r n = T_shuffle (x -> Fn n a r)
+
+-- | Apply function to parameters and result of @Fun@ simultaneously.
+dimapFun :: ArityPeano n => (a -> b) -> (c -> d) -> Fun n b c -> Fun n a d
+{-# INLINE dimapFun #-}
+dimapFun fA fR fun
+  = accum (\(T_Flip g) a -> T_Flip (curryFirst g (fA a)))
+          (\(T_Flip x)   -> fR (unFun x))
+          (T_Flip fun)
+
 
 
 
@@ -881,7 +891,8 @@ zipWith f vecA vecB = ContVec $ \funC ->
 zipWith3 :: (ArityPeano n) => (a -> b -> c -> d)
          -> ContVec n a -> ContVec n b -> ContVec n c -> ContVec n d
 {-# INLINE zipWith3 #-}
-zipWith3 f v1 v2 v3 = zipWith (\a (b, c) -> f a b c) v1 (zipWith (,) v2 v3)
+zipWith3 f v1 v2 v3
+  = zipWith ($) (zipWith f v1 v2) v3
 
 -- | Zip two vector together using function which takes element index
 --   as well.

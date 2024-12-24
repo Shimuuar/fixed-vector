@@ -1,27 +1,37 @@
-{-# LANGUAGE CPP                  #-}
-{-# LANGUAGE PolyKinds            #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE MagicHash             #-}
+{-# LANGUAGE QuantifiedConstraints #-}
+{-# LANGUAGE UnboxedTuples         #-}
+{-# LANGUAGE UndecidableInstances  #-}
 -- |
--- Unboxed vectors with fixed length.
+-- Adaptive array type which picks vector representation from type of
+-- element of array. For example arrays of @Double@ are backed by
+-- @ByteArray@, arrays of @Bool@ are represented as bit-vector, arrays
+-- of tuples are products of arrays. 'Unbox' type class is used to
+-- describe representation of an array.
 module Data.Vector.Fixed.Unboxed(
-    -- * Immutable
-    Vec
+    -- * Data type
+    Vec(..)
   , Vec1
   , Vec2
   , Vec3
   , Vec4
   , Vec5
-    -- * Mutable
-  , MVec
-    -- * Type classes
+    -- * Type classes & derivation
   , Unbox
+  , UnboxViaPrim
+    -- * Concrete representations
+  , BitVec
+  , T2(..)
+  , T3(..)
   ) where
 
 import Control.Applicative   (Const(..))
-import Control.Monad
 import Control.DeepSeq       (NFData(..))
+import Data.Bits
 import Data.Complex
+import Data.Coerce
 import Data.Data
+import Data.Kind
 import Data.Functor.Identity (Identity(..))
 import Data.Int              (Int8, Int16, Int32, Int64 )
 import Data.Monoid           (Monoid(..),Dual(..),Sum(..),Product(..),All(..),Any(..))
@@ -30,22 +40,25 @@ import Data.Ord              (Down(..))
 import Data.Word             (Word,Word8,Word16,Word32,Word64)
 import Foreign.Storable      (Storable(..))
 import GHC.TypeLits
-import Prelude               ( Show(..),Eq(..),Ord(..),Int,Double,Float,Char,Bool(..)
-                             , ($),(.))
+import GHC.Exts              (Proxy#, proxy#)
+import Prelude               ( Show(..),Eq(..),Ord(..),Num(..),Applicative(..)
+                             , Int,Double,Float,Char,Bool(..),($),id)
 
-import Data.Vector.Fixed (Dim,Vector(..),ViaFixed(..))
-import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, Arity, index)
-import qualified Data.Vector.Fixed.Cont      as C
-import           Data.Vector.Fixed.Cont      (Peano)
-import qualified Data.Vector.Fixed.Primitive as P
+import Data.Vector.Fixed           (Dim,Vector(..),ViaFixed(..))
+import Data.Vector.Fixed           qualified as F
+import Data.Vector.Fixed.Cont      qualified as C
+import Data.Vector.Fixed.Cont      (Peano,Arity,ArityPeano,Fun(..),curryFirst)
+import Data.Vector.Fixed.Primitive qualified as P
+
 
 
 ----------------------------------------------------------------
 -- Data type
 ----------------------------------------------------------------
 
-data family Vec  (n :: Nat) a
-data family MVec (n :: Nat) s a
+-- | Adaptive array of dimension @n@ and containing elements of type
+--   @a@.
+newtype Vec (n :: Nat) a = Vec { getVecRepr :: VecRepr n a (EltRepr a) }
 
 type Vec1 = Vec 1
 type Vec2 = Vec 2
@@ -53,32 +66,50 @@ type Vec3 = Vec 3
 type Vec4 = Vec 4
 type Vec5 = Vec 5
 
-class (Arity n, IVector (Vec n) a, MVector (MVec n) a) => Unbox n a
+-- | Type class which selects internal representation of unboxed vector.
+--
+--   Crucial design constraint is this type class must be
+--   GND-derivable. And this rules out anything mentioning 'Fun',
+--   since all it's parameters has @nominal@ role. Thus 'Vector' is
+--   not GND-derivable and we have to take somewhat roundabout
+--   approach.
+class ( Dim    (VecRepr n a) ~ Peano n
+      , Vector (VecRepr n a) (EltRepr a)
+      ) => Unbox n a where
+  -- | Vector data type to use as a representation.
+  type VecRepr n a :: Type -> Type
+  -- | Element data type to use as a representation.
+  type EltRepr   a :: Type
+  -- | Convert element to its representation
+  toEltRepr   :: Proxy# n -> a -> EltRepr a
+  -- | Convert element from its representation
+  fromEltRepr :: Proxy# n -> EltRepr a -> a
 
-type instance Mutable (Vec  n) = MVec n
-type instance Dim     (Vec  n) = Peano n
-type instance DimM    (MVec n) = Peano n
+type instance Dim (Vec n) = Peano n
+
+instance (Arity n, Unbox n a) => Vector (Vec n) a where
+  inspect (Vec v) f
+    = inspect v
+      (C.dimapFun (fromEltRepr (proxy# @n)) id f)
+  construct
+    = C.dimapFun (toEltRepr (proxy# @n)) Vec
+      (construct @(VecRepr n a) @(EltRepr a))
+  {-# INLINE inspect   #-}
+  {-# INLINE construct #-}
+
 
 
 ----------------------------------------------------------------
 -- Generic instances
 ----------------------------------------------------------------
 
-deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Show      a) => Show      (Vec n a)
-deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Eq        a) => Eq        (Vec n a)
-deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Ord       a) => Ord       (Vec n a)
-deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, NFData    a) => NFData    (Vec n a)
-deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Semigroup a) => Semigroup (Vec n a)
-deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Monoid    a) => Monoid    (Vec n a)
-deriving via ViaFixed (Vec n) a instance (Arity n, Unbox n a, Storable  a) => Storable  (Vec n a)
-
-instance (Unbox n a) => Vector (Vec n) a where
-  construct  = constructVec
-  inspect    = inspectVec
-  basicIndex = index
-  {-# INLINE construct  #-}
-  {-# INLINE inspect    #-}
-  {-# INLINE basicIndex #-}
+deriving via ViaFixed (Vec n) a instance (Unbox n a, Show      a) => Show      (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Unbox n a, Eq        a) => Eq        (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Unbox n a, Ord       a) => Ord       (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Unbox n a, NFData    a) => NFData    (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Unbox n a, Semigroup a) => Semigroup (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Unbox n a, Monoid    a) => Monoid    (Vec n a)
+deriving via ViaFixed (Vec n) a instance (Unbox n a, Storable  a) => Storable  (Vec n a)
 
 instance (Typeable n, Unbox n a, Data a) => Data (Vec n a) where
   gfoldl       = C.gfoldl
@@ -97,271 +128,187 @@ con_Vec = mkConstr ty_Vec "Vec" [] Prefix
 -- Data instances
 ----------------------------------------------------------------
 
--- Unit type
-data instance MVec n s () = MV_Unit
-data instance Vec  n   () = V_Unit
+instance F.Arity n => Unbox n () where
+  type VecRepr n () = VecUnit n
+  type EltRepr   () = ()
+  toEltRepr   _ = id
+  fromEltRepr _ = id
+  {-# INLINE toEltRepr   #-}
+  {-# INLINE fromEltRepr #-}
 
-instance Arity n => Unbox n ()
+data VecUnit (n :: Nat) a = VecUnit
 
-instance Arity n => MVector (MVec n) () where
-  basicNew          = return MV_Unit
-  {-# INLINE basicNew         #-}
-  basicCopy _ _     = return ()
-  {-# INLINE basicCopy        #-}
-  basicUnsafeRead  _ _   = return ()
-  {-# INLINE basicUnsafeRead  #-}
-  basicUnsafeWrite _ _ _ = return ()
-  {-# INLINE basicUnsafeWrite #-}
+type instance Dim (VecUnit n) = Peano n
 
-instance Arity n => IVector (Vec n) () where
-  basicUnsafeFreeze _   = return V_Unit
-  basicThaw   _   = return MV_Unit
-  unsafeIndex  _ _ = ()
-  {-# INLINE basicUnsafeFreeze #-}
-  {-# INLINE basicThaw   #-}
-  {-# INLINE unsafeIndex  #-}
+instance F.Arity n => Vector (VecUnit n) () where
+  inspect _ fun
+    = C.runContVec fun
+    $ C.apply (\Proxy -> ((),Proxy)) Proxy
+  construct
+    = pure VecUnit
+  {-# INLINE inspect   #-}
+  {-# INLINE construct #-}
 
 
 
 ----------------------------------------------------------------
 -- Boolean
 
-newtype instance MVec n s Bool = MV_Bool (P.MVec n s Word8)
-newtype instance Vec  n   Bool = V_Bool  (P.Vec  n   Word8)
+-- | Bit vector represented as 64-bit word. This puts upper limit on
+--   length of vector. It's not a big problem. 64-element will strain
+--   GHC quite a bit.
+data BitVec (n :: Nat) a = BitVec Word64
 
-instance Arity n => Unbox n Bool
+type instance Dim (BitVec n) = Peano n
 
-instance Arity n => MVector (MVec n) Bool where
-  basicNew          = MV_Bool `liftM` basicNew
-  {-# INLINE basicNew         #-}
-  basicCopy (MV_Bool v) (MV_Bool w) = basicCopy v w
-  {-# INLINE basicCopy        #-}
-  basicUnsafeRead  (MV_Bool v) i   = toBool `liftM` basicUnsafeRead v i
-  {-# INLINE basicUnsafeRead  #-}
-  basicUnsafeWrite (MV_Bool v) i b = basicUnsafeWrite v i (fromBool b)
-  {-# INLINE basicUnsafeWrite #-}
+instance (n <= 64, Arity n, a ~ Bool) => Vector (BitVec n) a where
+  inspect (BitVec w) = inspect (C.generate (testBit w))
+  construct = C.accum
+    (\(Const (i,w)) -> \case
+          True  -> Const (i+1, setBit w i)
+          False -> Const (i+1, w))
+    (\(Const (_,w)) -> BitVec w)
+    (Const (0,0))
 
-instance Arity n => IVector (Vec n) Bool where
-  basicUnsafeFreeze (MV_Bool v) = V_Bool  `liftM` basicUnsafeFreeze v
-  basicThaw   (V_Bool  v) = MV_Bool `liftM` basicThaw   v
-  unsafeIndex  (V_Bool  v) = toBool . unsafeIndex v
-  {-# INLINE basicUnsafeFreeze #-}
-  {-# INLINE basicThaw   #-}
-  {-# INLINE unsafeIndex  #-}
+instance (n <= 64, Arity n) => Unbox n Bool where
+  type VecRepr n Bool = BitVec n
+  type EltRepr   Bool = Bool
+  toEltRepr   _ = id
+  fromEltRepr _ = id
+  {-# INLINE toEltRepr   #-}
+  {-# INLINE fromEltRepr #-}
 
-
-fromBool :: Bool -> Word8
-{-# INLINE fromBool #-}
-fromBool True = 1
-fromBool False = 0
-
-toBool :: Word8 -> Bool
-{-# INLINE toBool #-}
-toBool 0 = False
-toBool _ = True
 
 
 ----------------------------------------------------------------
 -- Primitive wrappers
-#define primMV(ty,con)                              \
-instance Arity n => MVector (MVec n) ty where {     \
-; basicNew = con `liftM` basicNew                             \
-; basicCopy (con v) (con w) = basicCopy v w                   \
-; basicUnsafeRead  (con v) i = basicUnsafeRead v i            \
-; basicUnsafeWrite (con v) i x = basicUnsafeWrite v i x       \
-; {-# INLINE basicNew         #-}                        \
-; {-# INLINE basicCopy        #-}                        \
-; {-# INLINE basicUnsafeRead  #-}                        \
-; {-# INLINE basicUnsafeWrite #-}                        \
-}
+----------------------------------------------------------------
 
-#define primIV(ty,con,mcon)                             \
-instance Arity n => IVector (Vec n) ty where {          \
-; basicUnsafeFreeze (mcon v)   = con  `liftM` basicUnsafeFreeze v \
-; basicThaw   (con  v)   = mcon `liftM` basicThaw   v \
-; unsafeIndex  (con  v) i = unsafeIndex v i             \
-; {-# INLINE basicUnsafeFreeze #-}                           \
-; {-# INLINE basicThaw   #-}                           \
-; {-# INLINE unsafeIndex  #-}                           \
-}
+-- | Wrapper for deriving 'Unbox' for data types which are instances
+--   of 'P.Prim' type class:
+--
+-- > deriving via UnboxViaPrim Word instance (C.Arity n) => Unbox n Word
+newtype UnboxViaPrim a = UnboxViaPrim a
+  deriving newtype P.Prim
 
-#define primWrap(ty,con,mcon) \
-newtype instance MVec n s ty = mcon (P.MVec n s ty) ; \
-newtype instance Vec  n   ty = con  (P.Vec  n   ty) ; \
-instance Arity n => Unbox n ty ; \
-primMV(ty, mcon     )          ; \
-primIV(ty, con, mcon)
+instance (C.Arity n, P.Prim a) => Unbox n (UnboxViaPrim a) where
+  type VecRepr n (UnboxViaPrim a) = P.Vec n
+  type EltRepr   (UnboxViaPrim a) = a
+  toEltRepr   _ = coerce
+  fromEltRepr _ = coerce
+  
+deriving via UnboxViaPrim Int    instance (C.Arity n) => Unbox n Int 
+deriving via UnboxViaPrim Int8   instance (C.Arity n) => Unbox n Int8
+deriving via UnboxViaPrim Int16  instance (C.Arity n) => Unbox n Int16
+deriving via UnboxViaPrim Int32  instance (C.Arity n) => Unbox n Int32
+deriving via UnboxViaPrim Int64  instance (C.Arity n) => Unbox n Int64
+deriving via UnboxViaPrim Word   instance (C.Arity n) => Unbox n Word 
+deriving via UnboxViaPrim Word8  instance (C.Arity n) => Unbox n Word8
+deriving via UnboxViaPrim Word16 instance (C.Arity n) => Unbox n Word16
+deriving via UnboxViaPrim Word32 instance (C.Arity n) => Unbox n Word32
+deriving via UnboxViaPrim Word64 instance (C.Arity n) => Unbox n Word64
 
-
-
-primWrap(Int,   V_Int,   MV_Int  )
-primWrap(Int8,  V_Int8,  MV_Int8 )
-primWrap(Int16, V_Int16, MV_Int16)
-primWrap(Int32, V_Int32, MV_Int32)
-primWrap(Int64, V_Int64, MV_Int64)
-
-primWrap(Word,   V_Word,   MV_Word  )
-primWrap(Word8,  V_Word8,  MV_Word8 )
-primWrap(Word16, V_Word16, MV_Word16)
-primWrap(Word32, V_Word32, MV_Word32)
-primWrap(Word64, V_Word64, MV_Word64)
-
-primWrap(Char,   V_Char,   MV_Char  )
-primWrap(Float,  V_Float,  MV_Float )
-primWrap(Double, V_Double, MV_Double)
-
+deriving via UnboxViaPrim Char   instance (C.Arity n) => Unbox n Char
+deriving via UnboxViaPrim Float  instance (C.Arity n) => Unbox n Float
+deriving via UnboxViaPrim Double instance (C.Arity n) => Unbox n Double
 
 
 ----------------------------------------------------------------
--- Complex
-newtype instance MVec n s (Complex a) = MV_Complex (MVec n s (a,a))
-newtype instance Vec  n   (Complex a) = V_Complex  (Vec  n   (a,a))
+-- Newtypes
+----------------------------------------------------------------
 
-instance (Unbox n a) => Unbox n (Complex a)
+deriving newtype instance (Unbox n a) => Unbox n (Const a b)
+deriving newtype instance (Unbox n a) => Unbox n (Identity a)
+deriving newtype instance (Unbox n a) => Unbox n (Down a)
+deriving newtype instance (Unbox n a) => Unbox n (Dual a)
+deriving newtype instance (Unbox n a) => Unbox n (Sum  a)
+deriving newtype instance (Unbox n a) => Unbox n (Product a)
 
-instance (Arity n, MVector (MVec n) a) => MVector (MVec n) (Complex a) where
-  basicNew = MV_Complex `liftM` basicNew
-  {-# INLINE basicNew #-}
-  basicCopy (MV_Complex v) (MV_Complex w) = basicCopy v w
-  {-# INLINE basicCopy        #-}
-  basicUnsafeRead (MV_Complex v) i = do (a,b) <- basicUnsafeRead v i
-                                        return (a :+ b)
-  {-# INLINE basicUnsafeRead  #-}
-  basicUnsafeWrite (MV_Complex v) i (a :+ b) = basicUnsafeWrite v i (a,b)
-  {-# INLINE basicUnsafeWrite #-}
-
-instance (Arity n, IVector (Vec n) a) => IVector (Vec n) (Complex a) where
-  basicUnsafeFreeze (MV_Complex v) = V_Complex `liftM` basicUnsafeFreeze v
-  {-# INLINE basicUnsafeFreeze #-}
-  basicThaw   (V_Complex  v) = MV_Complex `liftM` basicThaw v
-  {-# INLINE basicThaw   #-}
-  unsafeIndex (V_Complex v) i =
-    case unsafeIndex v i of (a,b) -> a :+ b
-  {-# INLINE unsafeIndex  #-}
-
+deriving newtype instance (n <= 64, Arity n) => Unbox n All
+deriving newtype instance (n <= 64, Arity n) => Unbox n Any
 
 
 ----------------------------------------------------------------
 -- Tuples
-data instance MVec n s (a,b) = MV_2 !(MVec n s a) !(MVec n s b)
-data instance Vec  n   (a,b) = V_2  !(Vec  n   a) !(Vec  n   b)
-
-instance (Unbox n a, Unbox n b) => Unbox n (a,b)
-
-instance (Arity n, MVector (MVec n) a, MVector (MVec n) b) => MVector (MVec n) (a,b) where
-  basicNew = do as <- basicNew
-                bs <- basicNew
-                return $ MV_2 as bs
-  {-# INLINE basicNew #-}
-  basicCopy (MV_2 va vb) (MV_2 wa wb) = basicCopy va wa >> basicCopy vb wb
-  {-# INLINE basicCopy        #-}
-  basicUnsafeRead  (MV_2 v w) i = do a <- basicUnsafeRead v i
-                                     b <- basicUnsafeRead w i
-                                     return (a,b)
-  {-# INLINE basicUnsafeRead  #-}
-  basicUnsafeWrite (MV_2 v w) i (a,b) = basicUnsafeWrite v i a >> basicUnsafeWrite w i b
-  {-# INLINE basicUnsafeWrite #-}
-
-
-instance ( Arity n
-         , IVector (Vec n) a, IVector (Vec n) b
-         ) => IVector (Vec n) (a,b) where
-  basicUnsafeFreeze (MV_2 v w)   = do as <- basicUnsafeFreeze v
-                                      bs <- basicUnsafeFreeze w
-                                      return $ V_2 as bs
-  {-# INLINE basicUnsafeFreeze #-}
-  basicThaw   (V_2  v w)   = do as <- basicThaw v
-                                bs <- basicThaw w
-                                return $ MV_2 as bs
-  {-# INLINE basicThaw   #-}
-  unsafeIndex  (V_2  v w) i = (unsafeIndex v i, unsafeIndex w i)
-  {-# INLINE unsafeIndex  #-}
-
-
-
-
-data instance MVec n s (a,b,c) = MV_3 !(MVec n s a) !(MVec n s b) !(MVec n s c)
-data instance Vec  n   (a,b,c) = V_3  !(Vec  n   a) !(Vec  n   b) !(Vec  n   c)
-
-instance (Unbox n a, Unbox n b, Unbox n c) => Unbox n (a,b,c)
-
-instance (Arity n, MVector (MVec n) a, MVector (MVec n) b, MVector (MVec n) c
-         ) => MVector (MVec n) (a,b,c) where
-  basicNew = do as <- basicNew
-                bs <- basicNew
-                cs <- basicNew
-                return $ MV_3 as bs cs
-  {-# INLINE basicNew #-}
-  basicCopy (MV_3 va vb vc) (MV_3 wa wb wc)
-    = basicCopy va wa >> basicCopy vb wb >> basicCopy vc wc
-  {-# INLINE basicCopy        #-}
-  basicUnsafeRead  (MV_3 v w u) i = do a <- basicUnsafeRead v i
-                                       b <- basicUnsafeRead w i
-                                       c <- basicUnsafeRead u i
-                                       return (a,b,c)
-  {-# INLINE basicUnsafeRead  #-}
-  basicUnsafeWrite (MV_3 v w u) i (a,b,c)
-    = basicUnsafeWrite v i a >> basicUnsafeWrite w i b >> basicUnsafeWrite u i c
-  {-# INLINE basicUnsafeWrite #-}
-
-instance ( Arity n
-         , Vector  (Vec n) a, Vector  (Vec n) b, Vector  (Vec n) c
-         , IVector (Vec n) a, IVector (Vec n) b, IVector (Vec n) c
-         ) => IVector (Vec n) (a,b,c) where
-  basicUnsafeFreeze (MV_3 v w u) = do as <- basicUnsafeFreeze v
-                                      bs <- basicUnsafeFreeze w
-                                      cs <- basicUnsafeFreeze u
-                                      return $ V_3 as bs cs
-  {-# INLINE basicUnsafeFreeze #-}
-  basicThaw   (V_3  v w u) = do as <- basicThaw v
-                                bs <- basicThaw w
-                                cs <- basicThaw u
-                                return $ MV_3 as bs cs
-  {-# INLINE basicThaw   #-}
-  unsafeIndex  (V_3 v w u) i
-    = (unsafeIndex v i, unsafeIndex w i, unsafeIndex u i)
-  {-# INLINE unsafeIndex  #-}
-
-
 ----------------------------------------------------------------
--- Newtype wrappers
 
-newtype instance MVec n s (Const a b) = MV_Const (MVec n s a)
-newtype instance Vec  n   (Const a b) = V_Const  (Vec  n   a)
-instance Unbox n a => Unbox n (Const a b)
-deriving newtype instance (Unbox n a) => MVector (MVec n) (Const a b)
-deriving newtype instance (Unbox n a) => IVector (Vec n)  (Const a b)
+-- | Representation for vector of 2-tuple as two vectors.
+data T2 n a b x = T2 !(Vec n a) !(Vec n b)
+
+type instance Dim (T2 n a b) = Peano n
+
+instance (Arity n, Unbox n a, Unbox n b) => Vector (T2 n a b) (a,b) where
+  inspect (T2 vA vB)
+    = inspect (C.zipWith (,) cvA cvB)
+    where
+      cvA = C.ContVec $ inspect vA
+      cvB = C.ContVec $ inspect vB
+  construct = pairF T2 construct construct
+  {-# INLINE construct #-}
+  {-# INLINE inspect   #-}
+
+pairF
+  :: ArityPeano n
+  => (x -> y -> z)
+  -> Fun n a x
+  -> Fun n b y
+  -> Fun n (a,b) z
+{-# INLINE pairF #-}
+pairF g funA funB = C.accum
+  (\(T_pair fA fB) (a,b) -> T_pair (curryFirst fA a) (curryFirst fB b))
+  (\(T_pair (Fun x) (Fun y)) -> g x y)
+  (T_pair funA funB)
+
+data T_pair a b x y n = T_pair (Fun n a x) (Fun n b y)
 
 
-----------------------------------------------------------------
--- Newtype wrappers with kind * -> *
+-- | Representation for vector of 2-tuple as two vectors.
+data T3 n a b c x = T3 !(Vec n a) !(Vec n b) !(Vec n c)
 
-#define primNewWrap(ty,con,mcon) \
-newtype instance MVec n s (ty a) = mcon (MVec n s a) ; \
-newtype instance Vec  n   (ty a) = con  (Vec  n   a) ; \
-instance Unbox n a => Unbox n (ty a) ; \
-deriving newtype instance Unbox n a => MVector (MVec n) (ty a); \
-deriving newtype instance Unbox n a => IVector (Vec  n) (ty a)
+type instance Dim (T3 n a b c) = Peano n
 
-primNewWrap(Identity, V_Identity, MV_Identity)
-primNewWrap(Down, V_Down, MV_Down)
-primNewWrap(Dual, V_Dual, MV_Dual)
-primNewWrap(Sum, V_Sum, MV_Sum)
-primNewWrap(Product, V_Product, MV_Product)
+instance (Arity n, Unbox n a, Unbox n b, Unbox n c) => Vector (T3 n a b c) (a,b,c) where
+  inspect (T3 vA vB vC)
+    = inspect (C.zipWith3 (,,) cvA cvB cvC)
+    where
+      cvA = C.ContVec $ inspect vA
+      cvB = C.ContVec $ inspect vB
+      cvC = C.ContVec $ inspect vC
+  construct = pair3F T3 construct construct construct
+  {-# INLINE construct #-}
+  {-# INLINE inspect   #-}
+
+pair3F
+  :: ArityPeano n
+  => (x -> y -> z -> r)
+  -> Fun n a x
+  -> Fun n b y
+  -> Fun n c z
+  -> Fun n (a,b,c) r
+{-# INLINE pair3F #-}
+pair3F g funA funB funC = C.accum
+  (\(T_pair3 fA fB fC) (a,b,c) -> T_pair3 (curryFirst fA a)
+                                          (curryFirst fB b)
+                                          (curryFirst fC c))
+  (\(T_pair3 (Fun x) (Fun y) (Fun z)) -> g x y z)
+  (T_pair3 funA funB funC)
+
+data T_pair3 a b c x y z n = T_pair3 (Fun n a x) (Fun n b y) (Fun n c z)
 
 
-----------------------------------------------------------------
--- Monomorphic newtype wrappers
 
+instance (Unbox n a, Unbox n b) => Unbox n (a,b) where
+  type VecRepr n (a,b) = T2 n a b
+  type EltRepr   (a,b) = (a,b)
+  toEltRepr   _ = id
+  fromEltRepr _ = id
 
-newtype instance MVec n s Any = MV_Any (MVec n s Bool)
-newtype instance Vec  n   Any = V_Any  (Vec  n   Bool)
-instance Arity n => Unbox n Any
-deriving newtype instance Arity n => IVector (Vec  n) Any
-deriving newtype instance Arity n => MVector (MVec n) Any
-
-newtype instance MVec n s All = MV_All (MVec n s Bool)
-newtype instance Vec  n   All = V_All  (Vec  n   Bool)
-instance Arity n => Unbox n All
-deriving newtype instance Arity n => IVector (Vec  n) All
-deriving newtype instance Arity n => MVector (MVec n) All
+instance (Unbox n a) => Unbox n (Complex a) where
+  -- NOTE: It would be nice to have ability to use single buffer say
+  --       for `Complex Double`. But buffers seems to be opaque
+  type VecRepr n (Complex a) = T2 n a a
+  type EltRepr   (Complex a) = (a,a)
+  toEltRepr   _ (r :+ i) = (r,i)
+  fromEltRepr _ (r,i)    = r :+ i
+  {-# INLINE toEltRepr   #-}
+  {-# INLINE fromEltRepr #-}
