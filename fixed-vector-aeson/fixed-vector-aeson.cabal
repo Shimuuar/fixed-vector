@@ -1,5 +1,5 @@
 Name:           fixed-vector-aeson
-Version:        1.0.0.2
+Version:        2.0.0.0
 Synopsis:       Aeson instances for fixed-vector
 Description:
   This package contains FromJSON and ToJSON instances for data types defined in

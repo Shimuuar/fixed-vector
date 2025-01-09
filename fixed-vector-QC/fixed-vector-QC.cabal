@@ -1,5 +1,5 @@
 Name:           fixed-vector-QC
-Version:        1.0.0.2
+Version:        2.0.0.0
 Synopsis:       QuickCheck instances for fixed-vector
 Description:
   This package contains Arbitrary instances for data types defined in
