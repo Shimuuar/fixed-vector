@@ -30,13 +30,13 @@ Test-Suite fixed-vector-test
                   TST.CBOR
                   TST.Aeson
                   TST.Util
-  Build-Depends:  base >=3 && <5
-                , fixed-vector
-                , fixed-vector-QC
-                , fixed-vector-aeson
-                , fixed-vector-binary
-                , fixed-vector-cborg
-                , fixed-vector-cereal
+  Build-Depends:  base >=4.14 && <5
+                , fixed-vector        >=2
+                , fixed-vector-QC     >=2
+                , fixed-vector-aeson  >=2
+                , fixed-vector-binary >=2
+                , fixed-vector-cborg  >=2
+                , fixed-vector-cereal >=2
                 --
                 , template-haskell
                 , aeson
