@@ -1,4 +1,4 @@
-2.0.0.0 [??]
+2.0.0.0 [2025.07.10]
 ------------------
 * Type family `Dim` returns Peano numbers instead of standard type level
   naturals.
@@ -14,21 +14,21 @@
   instances which are defined in the library except `Bool` should work without
   changes.
 
-* `Data.Vector.Fixed.Cont.arity` dropped
+* `Data.Vector.Fixed.Cont.arity` dropped.
 
-* Type of `D.V.F.Cont.withFun` generalized
+* Type of `D.V.F.Cont.withFun` generalized.
 
-* Type class `VectorN` dropped. Use QuantifiedConstraints instead
+* Type class `VectorN` dropped. Use `QuantifiedConstraints` instead.
 
-* Show instance now has form `[...]` instead of `fromList [...]`
+* Show instance now has form `[...]` instead of `fromList [...]`.
 
 * `ViaFixed` newtype wrapper for deriving instances is
-  added. `StorableViaFixed` is removed
+  added. `StorableViaFixed` is removed.
 
 * `Data.Vector.Fixed.Storable.unsafeWith` ensures that pointer won't
-  get GC'd while function runs
+  get GC'd while function runs.
 
-* `Data.Vector.Fixed.sequenceA` is deprecated in favor of `sequence`
+* `Data.Vector.Fixed.sequenceA` is deprecated in favor of `sequence`.
 
 * `foldl'` and `ifoldl'` functions added.
 
