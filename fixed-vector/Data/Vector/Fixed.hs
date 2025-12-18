@@ -1,6 +1,8 @@
 {-# LANGUAGE CPP                   #-}
+{-# LANGUAGE MagicHash             #-}
 {-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE QuantifiedConstraints #-}
+{-# LANGUAGE UnboxedTuples         #-}
 {-# LANGUAGE UndecidableInstances  #-}
 -- |
 -- @fixed-vector@ library provides general API for working with short
@@ -188,23 +190,27 @@ module Data.Vector.Fixed (
   , sequenceA
   ) where
 
-import Control.Applicative (Applicative(..))
-import Control.DeepSeq     (NFData(..))
+import Control.Applicative     (Applicative(..))
+import Control.DeepSeq         (NFData(..))
+import Control.Monad.Primitive (PrimBase(..))
 import Data.Coerce
-import Data.Data           (Data)
-import Data.Monoid         (Monoid(..))
-import Data.Semigroup      (Semigroup(..))
-import Data.Foldable       qualified as F
-import Data.Traversable    qualified as T
-import Foreign.Storable    (Storable(..))
+import Data.Data               (Data)
+import Data.Monoid             (Monoid(..))
+import Data.Semigroup          (Semigroup(..))
+import Data.Foldable           qualified as F
+import Data.Traversable        qualified as T
+import Data.Primitive.Types    (Prim(..))
+import Foreign.Storable        (Storable(..))
 import GHC.TypeLits
+import GHC.Exts                (Proxy#,proxy#,(*#),(+#),Int(..),Int#)
+import GHC.ST                  (ST(..))
 
 import Data.Vector.Fixed.Cont     (Vector(..),Dim,length,ContVec,PeanoNum(..),
                                    vector,cvec,empty,Arity,ArityPeano,Fun(..),accum,apply)
 import Data.Vector.Fixed.Cont     qualified as C
 import Data.Vector.Fixed.Internal as I
 
-import Prelude (Show(..),Eq(..),Ord(..),Num(..),Functor(..),id,(.),($),(<$>))
+import Prelude (Show(..),Eq(..),Ord(..),Num(..),Functor(..),id,(.),($),(<$>),undefined,flip)
 
 
 -- $construction
@@ -302,6 +308,7 @@ deriving via ViaFixed (VecList n) a instance (Arity n, NFData    a) => NFData   
 deriving via ViaFixed (VecList n) a instance (Arity n, Semigroup a) => Semigroup (VecList n a)
 deriving via ViaFixed (VecList n) a instance (Arity n, Monoid    a) => Monoid    (VecList n a)
 deriving via ViaFixed (VecList n) a instance (Arity n, Storable  a) => Storable  (VecList n a)
+deriving via ViaFixed (VecList n) a instance (Arity n, Prim      a) => Prim      (VecList n a)
 
 
 
@@ -326,6 +333,7 @@ deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, NFData    a) => NFD
 deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, Semigroup a) => Semigroup (VecPeano n a)
 deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, Monoid    a) => Monoid    (VecPeano n a)
 deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, Storable  a) => Storable  (VecPeano n a)
+deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, Prim      a) => Prim      (VecPeano n a)
 
 
 
@@ -429,6 +437,65 @@ instance (Vector v a, Storable a) => Storable (ViaFixed v a) where
   {-# INLINE sizeOf    #-}
   {-# INLINE peek      #-}
   {-# INLINE poke      #-}
+
+instance (Vector v a, Prim a) => Prim (ViaFixed v a) where
+  sizeOf# _ = sizeOf# (undefined :: a) *# dim where
+    dim = case C.peanoToInt (proxy# @(Dim v)) of I# i -> i
+  alignment# _ = alignment# (undefined :: a)
+  {-# INLINE sizeOf#    #-}
+  {-# INLINE alignment# #-}
+  -- Bytearray
+  indexByteArray# ba k
+    = generate $ \(I# i) -> indexByteArray# ba (off +# i)
+    where
+      off = vectorOff (proxy# @(Dim v))  k
+  readByteArray# ba k
+    = internal
+    $ generateM
+    $ \(I# i) -> ST (\s -> readByteArray# ba (off +# i) s)
+    where
+      off = vectorOff (proxy# @(Dim v))  k
+  writeByteArray# ba k (ViaFixed vec) =
+    case loop of
+      ST st -> \s -> case st s of
+                       (# s', () #) -> s'
+    where
+      off  = vectorOff (proxy# @(Dim v))  k
+      loop = flip imapM_ vec $ \(I# i) a -> ST $ \s ->
+        (# writeByteArray# ba (off +# i) a s, () #)
+  {-# INLINE indexByteArray# #-}
+  {-# INLINE readByteArray#  #-}
+  {-# INLINE writeByteArray# #-}
+  -- Addr
+  indexOffAddr# addr k
+    = generate $ \(I# i) -> indexOffAddr# addr (off +# i)
+    where
+      off = vectorOff (proxy# @(Dim v))  k
+  readOffAddr# ba k
+    = internal
+    $ generateM
+    $ \(I# i) -> ST (\s -> readOffAddr# ba (off +# i) s)
+    where
+      off = vectorOff (proxy# @(Dim v))  k
+  writeOffAddr# addr k (ViaFixed vec) =
+    case loop of
+      ST st -> \s -> case st s of
+                       (# s', () #) -> s'
+    where
+      off  = vectorOff (proxy# @(Dim v))  k
+      loop = flip imapM_ vec $ \(I# i) a -> ST $ \s ->
+        (# writeOffAddr# addr (off +# i) a s, () #)
+  {-# INLINE indexOffAddr# #-}
+  {-# INLINE readOffAddr#  #-}
+  {-# INLINE writeOffAddr# #-}
+
+
+vectorOff :: (ArityPeano n) => Proxy# n -> Int# -> Int#
+{-# INLINE vectorOff #-}
+vectorOff n k =
+  case C.peanoToInt n of
+    I# dim -> dim *# k
+
 
 instance (forall a. Vector v a) => Functor (ViaFixed v) where
   fmap = map
