@@ -157,6 +157,7 @@ instance (Arity n, Storable a) => Storable (Vec n a) where
     = unsafeWithForeignPtr fp $ \p ->
       moveArray (castPtr ptr) p (peanoToInt (proxy# @(Peano n)))
 
+-- | @since 2.0.1.0
 deriving via ViaFixed (Vec n) a instance (Arity n, Storable a, Prim a) => Prim (Vec n a)
 
 instance (Typeable n, Arity n, Storable a, Data a) => Data (Vec n a) where

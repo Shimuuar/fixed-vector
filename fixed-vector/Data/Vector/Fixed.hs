@@ -308,6 +308,7 @@ deriving via ViaFixed (VecList n) a instance (Arity n, NFData    a) => NFData   
 deriving via ViaFixed (VecList n) a instance (Arity n, Semigroup a) => Semigroup (VecList n a)
 deriving via ViaFixed (VecList n) a instance (Arity n, Monoid    a) => Monoid    (VecList n a)
 deriving via ViaFixed (VecList n) a instance (Arity n, Storable  a) => Storable  (VecList n a)
+-- | @since 2.0.1.0
 deriving via ViaFixed (VecList n) a instance (Arity n, Prim      a) => Prim      (VecList n a)
 
 
@@ -333,6 +334,7 @@ deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, NFData    a) => NFD
 deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, Semigroup a) => Semigroup (VecPeano n a)
 deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, Monoid    a) => Monoid    (VecPeano n a)
 deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, Storable  a) => Storable  (VecPeano n a)
+-- | @since 2.0.1.0
 deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, Prim      a) => Prim      (VecPeano n a)
 
 
@@ -438,6 +440,7 @@ instance (Vector v a, Storable a) => Storable (ViaFixed v a) where
   {-# INLINE peek      #-}
   {-# INLINE poke      #-}
 
+-- | @since 2.0.1.0
 instance (Vector v a, Prim a) => Prim (ViaFixed v a) where
   sizeOf# _ = sizeOf# (undefined :: a) *# dim where
     dim = case C.peanoToInt (proxy# @(Dim v)) of I# i -> i

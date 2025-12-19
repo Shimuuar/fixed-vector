@@ -111,6 +111,7 @@ deriving via ViaFixed (Vec n) a instance (Unbox n a, NFData    a) => NFData    (
 deriving via ViaFixed (Vec n) a instance (Unbox n a, Semigroup a) => Semigroup (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Unbox n a, Monoid    a) => Monoid    (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Unbox n a, Storable  a) => Storable  (Vec n a)
+-- | @since 2.0.1.0
 deriving via ViaFixed (Vec n) a instance (Unbox n a, Prim      a) => Prim      (Vec n a)
 
 instance (Typeable n, Unbox n a, Data a) => Data (Vec n a) where

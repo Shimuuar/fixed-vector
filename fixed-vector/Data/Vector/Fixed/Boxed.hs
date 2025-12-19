@@ -83,6 +83,7 @@ deriving via ViaFixed (Vec n) a instance (Arity n, NFData    a) => NFData    (Ve
 deriving via ViaFixed (Vec n) a instance (Arity n, Semigroup a) => Semigroup (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Monoid    a) => Monoid    (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Storable  a) => Storable  (Vec n a)
+-- | @since 2.0.1.0
 deriving via ViaFixed (Vec n) a instance (Arity n, Prim      a) => Prim      (Vec n a)
 
 instance (Arity n) => MVector (MVec n) a where
