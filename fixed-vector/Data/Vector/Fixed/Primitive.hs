@@ -1,4 +1,5 @@
 {-# LANGUAGE MagicHash            #-}
+{-# LANGUAGE UnboxedTuples        #-}
 {-# LANGUAGE UndecidableInstances #-}
 -- |
 -- Unboxed vectors with fixed length. Vectors from
@@ -73,6 +74,8 @@ deriving via ViaFixed (Vec n) a instance (Arity n, Prim a, Ord       a) => Ord  
 deriving via ViaFixed (Vec n) a instance (Arity n, Prim a, Semigroup a) => Semigroup (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Prim a, Monoid    a) => Monoid    (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Arity n, Prim a, Storable  a) => Storable  (Vec n a)
+-- | @since 2.0.1.0
+deriving via ViaFixed (Vec n) a instance (Arity n, Prim a)              => Prim      (Vec n a)
 
 instance (Arity n, Prim a) => MVector (MVec n) a where
   basicNew = do

@@ -1,3 +1,9 @@
+2.0.1.0 [XXX]
+-------------
+* All data types defined in library now has `Prim` instance.
+* `Prim` could be derived using `ViaFixed` by deriving via mechanism.
+
+
 2.0.0.0 [2025.07.10]
 ------------------
 * Type family `Dim` returns Peano numbers instead of standard type level

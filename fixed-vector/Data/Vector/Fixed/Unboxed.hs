@@ -38,7 +38,8 @@ import Data.Monoid           (Monoid(..),Dual(..),Sum(..),Product(..),All(..),An
 import Data.Semigroup        (Semigroup(..))
 import Data.Ord              (Down(..))
 import Data.Word             (Word,Word8,Word16,Word32,Word64)
-import Foreign.Storable      (Storable(..))
+import Data.Primitive.Types  (Prim)
+import Foreign.Storable      (Storable)
 import GHC.TypeLits
 import GHC.Exts              (Proxy#, proxy#)
 import Prelude               ( Show(..),Eq(..),Ord(..),Num(..),Applicative(..)
@@ -110,6 +111,8 @@ deriving via ViaFixed (Vec n) a instance (Unbox n a, NFData    a) => NFData    (
 deriving via ViaFixed (Vec n) a instance (Unbox n a, Semigroup a) => Semigroup (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Unbox n a, Monoid    a) => Monoid    (Vec n a)
 deriving via ViaFixed (Vec n) a instance (Unbox n a, Storable  a) => Storable  (Vec n a)
+-- | @since 2.0.1.0
+deriving via ViaFixed (Vec n) a instance (Unbox n a, Prim      a) => Prim      (Vec n a)
 
 instance (Typeable n, Unbox n a, Data a) => Data (Vec n a) where
   gfoldl       = C.gfoldl

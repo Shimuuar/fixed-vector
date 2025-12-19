@@ -2,48 +2,52 @@ Cabal-Version:  3.0
 Build-Type:     Simple
 
 Name:           fixed-vector
-Version:        2.0.0.0
+Version:        2.0.1.0
 Synopsis:       Generic vectors with statically known size.
 Description:
   Generic library for vectors with statically known
   size. Implementation is based on
   <http://unlines.wordpress.com/2010/11/15/generics-for-small-fixed-size-vectors/>
   Same functions could be used to work with both ADT based vector like
-  .
+
   > data Vec3 a = a a a
-  .
+
   Tuples are vectors too:
-  .
+
   >>> sum (1,2,3)
   6
-  .
+
   Vectors which are represented internally by arrays are provided by
   library. Both boxed and unboxed arrays are supported.
-  .
+
   Library is structured as follows:
-  .
-  * Data.Vector.Fixed
+
+  * __Data.Vector.Fixed__:
   Generic API. It's suitable for both ADT-based vector like Complex
   and array-based ones.
-  .
-  * Data.Vector.Fixed.Cont
+
+  * __Data.Vector.Fixed.Cont__:
   Continuation based vectors. Internally all functions use them.
-  .
-  * Data.Vector.Fixed.Mutable
+
+  * __Data.Vector.Fixed.Unboxed__:
+  Unboxed vectors which select best representation using types.
+
+  * __Data.Vector.Fixed.Strict__:
+  Strict boxed vector which can hold elements of any type.
+
+  * __Data.Vector.Fixed.Boxed__:
+  Lazy boxed vector which can hold elements of any type.
+
+  * __Data.Vector.Fixed.Storable__:
+  Unboxed vectors of Storable  types.
+
+  * __Data.Vector.Fixed.Primitive__:
+  Unboxed vectors backed by single @ByteArray@
+
+  * __Data.Vector.Fixed.Mutable__:
   Type classes for array-based implementation and API for working with
   mutable state.
-  .
-  * Data.Vector.Fixed.Unboxed
-  Unboxed vectors.
-  .
-  * Data.Vector.Fixed.Boxed
-  Boxed vector which can hold elements of any type.
-  .
-  * Data.Vector.Fixed.Storable
-  Unboxed vectors of Storable  types.
-  .
-  * Data.Vector.Fixed.Primitive
-  Unboxed vectors based on pritimive package.
+
 
 License:        BSD-3-Clause
 License-File:   LICENSE
@@ -56,12 +60,13 @@ extra-doc-files:
 
 tested-with:
     GHC ==8.10.7
-     || ==9.0.1
+     || ==9.0.2
      || ==9.2.8
      || ==9.4.7
-     || ==9.6.6
-     || ==9.8.2
-     || ==9.10.1
+     || ==9.6.7
+     || ==9.8.4
+     || ==9.10.2
+     || ==9.12.2
 
 source-repository head
   type:     git

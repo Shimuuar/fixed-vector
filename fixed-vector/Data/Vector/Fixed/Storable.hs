@@ -1,5 +1,6 @@
 {-# LANGUAGE CPP                  #-}
 {-# LANGUAGE MagicHash            #-}
+{-# LANGUAGE UnboxedTuples        #-}
 {-# LANGUAGE UndecidableInstances #-}
 -- |
 -- Storable-based unboxed vectors.
@@ -26,6 +27,7 @@ import Control.DeepSeq (NFData(..))
 import Data.Monoid           (Monoid(..))
 import Data.Semigroup        (Semigroup(..))
 import Data.Data
+import Data.Primitive.Types  (Prim)
 import Foreign.Ptr           (castPtr)
 import Foreign.Storable
 import Foreign.Marshal.Array ( copyArray, moveArray )
@@ -155,6 +157,9 @@ instance (Arity n, Storable a) => Storable (Vec n a) where
   poke ptr (Vec fp)
     = unsafeWithForeignPtr fp $ \p ->
       moveArray (castPtr ptr) p (peanoToInt (proxy# @(Peano n)))
+
+-- | @since 2.0.1.0
+deriving via ViaFixed (Vec n) a instance (Arity n, Storable a, Prim a) => Prim (Vec n a)
 
 instance (Typeable n, Arity n, Storable a, Data a) => Data (Vec n a) where
   gfoldl       = C.gfoldl
