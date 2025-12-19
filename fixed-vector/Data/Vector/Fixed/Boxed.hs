@@ -1,4 +1,5 @@
 {-# LANGUAGE MagicHash            #-}
+{-# LANGUAGE UnboxedTuples        #-}
 {-# LANGUAGE UndecidableInstances #-}
 -- |
 -- Lazy vector which could hold any value. For strict variant see

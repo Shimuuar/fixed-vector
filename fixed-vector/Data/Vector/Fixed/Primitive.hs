@@ -1,4 +1,5 @@
 {-# LANGUAGE MagicHash            #-}
+{-# LANGUAGE UnboxedTuples        #-}
 {-# LANGUAGE UndecidableInstances #-}
 -- |
 -- Unboxed vectors with fixed length. Vectors from
