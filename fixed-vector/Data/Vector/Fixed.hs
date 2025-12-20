@@ -199,6 +199,9 @@ import Data.Monoid             (Monoid(..))
 import Data.Semigroup          (Semigroup(..))
 import Data.Foldable           qualified as F
 import Data.Traversable        qualified as T
+#if MIN_VERSION_base(4,18,0)
+import Data.Foldable1          qualified as F1
+#endif
 import Data.Primitive.Types    (Prim(..))
 import Foreign.Storable        (Storable(..))
 import GHC.TypeLits
@@ -290,6 +293,10 @@ newtype T_List a n k = T_List (VecPeano k a -> VecPeano n a)
 deriving via ViaFixed (VecList n) instance (Arity n) => Functor     (VecList n)
 deriving via ViaFixed (VecList n) instance (Arity n) => Applicative (VecList n)
 deriving via ViaFixed (VecList n) instance (Arity n) => F.Foldable  (VecList n)
+#if MIN_VERSION_base(4,18,0)
+deriving via ViaFixed (VecList n)
+    instance (Arity n, C.Peano n ~ S k) => F1.Foldable1 (VecList n)
+#endif
 
 instance Arity n => T.Traversable (VecList n) where
   sequence  = sequence
@@ -316,6 +323,10 @@ deriving via ViaFixed (VecList n) a instance (Arity n, Prim      a) => Prim     
 deriving via ViaFixed (VecPeano n) instance (ArityPeano n) => Functor     (VecPeano n)
 deriving via ViaFixed (VecPeano n) instance (ArityPeano n) => Applicative (VecPeano n)
 deriving via ViaFixed (VecPeano n) instance (ArityPeano n) => F.Foldable  (VecPeano n)
+#if MIN_VERSION_base(4,18,0)
+deriving via ViaFixed (VecPeano n)
+    instance (ArityPeano n, n ~ S k) => F1.Foldable1 (VecPeano n)
+#endif
 
 instance ArityPeano n => T.Traversable (VecPeano n) where
   sequence  = sequence
@@ -342,6 +353,11 @@ deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, Prim      a) => Pri
 -- | Single-element tuple.
 newtype Only a = Only a
                  deriving (Show,Eq,Ord,Data,Functor,F.Foldable,T.Traversable)
+
+#if MIN_VERSION_base(4,18,0)
+deriving via ViaFixed Only instance F1.Foldable1 Only
+#endif
+
 
 instance Monoid a => Monoid (Only a) where
   mempty  = Only mempty
@@ -535,6 +551,26 @@ instance (forall a. Vector v a) => F.Foldable (ViaFixed v) where
 #if MIN_VERSION_base(4,16,0)
   length = length
   {-# INLINE length #-}
+#endif
+
+#if MIN_VERSION_base(4,18,0)
+instance (forall a. Vector v a, Dim v ~ S k) => F1.Foldable1 (ViaFixed v) where
+  fold1       = foldl1 (<>)
+  foldMap1  f = F1.foldMap1  f . cvec
+  foldMap1' f = F1.foldMap1' f . cvec
+  toNonEmpty  = F1.toNonEmpty . cvec
+  maximum = maximum
+  minimum = minimum
+  head    = head
+  last    = F1.last . cvec
+  {-# INLINE fold1      #-}
+  {-# INLINE foldMap1   #-}
+  {-# INLINE foldMap1'  #-}
+  {-# INLINE toNonEmpty #-}
+  {-# INLINE maximum    #-}
+  {-# INLINE minimum    #-}
+  {-# INLINE head       #-}
+  {-# INLINE last       #-}
 #endif
 
 
