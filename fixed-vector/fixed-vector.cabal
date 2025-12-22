@@ -59,9 +59,7 @@ extra-doc-files:
   ChangeLog.md
 
 tested-with:
-    GHC ==8.10.7
-     || ==9.0.2
-     || ==9.2.8
+    GHC ==9.2.8
      || ==9.4.7
      || ==9.6.7
      || ==9.8.4
@@ -132,9 +130,11 @@ common language
 
 Library
   import:        language
-  Build-Depends: base      >=4.14 && <5
+  Build-Depends: base      >=4.16 && <5
                , primitive >=0.6.2
                , deepseq
+  if impl(ghc<9.6)
+     Build-Depends: foldable1-classes-compat >=0.1
   Exposed-modules:
     -- API
     Data.Vector.Fixed.Cont

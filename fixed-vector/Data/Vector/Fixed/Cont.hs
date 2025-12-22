@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP                  #-}
 {-# LANGUAGE MagicHash            #-}
 {-# LANGUAGE PolyKinds            #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -126,9 +125,11 @@ import Data.Data             (Data)
 import Data.Kind             (Type)
 import Data.Functor.Identity (Identity(..))
 import Data.Typeable         (Proxy(..))
-import qualified Data.Foldable    as F
-import qualified Data.Traversable as T
-import Unsafe.Coerce       (unsafeCoerce)
+import Data.Foldable         qualified as F
+import Data.Traversable      qualified as T
+import Data.List.NonEmpty    qualified as NE
+import Data.Foldable1        qualified as F1
+import Unsafe.Coerce         (unsafeCoerce)
 import GHC.TypeLits
 import GHC.Exts       (Proxy#, proxy#)
 import Prelude        ( Bool(..), Int, Maybe(..), Either(..)
@@ -532,6 +533,7 @@ instance (ArityPeano n) => F.Foldable (ContVec n) where
   toList     = toList
   sum        = sum
   product    = foldl' (*) 0
+  length     = length
   {-# INLINE foldMap' #-}
   {-# INLINE foldr    #-}
   {-# INLINE foldl    #-}
@@ -539,11 +541,27 @@ instance (ArityPeano n) => F.Foldable (ContVec n) where
   {-# INLINE toList   #-}
   {-# INLINE sum      #-}
   {-# INLINE product  #-}
--- GHC<9.2 fails to compile this
-#if MIN_VERSION_base(4,16,0)
-  length = length
   {-# INLINE length #-}
-#endif
+
+
+instance (ArityPeano n, n ~ S k) => F1.Foldable1 (ContVec n) where
+  fold1        = foldl1 (<>)
+  foldMap1   f = foldl1  (<>) . map f
+  foldMap1'  f = foldl1' (<>) . map f
+  toNonEmpty v = dictionaryPred (proxy# @n)
+               $ head v NE.:| toList (tail v)
+  maximum = maximum
+  minimum = minimum
+  head    = head
+  last    = F1.last . F1.toNonEmpty
+  {-# INLINE fold1      #-}
+  {-# INLINE foldMap1   #-}
+  {-# INLINE foldMap1'  #-}
+  {-# INLINE toNonEmpty #-}
+  {-# INLINE maximum    #-}
+  {-# INLINE minimum    #-}
+  {-# INLINE head       #-}
+  {-# INLINE last       #-}
 
 instance (ArityPeano n) => T.Traversable (ContVec n) where
   sequence  = sequence
@@ -1012,7 +1030,6 @@ head
   = dictionaryPred (proxy# @n)
   $ runContVec
   $ uncurryFirst pure
-
 
 -- | /O(n)/ Get value at specified index.
 index :: ArityPeano n => Int -> ContVec n a -> a

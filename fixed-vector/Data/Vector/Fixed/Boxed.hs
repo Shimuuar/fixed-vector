@@ -24,6 +24,7 @@ import Data.Semigroup       (Semigroup(..))
 import Data.Data
 import Data.Primitive.Types (Prim)
 import qualified Data.Foldable    as F
+import qualified Data.Foldable1   as F1
 import qualified Data.Traversable as T
 import Foreign.Storable (Storable)
 import GHC.TypeLits
@@ -66,6 +67,9 @@ type instance DimM    (MVec n) = Peano n
 deriving via ViaFixed (Vec n) instance Arity n => Functor    (Vec n)
 deriving via ViaFixed (Vec n) instance Arity n => Applicative (Vec n)
 deriving via ViaFixed (Vec n) instance Arity n => F.Foldable  (Vec n)
+-- | @since @2.0.1.0
+deriving via ViaFixed (Vec n)
+    instance (Arity n, Peano n ~ S k) => F1.Foldable1 (Vec n)
 
 instance Arity n => T.Traversable (Vec n) where
   sequence  = sequence

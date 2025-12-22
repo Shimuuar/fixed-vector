@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP                   #-}
 {-# LANGUAGE MagicHash             #-}
 {-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE QuantifiedConstraints #-}
@@ -199,6 +198,7 @@ import Data.Monoid             (Monoid(..))
 import Data.Semigroup          (Semigroup(..))
 import Data.Foldable           qualified as F
 import Data.Traversable        qualified as T
+import Data.Foldable1          qualified as F1
 import Data.Primitive.Types    (Prim(..))
 import Foreign.Storable        (Storable(..))
 import GHC.TypeLits
@@ -290,6 +290,9 @@ newtype T_List a n k = T_List (VecPeano k a -> VecPeano n a)
 deriving via ViaFixed (VecList n) instance (Arity n) => Functor     (VecList n)
 deriving via ViaFixed (VecList n) instance (Arity n) => Applicative (VecList n)
 deriving via ViaFixed (VecList n) instance (Arity n) => F.Foldable  (VecList n)
+-- | @since @2.0.1.0
+deriving via ViaFixed (VecList n)
+    instance (Arity n, C.Peano n ~ S k) => F1.Foldable1 (VecList n)
 
 instance Arity n => T.Traversable (VecList n) where
   sequence  = sequence
@@ -316,6 +319,9 @@ deriving via ViaFixed (VecList n) a instance (Arity n, Prim      a) => Prim     
 deriving via ViaFixed (VecPeano n) instance (ArityPeano n) => Functor     (VecPeano n)
 deriving via ViaFixed (VecPeano n) instance (ArityPeano n) => Applicative (VecPeano n)
 deriving via ViaFixed (VecPeano n) instance (ArityPeano n) => F.Foldable  (VecPeano n)
+-- | @since @2.0.1.0
+deriving via ViaFixed (VecPeano n)
+    instance (ArityPeano n, n ~ S k) => F1.Foldable1 (VecPeano n)
 
 instance ArityPeano n => T.Traversable (VecPeano n) where
   sequence  = sequence
@@ -342,6 +348,10 @@ deriving via ViaFixed (VecPeano n) a instance (ArityPeano n, Prim      a) => Pri
 -- | Single-element tuple.
 newtype Only a = Only a
                  deriving (Show,Eq,Ord,Data,Functor,F.Foldable,T.Traversable)
+
+-- | @since @2.0.1.0
+deriving via ViaFixed Only instance F1.Foldable1 Only
+
 
 instance Monoid a => Monoid (Only a) where
   mempty  = Only mempty
@@ -524,6 +534,7 @@ instance (forall a. Vector v a) => F.Foldable (ViaFixed v) where
   toList     = toList
   sum        = sum
   product    = foldl' (*) 0
+  length     = length
   {-# INLINE foldMap' #-}
   {-# INLINE foldr    #-}
   {-# INLINE foldl    #-}
@@ -531,11 +542,27 @@ instance (forall a. Vector v a) => F.Foldable (ViaFixed v) where
   {-# INLINE toList   #-}
   {-# INLINE sum      #-}
   {-# INLINE product  #-}
--- GHC<9.2 fails to compile this
-#if MIN_VERSION_base(4,16,0)
-  length = length
-  {-# INLINE length #-}
-#endif
+  {-# INLINE length   #-}
+
+
+-- | @since @2.0.1.0
+instance (forall a. Vector v a, Dim v ~ S k) => F1.Foldable1 (ViaFixed v) where
+  fold1       = foldl1 (<>)
+  foldMap1  f = F1.foldMap1  f . cvec
+  foldMap1' f = F1.foldMap1' f . cvec
+  toNonEmpty  = F1.toNonEmpty . cvec
+  head        = head
+  last        = F1.last . cvec
+  maximum     = maximum
+  minimum     = minimum
+  {-# INLINE fold1      #-}
+  {-# INLINE foldMap1   #-}
+  {-# INLINE foldMap1'  #-}
+  {-# INLINE toNonEmpty #-}
+  {-# INLINE maximum    #-}
+  {-# INLINE minimum    #-}
+  {-# INLINE head       #-}
+  {-# INLINE last       #-}
 
 
 ----------------------------------------------------------------
@@ -545,34 +572,26 @@ instance (forall a. Vector v a) => F.Foldable (ViaFixed v) where
 pattern V1 :: (Vector v a, Dim v ~ C.N1) => a -> v a
 pattern V1 x <- (convert -> (Only x)) where
   V1 x = mk1 x
-#if MIN_VERSION_base(4,16,0)
 {-# INLINE   V1 #-}
 {-# COMPLETE V1 #-}
-#endif
 
 pattern V2 :: (Vector v a, Dim v ~ C.N2) => a -> a -> v a
 pattern V2 x y <- (convert -> (x,y)) where
   V2 x y = mk2 x y
-#if MIN_VERSION_base(4,16,0)
 {-# INLINE   V2 #-}
 {-# COMPLETE V2 #-}
-#endif
 
 pattern V3 :: (Vector v a, Dim v ~ C.N3) => a -> a -> a -> v a
 pattern V3 x y z <- (convert -> (x,y,z)) where
   V3 x y z = mk3 x y z
-#if MIN_VERSION_base(4,16,0)
 {-# INLINE   V3 #-}
 {-# COMPLETE V3 #-}
-#endif
 
 pattern V4 :: (Vector v a, Dim v ~ C.N4) => a -> a -> a -> a -> v a
 pattern V4 t x y z <- (convert -> (t,x,y,z)) where
   V4 t x y z = mk4 t x y z
-#if MIN_VERSION_base(4,16,0)
 {-# INLINE   V4 #-}
 {-# COMPLETE V4 #-}
-#endif
 
 -- $setup
 --
