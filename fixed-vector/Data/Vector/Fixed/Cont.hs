@@ -435,7 +435,7 @@ dimapFun fA fR fun
 ----------------------------------------------------------------
 
 -- | Size of vector expressed as Peano natural.
-type family Dim (v :: Type -> Type) :: PeanoNum
+type family Dim (v :: k) :: PeanoNum
 
 -- | Type class for vectors with fixed length. Instance should provide
 --   two functions: one to create vector from @N@ elements and another
