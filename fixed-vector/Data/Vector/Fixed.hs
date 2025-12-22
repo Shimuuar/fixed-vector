@@ -194,6 +194,7 @@ import Control.DeepSeq         (NFData(..))
 import Control.Monad.Primitive (PrimBase(..))
 import Data.Coerce
 import Data.Data               (Data)
+import Data.Kind               (Type)
 import Data.Monoid             (Monoid(..))
 import Data.Semigroup          (Semigroup(..))
 import Data.Foldable           qualified as F
@@ -407,7 +408,7 @@ type Tuple5 a = (a,a,a,a,a)
 -- | Newtype for deriving instance for data types which has instance
 --   of 'Vector'. It supports 'Eq', 'Ord', 'Semigroup', 'Monoid',
 --   'Storable', 'NFData', 'Functor', 'Applicative', 'Foldable'.
-newtype ViaFixed v a = ViaFixed (v a)
+newtype ViaFixed (v :: Type -> Type) (a :: Type) = ViaFixed (v a)
 
 type instance Dim (ViaFixed v) = Dim v
 
