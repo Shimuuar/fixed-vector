@@ -1,5 +1,6 @@
 2.0.1.0 [XXX]
 -------------
+* Support for GHC<9.2 dropped.
 * `Prim` could be derived using `ViaFixed` by deriving via mechanism and add
   data types defined in library now has `Prim` instance.
 * `Foldable1` could be derived using `ViaFixed`. All types for which it could be

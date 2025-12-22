@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP                  #-}
 {-# LANGUAGE MagicHash            #-}
 {-# LANGUAGE PolyKinds            #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -534,6 +533,7 @@ instance (ArityPeano n) => F.Foldable (ContVec n) where
   toList     = toList
   sum        = sum
   product    = foldl' (*) 0
+  length     = length
   {-# INLINE foldMap' #-}
   {-# INLINE foldr    #-}
   {-# INLINE foldl    #-}
@@ -541,11 +541,7 @@ instance (ArityPeano n) => F.Foldable (ContVec n) where
   {-# INLINE toList   #-}
   {-# INLINE sum      #-}
   {-# INLINE product  #-}
--- GHC<9.2 fails to compile this
-#if MIN_VERSION_base(4,16,0)
-  length = length
   {-# INLINE length #-}
-#endif
 
 
 instance (ArityPeano n, n ~ S k) => F1.Foldable1 (ContVec n) where

@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP                  #-}
 {-# LANGUAGE MagicHash            #-}
 {-# LANGUAGE UnboxedTuples        #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -35,9 +34,7 @@ import GHC.ForeignPtr        ( mallocPlainForeignPtrBytes )
 import GHC.Ptr               ( Ptr(..) )
 import GHC.Exts              ( proxy# )
 import GHC.TypeLits
-#if MIN_VERSION_base(4,15,0)
 import GHC.ForeignPtr       ( unsafeWithForeignPtr )
-#endif
 import Foreign.ForeignPtr   ( ForeignPtr, withForeignPtr )
 import Prelude ( Show(..),Eq(..),Ord(..),Num(..),Monad(..),IO,Int
                , ($),undefined,seq,pure)
@@ -186,13 +183,3 @@ mallocVector :: forall a. Storable a => Int -> IO (ForeignPtr a)
 {-# INLINE mallocVector #-}
 mallocVector size
   = mallocPlainForeignPtrBytes (size * sizeOf (undefined :: a))
-
-#if !MIN_VERSION_base(4,15,0)
--- | A compatibility wrapper for 'GHC.ForeignPtr.unsafeWithForeignPtr' provided
--- by GHC 9.0.1 and later.
---
--- Only to be used when the continuation is known not to
--- unconditionally diverge lest unsoundness can result.
-unsafeWithForeignPtr :: ForeignPtr a -> (Ptr a -> IO b) -> IO b
-unsafeWithForeignPtr = withForeignPtr
-#endif

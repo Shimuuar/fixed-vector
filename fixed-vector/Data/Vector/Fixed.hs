@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP                   #-}
 {-# LANGUAGE MagicHash             #-}
 {-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE QuantifiedConstraints #-}
@@ -535,6 +534,7 @@ instance (forall a. Vector v a) => F.Foldable (ViaFixed v) where
   toList     = toList
   sum        = sum
   product    = foldl' (*) 0
+  length     = length
   {-# INLINE foldMap' #-}
   {-# INLINE foldr    #-}
   {-# INLINE foldl    #-}
@@ -542,11 +542,8 @@ instance (forall a. Vector v a) => F.Foldable (ViaFixed v) where
   {-# INLINE toList   #-}
   {-# INLINE sum      #-}
   {-# INLINE product  #-}
--- GHC<9.2 fails to compile this
-#if MIN_VERSION_base(4,16,0)
-  length = length
-  {-# INLINE length #-}
-#endif
+  {-# INLINE length   #-}
+
 
 -- | @since @2.0.1.0
 instance (forall a. Vector v a, Dim v ~ S k) => F1.Foldable1 (ViaFixed v) where
@@ -554,10 +551,10 @@ instance (forall a. Vector v a, Dim v ~ S k) => F1.Foldable1 (ViaFixed v) where
   foldMap1  f = F1.foldMap1  f . cvec
   foldMap1' f = F1.foldMap1' f . cvec
   toNonEmpty  = F1.toNonEmpty . cvec
-  maximum = maximum
-  minimum = minimum
-  head    = head
-  last    = F1.last . cvec
+  head        = head
+  last        = F1.last . cvec
+  maximum     = maximum
+  minimum     = minimum
   {-# INLINE fold1      #-}
   {-# INLINE foldMap1   #-}
   {-# INLINE foldMap1'  #-}
@@ -575,34 +572,26 @@ instance (forall a. Vector v a, Dim v ~ S k) => F1.Foldable1 (ViaFixed v) where
 pattern V1 :: (Vector v a, Dim v ~ C.N1) => a -> v a
 pattern V1 x <- (convert -> (Only x)) where
   V1 x = mk1 x
-#if MIN_VERSION_base(4,16,0)
 {-# INLINE   V1 #-}
 {-# COMPLETE V1 #-}
-#endif
 
 pattern V2 :: (Vector v a, Dim v ~ C.N2) => a -> a -> v a
 pattern V2 x y <- (convert -> (x,y)) where
   V2 x y = mk2 x y
-#if MIN_VERSION_base(4,16,0)
 {-# INLINE   V2 #-}
 {-# COMPLETE V2 #-}
-#endif
 
 pattern V3 :: (Vector v a, Dim v ~ C.N3) => a -> a -> a -> v a
 pattern V3 x y z <- (convert -> (x,y,z)) where
   V3 x y z = mk3 x y z
-#if MIN_VERSION_base(4,16,0)
 {-# INLINE   V3 #-}
 {-# COMPLETE V3 #-}
-#endif
 
 pattern V4 :: (Vector v a, Dim v ~ C.N4) => a -> a -> a -> a -> v a
 pattern V4 t x y z <- (convert -> (t,x,y,z)) where
   V4 t x y z = mk4 t x y z
-#if MIN_VERSION_base(4,16,0)
 {-# INLINE   V4 #-}
 {-# COMPLETE V4 #-}
-#endif
 
 -- $setup
 --
