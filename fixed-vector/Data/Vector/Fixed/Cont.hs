@@ -128,11 +128,9 @@ import Data.Functor.Identity (Identity(..))
 import Data.Typeable         (Proxy(..))
 import Data.Foldable         qualified as F
 import Data.Traversable      qualified as T
-#if MIN_VERSION_base(4,18,0)
 import Data.List.NonEmpty    qualified as NE
 import Data.Foldable1        qualified as F1
-#endif
-import Unsafe.Coerce       (unsafeCoerce)
+import Unsafe.Coerce         (unsafeCoerce)
 import GHC.TypeLits
 import GHC.Exts       (Proxy#, proxy#)
 import Prelude        ( Bool(..), Int, Maybe(..), Either(..)
@@ -550,7 +548,6 @@ instance (ArityPeano n) => F.Foldable (ContVec n) where
 #endif
 
 
-#if MIN_VERSION_base(4,18,0)
 instance (ArityPeano n, n ~ S k) => F1.Foldable1 (ContVec n) where
   fold1        = foldl1 (<>)
   foldMap1   f = foldl1  (<>) . map f
@@ -569,7 +566,6 @@ instance (ArityPeano n, n ~ S k) => F1.Foldable1 (ContVec n) where
   {-# INLINE minimum    #-}
   {-# INLINE head       #-}
   {-# INLINE last       #-}
-#endif
 
 instance (ArityPeano n) => T.Traversable (ContVec n) where
   sequence  = sequence

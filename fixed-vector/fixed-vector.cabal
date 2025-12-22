@@ -135,6 +135,8 @@ Library
   Build-Depends: base      >=4.14 && <5
                , primitive >=0.6.2
                , deepseq
+  if impl(ghc<9.6)
+     Build-Depends: foldable1-classes-compat >=0.1
   Exposed-modules:
     -- API
     Data.Vector.Fixed.Cont

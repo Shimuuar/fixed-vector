@@ -1,7 +1,9 @@
 2.0.1.0 [XXX]
 -------------
-* All data types defined in library now has `Prim` instance.
-* `Prim` could be derived using `ViaFixed` by deriving via mechanism.
+* `Prim` could be derived using `ViaFixed` by deriving via mechanism and add
+  data types defined in library now has `Prim` instance.
+* `Foldable1` could be derived using `ViaFixed`. All types for which it could be
+  defined now has it. For GHC<9.6 `foldable1-classes-compat` is used.
 
 
 2.0.0.0 [2025.07.10]
