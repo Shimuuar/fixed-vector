@@ -129,6 +129,7 @@ module Data.Vector.Fixed (
   , fold
   , foldMap
   , ifoldl
+  , ifoldl'
   , ifoldr
   , foldM
   , ifoldM
