@@ -607,7 +607,7 @@ izipWithM f v u = fmap vector
 -- | Zip two vector elementwise using monadic function and discard
 --   result
 izipWithM_
-  :: (Vector v a, Vector v b, Vector v c, Applicative f, Vector v (f c))
+  :: (Vector v a, Vector v b, Vector v c, Applicative f)
   => (Int -> a -> b -> f c) -> v a -> v b -> f ()
 {-# INLINE izipWithM_ #-}
 izipWithM_ f xs ys = C.izipWithM_ f (C.cvec xs) (C.cvec ys)
