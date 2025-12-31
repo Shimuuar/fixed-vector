@@ -273,9 +273,7 @@ elementTy :: forall k v a f proxy. (Vector v a, Index (Peano k) (Dim v), Functor
           => proxy k -> (a -> f a) -> (v a -> f (v a))
 {-# INLINE elementTy #-}
 elementTy _ f v
-  = fmap vector
-  $ inspect (C.cvec v) 
-    (C.lensF (proxy# @(Peano k)) f construct)
+  = inspect v (C.lensF (proxy# @(Peano k)) f construct)
 
 -- | Left fold over vector
 foldl :: Vector v a => (b -> a -> b) -> b -> v a -> b
