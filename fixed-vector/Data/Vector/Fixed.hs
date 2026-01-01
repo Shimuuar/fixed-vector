@@ -261,8 +261,10 @@ data VecPeano (n :: PeanoNum) a where
   Nil  :: VecPeano 'Z a
   Cons :: a -> VecPeano n a -> VecPeano ('S n) a
 
-type instance Dim (VecList  n) = C.Peano n
-type instance Dim (VecPeano n) = n
+type instance Dim (VecList  n)   = C.Peano n
+type instance Dim (VecList  n a) = C.Peano n
+type instance Dim (VecPeano n)   = n
+type instance Dim (VecPeano n a) = n
 
 instance Arity n => Vector (VecList n) a where
   construct = VecList <$> construct @(VecPeano (C.Peano n)) @a
@@ -365,7 +367,8 @@ instance (Semigroup a) => Semigroup (Only a) where
 instance NFData a => NFData (Only a) where
   rnf (Only a) = rnf a
 
-type instance Dim Only = C.N1
+type instance Dim  Only    = C.N1
+type instance Dim (Only a) = C.N1
 
 instance Vector Only a where
   construct = Fun Only
@@ -387,7 +390,8 @@ data Empty a = Empty
 instance NFData (Empty a) where
   rnf Empty = ()
 
-type instance Dim Empty = 'Z
+type instance Dim  Empty    = 'Z
+type instance Dim (Empty a) = 'Z
 
 instance Vector Empty a where
   construct = Fun Empty
@@ -410,7 +414,8 @@ type Tuple5 a = (a,a,a,a,a)
 --   'Storable', 'NFData', 'Functor', 'Applicative', 'Foldable'.
 newtype ViaFixed v a = ViaFixed (v a)
 
-type instance Dim (ViaFixed v) = Dim v
+type instance Dim (ViaFixed v)   = Dim v
+type instance Dim (ViaFixed v a) = Dim v
 
 instance Vector v a => Vector (ViaFixed v) a where
   construct = ViaFixed <$> construct

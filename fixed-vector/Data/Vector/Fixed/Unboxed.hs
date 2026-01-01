@@ -86,7 +86,8 @@ class ( Dim    (VecRepr n a) ~ Peano n
   -- | Convert element from its representation
   fromEltRepr :: Proxy# n -> EltRepr a -> a
 
-type instance Dim (Vec n) = Peano n
+type instance Dim (Vec n)   = Peano n
+type instance Dim (Vec n a) = Peano n
 
 instance (Arity n, Unbox n a) => Vector (Vec n) a where
   inspect (Vec v) f
@@ -141,7 +142,8 @@ instance F.Arity n => Unbox n () where
 
 data VecUnit (n :: Nat) a = VecUnit
 
-type instance Dim (VecUnit n) = Peano n
+type instance Dim (VecUnit n)   = Peano n
+type instance Dim (VecUnit n a) = Peano n
 
 instance F.Arity n => Vector (VecUnit n) () where
   inspect _ fun
@@ -162,7 +164,8 @@ instance F.Arity n => Vector (VecUnit n) () where
 --   GHC quite a bit.
 data BitVec (n :: Nat) a = BitVec Word64
 
-type instance Dim (BitVec n) = Peano n
+type instance Dim (BitVec n)   = Peano n
+type instance Dim (BitVec n a) = Peano n
 
 instance (n <= 64, Arity n, a ~ Bool) => Vector (BitVec n) a where
   inspect (BitVec w) = inspect (C.generate (testBit w))
@@ -238,7 +241,8 @@ deriving newtype instance (n <= 64, Arity n) => Unbox n Any
 -- | Representation for vector of 2-tuple as two vectors.
 data T2 n a b x = T2 !(Vec n a) !(Vec n b)
 
-type instance Dim (T2 n a b) = Peano n
+type instance Dim (T2 n a b)   = Peano n
+type instance Dim (T2 n a b x) = Peano n
 
 instance (Arity n, Unbox n a, Unbox n b) => Vector (T2 n a b) (a,b) where
   inspect (T2 vA vB)
@@ -268,7 +272,8 @@ data T_pair a b x y n = T_pair (Fun n a x) (Fun n b y)
 -- | Representation for vector of 2-tuple as two vectors.
 data T3 n a b c x = T3 !(Vec n a) !(Vec n b) !(Vec n c)
 
-type instance Dim (T3 n a b c) = Peano n
+type instance Dim (T3 n a b c)   = Peano n
+type instance Dim (T3 n a b c x) = Peano n
 
 instance (Arity n, Unbox n a, Unbox n b, Unbox n c) => Vector (T3 n a b c) (a,b,c) where
   inspect (T3 vA vB vC)

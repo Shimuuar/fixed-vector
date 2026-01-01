@@ -478,7 +478,8 @@ length _ = peanoToInt (proxy# @(Dim v))
 --   Church encoded N-element vector.
 newtype ContVec n a = ContVec (forall r. Fun n a r -> r)
 
-type instance Dim (ContVec n) = n
+type instance Dim (ContVec n)   = n
+type instance Dim (ContVec n a) = n
 
 -- | Cons values to the @ContVec@.
 consPeano :: a -> ContVec n a -> ContVec ('S n) a
@@ -1301,7 +1302,8 @@ gfoldlF f c0 = accum
 -- Instances
 ----------------------------------------------------------------
 
-type instance Dim Complex = N2
+type instance Dim Complex     = N2
+type instance Dim (Complex a) = N2
 
 instance Vector Complex a where
   construct = Fun (:+)
@@ -1310,7 +1312,8 @@ instance Vector Complex a where
   {-# INLINE inspect #-}
 
 
-type instance Dim Identity = N1
+type instance Dim Identity     = N1
+type instance Dim (Identity a) = N1
 
 instance Vector Identity a where
   construct = Fun Identity
@@ -1319,7 +1322,8 @@ instance Vector Identity a where
   {-# INLINE inspect #-}
 
 
-type instance Dim ((,) a) = N2
+type instance Dim ((,) a)   = N2
+type instance Dim ((,) a b) = N2
 
 -- | Note this instance (and other instances for tuples) is
 --   essentially monomorphic in element type. Vector type /v/ of 2
@@ -1332,7 +1336,8 @@ instance (b~a) => Vector ((,) b) a where
   {-# INLINE inspect #-}
 
 
-type instance Dim ((,,) a b) = N3
+type instance Dim ((,,) a b)   = N3
+type instance Dim ((,,) a b c) = N3
 
 instance (b~a, c~a) => Vector ((,,) b c) a where
   construct = Fun (,,)
@@ -1341,7 +1346,8 @@ instance (b~a, c~a) => Vector ((,,) b c) a where
   {-# INLINE inspect #-}
 
 
-type instance Dim ((,,,) a b c) = N4
+type instance Dim ((,,,) a b c)   = N4
+type instance Dim ((,,,) a b c d) = N4
 
 instance (b~a, c~a, d~a) => Vector ((,,,) b c d) a where
   construct = Fun (,,,)
@@ -1350,7 +1356,8 @@ instance (b~a, c~a, d~a) => Vector ((,,,) b c d) a where
   {-# INLINE inspect #-}
 
 
-type instance Dim ((,,,,) a b c d) = N5
+type instance Dim ((,,,,) a b c d)   = N5
+type instance Dim ((,,,,) a b c d e) = N5
 
 instance (b~a, c~a, d~a, e~a) => Vector ((,,,,) b c d e) a where
   construct = Fun (,,,,)
@@ -1359,7 +1366,8 @@ instance (b~a, c~a, d~a, e~a) => Vector ((,,,,) b c d e) a where
   {-# INLINE inspect #-}
 
 
-type instance Dim ((,,,,,) a b c d e) = N6
+type instance Dim ((,,,,,) a b c d e)   = N6
+type instance Dim ((,,,,,) a b c d e f) = N6
 
 instance (b~a, c~a, d~a, e~a, f~a) => Vector ((,,,,,) b c d e f) a where
   construct = Fun (,,,,,)
@@ -1368,7 +1376,8 @@ instance (b~a, c~a, d~a, e~a, f~a) => Vector ((,,,,,) b c d e f) a where
   {-# INLINE inspect #-}
 
 
-type instance Dim ((,,,,,,) a b c d e f) = N7
+type instance Dim ((,,,,,,) a b c d e f)   = N7
+type instance Dim ((,,,,,,) a b c d e f g) = N7
 
 instance (b~a, c~a, d~a, e~a, f~a, g~a) => Vector ((,,,,,,) b c d e f g) a where
   construct = Fun (,,,,,,)
@@ -1376,7 +1385,8 @@ instance (b~a, c~a, d~a, e~a, f~a, g~a) => Vector ((,,,,,,) b c d e f g) a where
   {-# INLINE construct #-}
   {-# INLINE inspect #-}
 
-type instance Dim Proxy = Z
+type instance Dim Proxy     = Z
+type instance Dim (Proxy a) = Z
 
 instance Vector Proxy a where
   construct = Fun Proxy
