@@ -5,7 +5,7 @@
   data types defined in library now has `Prim` instance.
 * `Foldable1` could be derived using `ViaFixed`. All types for which it could be
   defined now has it. For GHC<9.6 `foldable1-classes-compat` is used.
-
+* `ifoldl'` added.
 
 2.0.0.0 [2025.07.10]
 ------------------
