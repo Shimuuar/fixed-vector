@@ -55,9 +55,10 @@ type Vec3 = Vec 3
 type Vec4 = Vec 4
 type Vec5 = Vec 5
 
-type instance Mutable (Vec  n) = MVec n
-type instance Dim     (Vec  n) = Peano n
-type instance DimM    (MVec n) = Peano n
+type instance Mutable (Vec  n)   = MVec n
+type instance Dim     (Vec  n)   = Peano n
+type instance Dim     (Vec  n a) = Peano n
+type instance DimM    (MVec n)   = Peano n
 
 
 ----------------------------------------------------------------
