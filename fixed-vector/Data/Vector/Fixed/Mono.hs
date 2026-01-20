@@ -968,3 +968,10 @@ instance (a1 ~ a2, a2 ~ a3, a3 ~ a4, a4 ~ a5, a5 ~ a6
          ) => Vector a1 (a1, a2, a3, a4, a5, a6)
 instance (a1 ~ a2, a2 ~ a3, a3 ~ a4, a4 ~ a5, a5 ~ a6, a6 ~ a7
          ) => Vector a1 (a1, a2, a3, a4, a5, a6, a7)
+
+
+-- $setup
+--
+-- >>> import Data.Char
+-- >>> import Prelude (Int,Bool(..),Double,IO,(^),String,putStrLn)
+
