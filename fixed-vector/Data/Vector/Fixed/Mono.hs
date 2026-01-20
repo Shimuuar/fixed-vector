@@ -138,8 +138,8 @@ import Prelude (Eq(..),Ord(..),Show(..),Num(..),Functor,Applicative,Monad
                )
 
 
-import Data.Vector.Fixed      (Only(..))
-import Data.Vector.Fixed      qualified as F
+-- import Data.Vector.Fixed      (Only(..))
+-- import Data.Vector.Fixed      qualified as F
 import Data.Vector.Fixed.Cont qualified as C
 import Data.Vector.Fixed.Cont (Dim,Add,ArityPeano,Peano,Index,PeanoNum(..),
                                N1,N2,N3,N4,N5,N6,N7,N8)
@@ -886,7 +886,7 @@ vectorOff n k =
 ----------------------------------------------------------------
 
 pattern V1 :: (Vector a v, Dim v ~ N1) => a -> v
-pattern V1 x <- (convert -> (Only x)) where
+pattern V1 x <- (head -> x) where
   V1 x = mk1 x
 {-# INLINE   V1 #-}
 {-# COMPLETE V1 #-}
@@ -919,14 +919,6 @@ instance Prod a (Complex a) where
   {-# INLINE inspect   #-}
   {-# INLINE construct #-}
 instance Vector a (Complex a)
-
-instance Prod a (Only a) where
-  inspect   = F.inspect
-  construct = F.construct
-  {-# INLINE inspect   #-}
-  {-# INLINE construct #-}
-instance Vector a (Only a)
-
 
 instance (a1 ~ a2) => Prod a1 (a1, a2) where
   inspect (a1, a2) (C.Fun f) = f a1 a2

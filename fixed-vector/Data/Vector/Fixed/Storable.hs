@@ -40,6 +40,7 @@ import Prelude ( Show(..),Eq(..),Ord(..),Num(..),Monad(..),IO,Int
                , ($),undefined,seq,pure)
 
 import Data.Vector.Fixed hiding (index)
+import Data.Vector.Fixed.Mono qualified as FM
 import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, index, new,unsafeFreeze)
 import qualified Data.Vector.Fixed.Cont     as C
 import           Data.Vector.Fixed.Cont     (ArityPeano(..))
@@ -143,6 +144,12 @@ instance (Arity n, Storable a) => Vector (Vec n) a where
   {-# INLINE construct  #-}
   {-# INLINE inspect    #-}
   {-# INLINE basicIndex #-}
+instance (Arity n, Storable a) => FM.Prod a (Vec n a) where
+  construct  = constructVec
+  inspect    = inspectVec
+  {-# INLINE construct  #-}
+  {-# INLINE inspect    #-}
+instance (Arity n, Storable a) => FM.Vector a (Vec n a)
 
 instance (Arity n, Storable a) => Storable (Vec n a) where
   sizeOf    = defaultSizeOf

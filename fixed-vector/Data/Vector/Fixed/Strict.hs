@@ -23,6 +23,7 @@ import Prelude ( Show(..),Eq(..),Ord(..),Functor(..),Monad(..)
                , ($!),error,(<$>),type (~))
 
 import Data.Vector.Fixed hiding (index)
+import Data.Vector.Fixed.Mono qualified as FM
 import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, index)
 import qualified Data.Vector.Fixed.Cont     as C
 import           Data.Vector.Fixed.Cont     (ArityPeano(..))
@@ -116,6 +117,12 @@ instance (Arity n) => Vector (Vec n) a where
   {-# INLINE construct  #-}
   {-# INLINE inspect    #-}
   {-# INLINE basicIndex #-}
+instance (Arity n) => FM.Prod a (Vec n a) where
+  construct  = constructVec
+  inspect    = inspectVec
+  {-# INLINE construct  #-}
+  {-# INLINE inspect    #-}
+instance (Arity n) => FM.Vector a (Vec n a)
 
 instance (Typeable n, Arity n, Data a) => Data (Vec n a) where
   gfoldl       = C.gfoldl

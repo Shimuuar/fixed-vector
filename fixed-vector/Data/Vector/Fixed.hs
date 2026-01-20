@@ -206,9 +206,10 @@ import GHC.TypeLits
 import GHC.Exts                (Proxy#,proxy#,(*#),(+#),Int(..),Int#)
 import GHC.ST                  (ST(..))
 
-import Data.Vector.Fixed.Cont     (Vector(..),Dim,length,ContVec,PeanoNum(..),
-                                   vector,cvec,empty,Arity,ArityPeano,Fun(..),accum,apply)
-import Data.Vector.Fixed.Cont     qualified as C
+import Data.Vector.Fixed.Cont  (Vector(..),Dim,length,ContVec,PeanoNum(..),
+                                vector,cvec,empty,Arity,ArityPeano,Fun(..),accum,apply)
+import Data.Vector.Fixed.Cont  qualified as C
+import Data.Vector.Fixed.Mono  qualified as FM
 import Data.Vector.Fixed.Internal as I
 
 import Prelude (Show(..),Eq(..),Ord(..),Num(..),Functor(..),id,(.),($),(<$>),undefined,flip,type(~))
@@ -271,6 +272,13 @@ instance Arity n => Vector (VecList n) a where
   inspect (VecList v) = inspect v
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
+instance Arity n => FM.Prod a (VecList n a) where
+  construct = construct
+  inspect   = inspect
+  {-# INLINE construct #-}
+  {-# INLINE inspect   #-}
+instance Arity n => FM.Vector a (VecList n a) where
+
 
 instance C.ArityPeano n => Vector (VecPeano n) a where
   construct = accum
@@ -284,6 +292,12 @@ instance C.ArityPeano n => Vector (VecPeano n) a where
       step (Flip (Cons a xs)) = (a, Flip xs)
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
+instance C.ArityPeano n => FM.Prod a (VecPeano n a) where
+  construct = construct
+  inspect   = inspect
+  {-# INLINE construct #-}
+  {-# INLINE inspect   #-}
+instance C.ArityPeano n => FM.Vector a (VecPeano n a) where
 
 newtype Flip f a n = Flip (f n a)
 newtype T_List a n k = T_List (VecPeano k a -> VecPeano n a)
@@ -375,6 +389,12 @@ instance Vector Only a where
   inspect (Only a) (Fun f) = f a
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
+instance FM.Prod a (Only a) where
+  construct = construct
+  inspect   = inspect
+  {-# INLINE construct #-}
+  {-# INLINE inspect   #-}
+instance FM.Vector a (Only a) where
 
 instance (Storable a) => Storable (Only a) where
   alignment = coerce (alignment @a)
@@ -398,6 +418,12 @@ instance Vector Empty a where
   inspect _ (Fun b) = b
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
+instance FM.Prod a (Empty a) where
+  construct = construct
+  inspect   = inspect
+  {-# INLINE construct #-}
+  {-# INLINE inspect   #-}
+instance FM.Vector a (Empty a) where
 
 type Tuple2 a = (a,a)
 type Tuple3 a = (a,a,a)
@@ -422,6 +448,13 @@ instance Vector v a => Vector (ViaFixed v) a where
   inspect (ViaFixed v) = inspect v
   {-# INLINE construct #-}
   {-# INLINE inspect   #-}
+
+instance Vector v a => FM.Prod a (ViaFixed v a) where
+  construct = ViaFixed <$> construct
+  inspect (ViaFixed v) = inspect v
+  {-# INLINE construct #-}
+  {-# INLINE inspect   #-}
+instance Vector v a => FM.Vector a (ViaFixed v a) where
 
 instance (Vector v a, Show a) => Show (ViaFixed v a) where
   showsPrec = coerce (I.showsPrec @v @a)
