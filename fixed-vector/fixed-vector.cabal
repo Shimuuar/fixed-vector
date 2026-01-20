@@ -126,6 +126,7 @@ common language
     PatternSynonyms
     ViewPatterns
     TypeFamilies
+    FunctionalDependencies
 
 
 Library
@@ -140,6 +141,7 @@ Library
     Data.Vector.Fixed.Cont
     Data.Vector.Fixed
     Data.Vector.Fixed.Generic
+    Data.Vector.Fixed.Mono
     -- Arrays
     Data.Vector.Fixed.Mutable
     Data.Vector.Fixed.Boxed
