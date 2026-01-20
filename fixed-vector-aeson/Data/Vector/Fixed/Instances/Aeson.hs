@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleContexts     #-}
 {-# LANGUAGE ScopedTypeVariables  #-}
 {-# LANGUAGE StandaloneDeriving   #-}
+{-# LANGUAGE TypeApplications     #-}
 {-# LANGUAGE TypeFamilies         #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
@@ -22,8 +23,10 @@ import qualified Data.Vector.Fixed.Strict    as FF
 import qualified Data.Vector.Fixed.Unboxed   as FU
 import qualified Data.Vector.Fixed.Primitive as FP
 import qualified Data.Vector.Fixed.Storable  as FS
+import qualified Data.Vector.Fixed.Mono      as FM
 import           Data.Aeson
 import           Data.Aeson.Types
+import           Data.Coerce
 
 import qualified Data.Vector as V
 import qualified Data.Vector.Mutable as MV
@@ -35,32 +38,32 @@ import qualified Data.Vector.Mutable as MV
 
 -- | Generic implementation of 'parseJSON' for data types which are
 --   instances of 'Vector'.
-fixedVectorParseJSON :: forall v a. (Vector v a, FromJSON a) => Value -> Parser (v a)
+fixedVectorParseJSON :: forall v a. (FM.Prod a v, FromJSON a) => Value -> Parser v
 {-# INLINE fixedVectorParseJSON #-}
 fixedVectorParseJSON = withArray "fixed-vector" $ \arr -> do
-  let expected = F.length (undefined :: v a)
+  let expected = FM.length (undefined :: v)
   when (V.length arr /= expected) $
     fail $ "Expecting array of length " ++ show expected
-  F.generateM $ \i -> parseJSON (arr V.! i)
+  coerce $ FM.generateM @(FM.ViaFixed a v) $ \i -> parseJSON (arr V.! i)
 
 -- | Generic implementation of 'toJSON' for data types which are
 --   instances of 'Vector'.
-fixedVectorToJSON :: forall v a. (Vector v a, ToJSON a) => v a -> Value
+fixedVectorToJSON :: forall v a. (FM.Prod a v, ToJSON a) => v -> Value
 {-# INLINE fixedVectorToJSON #-}
 fixedVectorToJSON v = Array $ runST $ do
   -- NOTE: (!) from fixed vector could have O(n) complexity so let
   --       fold over fixed vector. Access to vector _is_ O(1)
   vec <- MV.unsafeNew n
-  flip F.imapM_ v $ \i a -> MV.unsafeWrite vec i (toJSON a)
+  flip FM.imapM_ (FM.ViaFixed v) $ \i a -> MV.unsafeWrite vec i (toJSON a)
   V.unsafeFreeze vec
   where
-    n = F.length v
+    n = FM.length v
 
 -- | Generic implementation of 'toEncoding' for data types which are
 --   instances of 'Vector'.
-fixedVectorToEncoding :: forall v a. (Vector v a, ToJSON a) => v a -> Encoding
+fixedVectorToEncoding :: forall v a. (FM.Prod a v, ToJSON a) => v -> Encoding
 {-# INLINE fixedVectorToEncoding #-}
-fixedVectorToEncoding = foldable . F.cvec
+fixedVectorToEncoding = foldable . FM.cvec
 
 
 ----------------------------------------------------------------
@@ -68,10 +71,21 @@ fixedVectorToEncoding = foldable . F.cvec
 ----------------------------------------------------------------
 
 instance (Vector v a, FromJSON a) => FromJSON (ViaFixed v a) where
-  {-# INLINE parseJSON #-}
   parseJSON = fixedVectorParseJSON
+  {-# INLINE parseJSON #-}
+
+instance (FM.Prod a v, FromJSON a) => FromJSON (FM.ViaFixed a v) where
+  parseJSON = fixedVectorParseJSON
+  {-# INLINE parseJSON #-}
+
 
 instance (Vector v a, ToJSON a) => ToJSON (ViaFixed v a) where
+  toJSON     = fixedVectorToJSON
+  toEncoding = fixedVectorToEncoding
+  {-# INLINE toJSON     #-}
+  {-# INLINE toEncoding #-}
+
+instance (FM.Prod a v, ToJSON a) => ToJSON (FM.ViaFixed a v) where
   toJSON     = fixedVectorToJSON
   toEncoding = fixedVectorToEncoding
   {-# INLINE toJSON     #-}

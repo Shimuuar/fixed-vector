@@ -24,9 +24,16 @@ import qualified Data.Vector.Fixed.Strict    as FF
 import qualified Data.Vector.Fixed.Unboxed   as FU
 import qualified Data.Vector.Fixed.Primitive as FP
 import qualified Data.Vector.Fixed.Storable  as FS
-
+import qualified Data.Vector.Fixed.Mono      as FM
+import Data.Coerce
 
 instance (Vector v a, Serialise a) => Serialise (ViaFixed v a) where
+  encode = encodeFixedVector
+  decode = decodeFixedVector
+  {-# INLINE encode #-}
+  {-# INLINE decode #-}
+
+instance (FM.Prod a v, Serialise a) => Serialise (FM.ViaFixed a v) where
   encode = encodeFixedVector
   decode = decodeFixedVector
   {-# INLINE encode #-}
@@ -49,15 +56,16 @@ instance Serialise (F.Empty a) where
 
 -- | Encode vector with statically known size as CBOR list. There's no
 --   type tag
-encodeFixedVector :: (F.Vector v a, Serialise a) => v a -> Encoding
+encodeFixedVector :: (FM.Prod a v, Serialise a) => v -> Encoding
 {-# INLINE encodeFixedVector #-}
-encodeFixedVector v = encodeListLen (fromIntegral $ F.length v)
-                   <> F.foldMap encode v
+encodeFixedVector v
+  = encodeListLen (fromIntegral $ FM.length v)
+ <> FM.foldMap encode (FM.ViaFixed v)
 
 -- | Decode vector with statically known size as CBOR list. There's no
 --   type tag
-decodeFixedVector :: forall v s a. (F.Vector v a, Serialise a) => Decoder s (v a)
+decodeFixedVector :: forall v s a. (FM.Prod a v, Serialise a) => Decoder s v
 {-# INLINE decodeFixedVector #-}
 decodeFixedVector = do
   decodeListLenOf (fromIntegral $ peanoToInt (proxy# @(Dim v)))
-  F.replicateM decode
+  coerce $ FM.replicateM @(FM.ViaFixed a v) decode
