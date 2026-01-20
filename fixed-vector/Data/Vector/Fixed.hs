@@ -211,7 +211,7 @@ import Data.Vector.Fixed.Cont     (Vector(..),Dim,length,ContVec,PeanoNum(..),
 import Data.Vector.Fixed.Cont     qualified as C
 import Data.Vector.Fixed.Internal as I
 
-import Prelude (Show(..),Eq(..),Ord(..),Num(..),Functor(..),id,(.),($),(<$>),undefined,flip)
+import Prelude (Show(..),Eq(..),Ord(..),Num(..),Functor(..),id,(.),($),(<$>),undefined,flip,type(~))
 
 
 -- $construction

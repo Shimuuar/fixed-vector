@@ -136,6 +136,7 @@ import Prelude        ( Bool(..), Int, Maybe(..), Either(..)
                       , Eq(..), Ord(..), Num(..), Functor(..), Applicative(..), Monad(..)
                       , Semigroup(..), Monoid(..)
                       , (.), ($), (&&), (||), (<$>), id, error, otherwise, fst
+                      , type(~)
                       )
 
 

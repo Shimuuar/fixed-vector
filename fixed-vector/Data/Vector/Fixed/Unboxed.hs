@@ -43,7 +43,7 @@ import Foreign.Storable      (Storable)
 import GHC.TypeLits
 import GHC.Exts              (Proxy#, proxy#)
 import Prelude               ( Show(..),Eq(..),Ord(..),Num(..),Applicative(..)
-                             , Int,Double,Float,Char,Bool(..),($),id)
+                             , Int,Double,Float,Char,Bool(..),($),id,type (~))
 
 import Data.Vector.Fixed           (Dim,Vector(..),ViaFixed(..))
 import Data.Vector.Fixed           qualified as F
