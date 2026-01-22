@@ -66,4 +66,5 @@ exts =
   , "-XPatternSynonyms"
   , "-XViewPatterns"
   , "-XTypeFamilies"
+  , "-XFunctionalDependencies"
   ]

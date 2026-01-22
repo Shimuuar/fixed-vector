@@ -16,11 +16,14 @@ import qualified Data.Vector.Fixed.Strict    as FF
 import qualified Data.Vector.Fixed.Unboxed   as FU
 import qualified Data.Vector.Fixed.Primitive as FP
 import qualified Data.Vector.Fixed.Storable  as FS
+import qualified Data.Vector.Fixed.Mono      as FM
 import           Test.QuickCheck
 
 
 instance (Vector v a, Arbitrary a) => Arbitrary (ViaFixed v a) where
   arbitrary = F.replicateM arbitrary
+instance (FM.Prod a v, Arbitrary a) => Arbitrary (FM.ViaFixed a v) where
+  arbitrary = FM.replicateM arbitrary
 
 
 deriving via ViaFixed (FB.Vec n) a instance (Arity n, Arbitrary a)                => Arbitrary (FB.Vec n a)

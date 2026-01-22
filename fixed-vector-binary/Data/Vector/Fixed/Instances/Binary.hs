@@ -15,11 +15,18 @@ import qualified Data.Vector.Fixed.Strict    as FF
 import qualified Data.Vector.Fixed.Unboxed   as FU
 import qualified Data.Vector.Fixed.Primitive as FP
 import qualified Data.Vector.Fixed.Storable  as FS
+import qualified Data.Vector.Fixed.Mono      as FM
 import           Data.Binary                   (Binary(..))
 
 instance (Vector v a, Binary a) => Binary (ViaFixed v a) where
   put = F.mapM_ put
   get = F.replicateM get
+  {-# INLINE put #-}
+  {-# INLINE get #-}
+
+instance (FM.Prod a v, Binary a) => Binary (FM.ViaFixed a v) where
+  put = FM.mapM_ put
+  get = FM.replicateM get
   {-# INLINE put #-}
   {-# INLINE get #-}
 

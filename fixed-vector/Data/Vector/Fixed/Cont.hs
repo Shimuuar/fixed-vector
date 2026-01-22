@@ -29,7 +29,7 @@ module Data.Vector.Fixed.Cont (
   , shuffleFun
   , withFun
   , dimapFun
-    -- * Vector type class
+    -- * Vector type Boxedclass
   , Dim
   , Vector(..)
   , length
@@ -137,7 +137,7 @@ import Prelude        ( Bool(..), Int, Maybe(..), Either(..)
                       , Semigroup(..), Monoid(..)
                       , (.), ($), (&&), (||), (<$>), id, error, otherwise, fst
                       )
-
+import Data.Vector.Fixed.Compat
 
 ----------------------------------------------------------------
 -- Naturals

@@ -47,7 +47,9 @@ import Prelude               ( Show(..),Eq(..),Ord(..),Num(..),Applicative(..)
 
 import Data.Vector.Fixed           (Dim,Vector(..),ViaFixed(..))
 import Data.Vector.Fixed           qualified as F
+import Data.Vector.Fixed.Compat
 import Data.Vector.Fixed.Cont      qualified as C
+import Data.Vector.Fixed.Mono      qualified as FM
 import Data.Vector.Fixed.Cont      (Peano,Arity,ArityPeano,Fun(..),curryFirst)
 import Data.Vector.Fixed.Primitive qualified as P
 
@@ -98,6 +100,14 @@ instance (Arity n, Unbox n a) => Vector (Vec n) a where
       (construct @(VecRepr n a) @(EltRepr a))
   {-# INLINE inspect   #-}
   {-# INLINE construct #-}
+
+instance (Arity n, Unbox n a) => FM.Prod a (Vec n a) where
+  construct  = construct
+  inspect    = inspect
+  {-# INLINE construct  #-}
+  {-# INLINE inspect    #-}
+
+instance (Arity n, Unbox n a) => FM.Vector a (Vec n a)
 
 
 

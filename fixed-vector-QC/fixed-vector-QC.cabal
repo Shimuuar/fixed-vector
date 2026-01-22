@@ -17,13 +17,12 @@ extra-source-files:
   ChangeLog.md
 
 tested-with:
-    GHC ==8.10.7
-     || ==9.0.1
-     || ==9.2.8
-     || ==9.4.7
-     || ==9.6.6
-     || ==9.8.2
-     || ==9.10.1
+    GHC ==9.4.7
+     || ==9.6.7
+     || ==9.8.4
+     || ==9.10.2
+     || ==9.12.2
+     || ==9.14.1
 
 source-repository head
   type:     git
@@ -32,7 +31,7 @@ source-repository head
 Library
   Ghc-options:          -Wall
   Default-Language:     Haskell2010
-  Build-Depends:        base         >=4.14 && <5
+  Build-Depends:        base         >=4.16 && <5
                       , fixed-vector >=2.0
                       , QuickCheck   >=2.13
   Exposed-modules:
