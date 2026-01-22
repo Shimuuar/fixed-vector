@@ -30,8 +30,9 @@ import Foreign.Storable (Storable)
 import GHC.TypeLits
 import GHC.Exts (proxy#)
 import Prelude ( Show(..),Eq(..),Ord(..),Functor(..),Monad(..)
-               , ($!),error,(<$>),type(~))
+               , ($!),error,(<$>))
 
+import Data.Vector.Fixed.Compat 
 import Data.Vector.Fixed hiding (index)
 import Data.Vector.Fixed.Mono qualified as FM
 import Data.Vector.Fixed.Mutable (Mutable, MVector(..), IVector(..), DimM, constructVec, inspectVec, index)

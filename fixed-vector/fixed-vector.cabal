@@ -59,12 +59,12 @@ extra-doc-files:
   ChangeLog.md
 
 tested-with:
-    GHC ==9.2.8
-     || ==9.4.7
+    GHC ==9.4.7
      || ==9.6.7
      || ==9.8.4
      || ==9.10.2
      || ==9.12.2
+     || ==9.14.1
 
 source-repository head
   type:     git
@@ -151,6 +151,7 @@ Library
     Data.Vector.Fixed.Storable
   Other-modules:
     Data.Vector.Fixed.Internal
+    Data.Vector.Fixed.Compat
 
 Test-Suite fixed-vector-doctests
   Default-Language: Haskell2010

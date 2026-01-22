@@ -211,8 +211,9 @@ import Data.Vector.Fixed.Cont  (Vector(..),Dim,length,ContVec,PeanoNum(..),
 import Data.Vector.Fixed.Cont  qualified as C
 import Data.Vector.Fixed.Mono  qualified as FM
 import Data.Vector.Fixed.Internal as I
+import Data.Vector.Fixed.Compat
 
-import Prelude (Show(..),Eq(..),Ord(..),Num(..),Functor(..),id,(.),($),(<$>),undefined,flip,type(~))
+import Prelude (Show(..),Eq(..),Ord(..),Num(..),Functor(..),id,(.),($),(<$>),undefined,flip)
 
 
 -- $construction

@@ -134,12 +134,9 @@ import Prelude (Eq(..),Ord(..),Show(..),Num(..),Functor,Applicative,Monad
                ,Semigroup(..),Monoid(..)
                ,Bool,Maybe(..),Ordering
                ,fmap,(<$>),(.),($),shows,flip,undefined
-               ,type (~)
                )
 
-
--- import Data.Vector.Fixed      (Only(..))
--- import Data.Vector.Fixed      qualified as F
+import Data.Vector.Fixed.Compat
 import Data.Vector.Fixed.Cont qualified as C
 import Data.Vector.Fixed.Cont (Dim,Add,ArityPeano,Peano,Index,PeanoNum(..),
                                N1,N2,N3,N4,N5,N6,N7,N8)
