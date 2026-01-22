@@ -23,12 +23,13 @@ jobs:
       matrix:
         include:
           # Linux
-          - { cabal: "3.14", os: ubuntu-latest,  ghc: "9.2.8"  }
-          - { cabal: "3.14", os: ubuntu-latest,  ghc: "9.4.8"  }
-          - { cabal: "3.14", os: ubuntu-latest,  ghc: "9.6.7"  }
-          - { cabal: "3.14", os: ubuntu-latest,  ghc: "9.8.4"  }
-          - { cabal: "3.14", os: ubuntu-latest,  ghc: "9.10.2" }
-          - { cabal: "3.14", os: ubuntu-latest,  ghc: "9.12.2" }
+          - { cabal: "3.16", os: ubuntu-latest,  ghc: "9.2.8"  }
+          - { cabal: "3.16", os: ubuntu-latest,  ghc: "9.4.8"  }
+          - { cabal: "3.16", os: ubuntu-latest,  ghc: "9.6.7"  }
+          - { cabal: "3.16", os: ubuntu-latest,  ghc: "9.8.4"  }
+          - { cabal: "3.16", os: ubuntu-latest,  ghc: "9.10.2" }
+          - { cabal: "3.16", os: ubuntu-latest,  ghc: "9.12.2" }
+          - { cabal: "3.16", os: ubuntu-latest,  ghc: "9.14.1" }
       fail-fast: false
 
     steps:
@@ -63,12 +64,36 @@ jobs:
         mkdir sdist
         for nm in fixed-vector*; do cabal sdist $nm -o sdist; done
     - name: Unpack
+      # NOTE: For time being aeson is not buildable with GHC9.14.
+      #       See: https://github.com/haskell/aeson/issues/1155
+      # NOTE: same for cborg
+      #       See: https://github.com/well-typed/cborg/issues/373
       run: |
         mkdir unpacked
         for nm in sdist/*; do tar -C unpacked -xf $nm; done
         cd unpacked
-        echo "packages:      */*.cabal" >  cabal.project
-        echo "tests:         true"      >> cabal.project
+        echo "packages:"                          >  cabal.project
+        echo "  fixed-vector-*/*.cabal"             >> cabal.project
+        if [ {{ matrix.ghc }} != 9.14.1 ]; then
+        echo "  fixed-vector-aeson-*/*.cabal"       >> cabal.project;
+        else
+        rm -rf fixed-vector-aeson-*
+        fi
+        echo "  fixed-vector-binary-*/*.cabal"      >> cabal.project
+        if [ {{ matrix.ghc }} != 9.14.1 ]; then
+        echo "  fixed-vector-cborg-*/*.cabal"       >> cabal.project
+        else
+        rm -rf fixed-vector-cborg-*
+        fi
+        echo "  fixed-vector-cereal-*/*.cabal"      >> cabal.project
+        echo "  fixed-vector-QC-*/*.cabal"          >> cabal.project
+        if [ {{ matrix.ghc }} != 9.14.1 ]; then
+        echo "  fixed-vector-test-*/*.cabal"        >> cabal.project;
+        else
+        rm -rf fixed-vector-test-*
+        fi
+        echo "tests:         true"                >> cabal.project
+        cat cabal.project
     # ----------------
     - name: cabal check
       run: |
