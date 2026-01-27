@@ -69,30 +69,15 @@ jobs:
       # NOTE: same for cborg
       #       See: https://github.com/well-typed/cborg/issues/373
       run: |
+        set -x
         mkdir unpacked
         for nm in sdist/*; do tar -C unpacked -xf $nm; done
         cd unpacked
-        echo "packages:"                          >  cabal.project
-        echo "  fixed-vector-*/*.cabal"             >> cabal.project
-        if [ {{ matrix.ghc }} != 9.14.1 ]; then
-        echo "  fixed-vector-aeson-*/*.cabal"       >> cabal.project;
-        else
-        rm -rf fixed-vector-aeson-*
+        echo "packages:      */*.cabal" >  cabal.project
+        echo "tests:         true"      >> cabal.project
+        if [ "${{ matrix.ghc }}" == 9.14.1 ]; then
+          echo "allow-newer: *:*" >> cabal.project
         fi
-        echo "  fixed-vector-binary-*/*.cabal"      >> cabal.project
-        if [ {{ matrix.ghc }} != 9.14.1 ]; then
-        echo "  fixed-vector-cborg-*/*.cabal"       >> cabal.project
-        else
-        rm -rf fixed-vector-cborg-*
-        fi
-        echo "  fixed-vector-cereal-*/*.cabal"      >> cabal.project
-        echo "  fixed-vector-QC-*/*.cabal"          >> cabal.project
-        if [ {{ matrix.ghc }} != 9.14.1 ]; then
-        echo "  fixed-vector-test-*/*.cabal"        >> cabal.project;
-        else
-        rm -rf fixed-vector-test-*
-        fi
-        echo "tests:         true"                >> cabal.project
         cat cabal.project
     # ----------------
     - name: cabal check

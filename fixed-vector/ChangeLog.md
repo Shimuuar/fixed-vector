@@ -1,11 +1,15 @@
-2.0.1.0 [XXX]
+2.1.0.0 [2026.01.27]
 -------------
+* New API for working with vectors that are not parametric in element:
+  `Data.Vector.Fixed.Mono`. It support data types like `data V2 = V2 !Double
+  !Double` as well as all existing data types.
 * Support for GHC<9.2 dropped.
 * `Prim` could be derived using `ViaFixed` by deriving via mechanism and add
   data types defined in library now has `Prim` instance.
 * `Foldable1` could be derived using `ViaFixed`. All types for which it could be
   defined now has it. For GHC<9.6 `foldable1-classes-compat` is used.
 * `ifoldl'` added.
+
 
 2.0.0.0 [2025.07.10]
 ------------------
