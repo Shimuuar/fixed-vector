@@ -1,5 +1,5 @@
 Name:           fixed-vector-cereal
-Version:        2.0.0.0
+Version:        2.1.0.0
 Synopsis:       Cereal instances for fixed-vector
 Description:
   This package contains Cereal instances for data types defined in
@@ -32,7 +32,7 @@ Library
   Ghc-options:          -Wall
   Default-Language:     Haskell2010
   Build-Depends:        base         >=4.16 && <5
-                      , fixed-vector >=2.0
+                      , fixed-vector >=2.1
                       , cereal
   Exposed-modules:
     Data.Vector.Fixed.Instances.Cereal
