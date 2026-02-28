@@ -1,3 +1,8 @@
+2.1.1.0 [2026.02.28]
+-------------
+* Missing `Prod` and `Vector` instances are added for `ContVec`.
+
+
 2.1.0.0 [2026.01.27]
 -------------
 * New API for working with vectors that are not parametric in element:
