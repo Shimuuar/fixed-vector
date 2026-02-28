@@ -910,6 +910,13 @@ pattern V4 t x y z <- (convert -> (t,x,y,z)) where
 -- Instances
 ----------------------------------------------------------------
 
+instance (ArityPeano n) => Prod a (C.ContVec n a) where
+  inspect   = C.inspect
+  construct = C.construct
+  {-# INLINE inspect   #-}
+  {-# INLINE construct #-}
+instance (ArityPeano n) => Vector a (C.ContVec n a) where
+
 instance Prod a (Complex a) where
   inspect (r :+ i) (C.Fun f) = f r i
   construct = C.Fun (:+)
