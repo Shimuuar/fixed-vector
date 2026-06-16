@@ -25,7 +25,7 @@ instance (Vector v a, Serialize a) => Serialize (ViaFixed v a) where
   {-# INLINE put #-}
   {-# INLINE get #-}
 
-instance (FM.Prod a v, Serialize a) => Serialize (FM.ViaFixed a v) where
+instance (FM.Prod a v, Serialize a) => Serialize (FM.ViaFixed v) where
   put = FM.mapM_ put
   get = FM.replicateM get
   {-# INLINE put #-}

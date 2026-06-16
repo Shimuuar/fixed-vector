@@ -1,5 +1,5 @@
 Name:           fixed-vector-binary
-Version:        2.1.0.0
+Version:        2.2.0.0
 Synopsis:       Binary instances for fixed-vector
 Description:
   This package contains Binary instances for data types defined in

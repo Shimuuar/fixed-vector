@@ -44,7 +44,7 @@ fixedVectorParseJSON = withArray "fixed-vector" $ \arr -> do
   let expected = FM.length (undefined :: v)
   when (V.length arr /= expected) $
     fail $ "Expecting array of length " ++ show expected
-  coerce $ FM.generateM @(FM.ViaFixed a v) $ \i -> parseJSON (arr V.! i)
+  coerce $ FM.generateM @(FM.ViaFixed v) $ \i -> parseJSON (arr V.! i)
 
 -- | Generic implementation of 'toJSON' for data types which are
 --   instances of 'Vector'.
@@ -74,7 +74,7 @@ instance (Vector v a, FromJSON a) => FromJSON (ViaFixed v a) where
   parseJSON = fixedVectorParseJSON
   {-# INLINE parseJSON #-}
 
-instance (FM.Prod a v, FromJSON a) => FromJSON (FM.ViaFixed a v) where
+instance (FM.Prod a v, FromJSON a) => FromJSON (FM.ViaFixed v) where
   parseJSON = fixedVectorParseJSON
   {-# INLINE parseJSON #-}
 
@@ -85,7 +85,7 @@ instance (Vector v a, ToJSON a) => ToJSON (ViaFixed v a) where
   {-# INLINE toJSON     #-}
   {-# INLINE toEncoding #-}
 
-instance (FM.Prod a v, ToJSON a) => ToJSON (FM.ViaFixed a v) where
+instance (FM.Prod a v, ToJSON a) => ToJSON (FM.ViaFixed v) where
   toJSON     = fixedVectorToJSON
   toEncoding = fixedVectorToEncoding
   {-# INLINE toJSON     #-}

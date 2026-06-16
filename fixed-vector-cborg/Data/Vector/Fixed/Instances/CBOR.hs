@@ -33,7 +33,7 @@ instance (Vector v a, Serialise a) => Serialise (ViaFixed v a) where
   {-# INLINE encode #-}
   {-# INLINE decode #-}
 
-instance (FM.Prod a v, Serialise a) => Serialise (FM.ViaFixed a v) where
+instance (FM.Prod a v, Serialise a) => Serialise (FM.ViaFixed v) where
   encode = encodeFixedVector
   decode = decodeFixedVector
   {-# INLINE encode #-}
@@ -68,4 +68,4 @@ decodeFixedVector :: forall v s a. (FM.Prod a v, Serialise a) => Decoder s v
 {-# INLINE decodeFixedVector #-}
 decodeFixedVector = do
   decodeListLenOf (fromIntegral $ peanoToInt (proxy# @(Dim v)))
-  coerce $ FM.replicateM @(FM.ViaFixed a v) decode
+  coerce $ FM.replicateM @(FM.ViaFixed v) decode

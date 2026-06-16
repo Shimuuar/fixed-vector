@@ -22,7 +22,7 @@ import           Test.QuickCheck
 
 instance (Vector v a, Arbitrary a) => Arbitrary (ViaFixed v a) where
   arbitrary = F.replicateM arbitrary
-instance (FM.Prod a v, Arbitrary a) => Arbitrary (FM.ViaFixed a v) where
+instance (FM.Prod a v, Arbitrary a) => Arbitrary (FM.ViaFixed v) where
   arbitrary = FM.replicateM arbitrary
 
 

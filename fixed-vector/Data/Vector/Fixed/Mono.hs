@@ -1,8 +1,9 @@
-{-# LANGUAGE DataKinds           #-}
-{-# LANGUAGE MagicHash           #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeFamilies        #-}
-{-# LANGUAGE UnboxedTuples       #-}
+{-# LANGUAGE DataKinds            #-}
+{-# LANGUAGE MagicHash            #-}
+{-# LANGUAGE ScopedTypeVariables  #-}
+{-# LANGUAGE TypeFamilies         #-}
+{-# LANGUAGE UnboxedTuples        #-}
+{-# LANGUAGE UndecidableInstances #-}
 module Data.Vector.Fixed.Mono
   ( -- * Vector type class
     Prod(..)
@@ -778,39 +779,39 @@ fromFoldable = fromListM . T.toList
 ----------------------------------------------------------------
 
 -- | Newtype for deriving instances.
-newtype ViaFixed a v = ViaFixed v
+newtype ViaFixed v = ViaFixed v
 
-instance (Prod a v) => Prod a (ViaFixed a v) where
+instance (Prod a v) => Prod a (ViaFixed v) where
   inspect (ViaFixed v) = inspect v
   construct = ViaFixed <$> construct
-instance (Prod a v) => Vector a (ViaFixed a v)
+instance (Prod a v) => Vector a (ViaFixed v)
 
-type instance Dim (ViaFixed a v) = Dim v
+type instance Dim (ViaFixed v) = Dim v
 
-instance (Prod a v, Show a) => Show (ViaFixed a v) where
+instance (Prod a v, Show a) => Show (ViaFixed v) where
   showsPrec _ = shows . toList
 
-instance (Prod a v, Eq a) => Eq (ViaFixed a v) where
+instance (Prod a v, Eq a) => Eq (ViaFixed v) where
   (==) = eq
   {-# INLINE (==) #-}
 
-instance (Prod a v, Ord a) => Ord (ViaFixed a v) where
+instance (Prod a v, Ord a) => Ord (ViaFixed v) where
   compare = ord
   {-# INLINE compare #-}
 
-instance (Prod a v, NFData a) => NFData (ViaFixed a v) where
+instance (Prod a v, NFData a) => NFData (ViaFixed v) where
   rnf = foldl (\() a -> rnf a) ()
   {-# INLINE rnf #-}
 
-instance (Prod a v, Semigroup a) => Semigroup (ViaFixed a v) where
+instance (Prod a v, Semigroup a) => Semigroup (ViaFixed v) where
   (<>) = zipWith (<>)
   {-# INLINE (<>) #-}
 
-instance (Prod a v, Monoid a) => Monoid (ViaFixed a v) where
+instance (Prod a v, Monoid a) => Monoid (ViaFixed v) where
   mempty = replicate mempty
   {-# INLINE mempty #-}
 
-instance (Prod a v, Storable a) => Storable (ViaFixed a v) where
+instance (Prod a v, Storable a) => Storable (ViaFixed v) where
   alignment _ = alignment (undefined :: a)
   sizeOf    _ = sizeOf (undefined :: a) * C.peanoToInt (proxy# @(Dim v))
   peek p = generateM (peekElemOff (castPtr p))
@@ -820,7 +821,7 @@ instance (Prod a v, Storable a) => Storable (ViaFixed a v) where
   {-# INLINE peek      #-}
   {-# INLINE poke      #-}
 
-instance (Prod a v, Prim a) => Prim (ViaFixed a v) where
+instance (Prod a v, Prim a) => Prim (ViaFixed v) where
   sizeOf# _ = sizeOf# (undefined :: a) *# dim where
     dim = case C.peanoToInt (proxy# @(Dim v)) of I# i -> i
   alignment# _ = alignment# (undefined :: a)
