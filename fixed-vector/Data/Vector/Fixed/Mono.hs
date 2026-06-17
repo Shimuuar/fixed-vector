@@ -176,39 +176,39 @@ vector = C.runContVec construct
 -- Constructors
 ----------------------------------------------------------------
 
-mk0 :: forall v a. (Vector a v, Dim v ~ 'Z) => v
+mk0 :: forall v a. (Prod a v, Dim v ~ 'Z) => v
 mk0 = vector C.empty
 {-# INLINE mk0 #-}
 
-mk1 :: forall v a. (Vector a v, Dim v ~ N1) => a -> v
+mk1 :: forall v a. (Prod a v, Dim v ~ N1) => a -> v
 mk1 a1 = vector $ C.mk1 a1
 {-# INLINE mk1 #-}
 
-mk2 :: forall v a. (Vector a v, Dim v ~ N2) => a -> a -> v
+mk2 :: forall v a. (Prod a v, Dim v ~ N2) => a -> a -> v
 mk2 a1 a2 = vector $ C.mk2 a1 a2
 {-# INLINE mk2 #-}
 
-mk3 :: forall v a. (Vector a v, Dim v ~ N3) => a -> a -> a -> v
+mk3 :: forall v a. (Prod a v, Dim v ~ N3) => a -> a -> a -> v
 mk3 a1 a2 a3 = vector $ C.mk3 a1 a2 a3
 {-# INLINE mk3 #-}
 
-mk4 :: forall v a. (Vector a v, Dim v ~ N4) => a -> a -> a -> a -> v
+mk4 :: forall v a. (Prod a v, Dim v ~ N4) => a -> a -> a -> a -> v
 mk4 a1 a2 a3 a4 = vector $ C.mk4 a1 a2 a3 a4
 {-# INLINE mk4 #-}
 
-mk5 :: forall v a. (Vector a v, Dim v ~ N5) => a -> a -> a -> a -> a -> v
+mk5 :: forall v a. (Prod a v, Dim v ~ N5) => a -> a -> a -> a -> a -> v
 mk5 a1 a2 a3 a4 a5 = vector $ C.mk5 a1 a2 a3 a4 a5
 {-# INLINE mk5 #-}
 
-mk6 :: forall v a. (Vector a v, Dim v ~ N6) => a -> a -> a -> a -> a -> a -> v
+mk6 :: forall v a. (Prod a v, Dim v ~ N6) => a -> a -> a -> a -> a -> a -> v
 mk6 a1 a2 a3 a4 a5 a6 = vector $ C.mk6 a1 a2 a3 a4 a5 a6
 {-# INLINE mk6 #-}
 
-mk7 :: forall v a. (Vector a v, Dim v ~ N7) => a -> a -> a -> a -> a -> a -> a -> v
+mk7 :: forall v a. (Prod a v, Dim v ~ N7) => a -> a -> a -> a -> a -> a -> a -> v
 mk7 a1 a2 a3 a4 a5 a6 a7 = vector $ C.mk7 a1 a2 a3 a4 a5 a6 a7
 {-# INLINE mk7 #-}
 
-mk8 :: forall v a. (Vector a v, Dim v ~ N8) => a -> a -> a -> a -> a -> a -> a -> a -> v
+mk8 :: forall v a. (Prod a v, Dim v ~ N8) => a -> a -> a -> a -> a -> a -> a -> a -> v
 mk8 a1 a2 a3 a4 a5 a6 a7 a8 = vector $ C.mk8 a1 a2 a3 a4 a5 a6 a7 a8
 {-# INLINE mk8 #-}
 
