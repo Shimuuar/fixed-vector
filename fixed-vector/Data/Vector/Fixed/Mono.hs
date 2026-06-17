@@ -883,26 +883,26 @@ vectorOff n k =
 -- Patterns
 ----------------------------------------------------------------
 
-pattern V1 :: (Vector a v, Dim v ~ N1) => a -> v
-pattern V1 x <- (head -> x) where
+pattern V1 :: (Prod a v, Dim v ~ N1) => a -> v
+pattern V1 x <- (C.head . cvec -> x) where
   V1 x = mk1 x
 {-# INLINE   V1 #-}
 {-# COMPLETE V1 #-}
 
-pattern V2 :: (Vector a v, Dim v ~ N2) => a -> a -> v
-pattern V2 x y <- (convert -> (x,y)) where
+pattern V2 :: (Prod a v, Dim v ~ N2) => a -> a -> v
+pattern V2 x y <- (vector . cvec -> (x,y)) where
   V2 x y = mk2 x y
 {-# INLINE   V2 #-}
 {-# COMPLETE V2 #-}
 
-pattern V3 :: (Vector a v, Dim v ~ N3) => a -> a -> a -> v
-pattern V3 x y z <- (convert -> (x,y,z)) where
+pattern V3 :: (Prod a v, Dim v ~ N3) => a -> a -> a -> v
+pattern V3 x y z <- (vector . cvec -> (x,y,z)) where
   V3 x y z = mk3 x y z
 {-# INLINE   V3 #-}
 {-# COMPLETE V3 #-}
 
-pattern V4 :: (Vector a v, Dim v ~ N4) => a -> a -> a -> a -> v
-pattern V4 t x y z <- (convert -> (t,x,y,z)) where
+pattern V4 :: (Prod a v, Dim v ~ N4) => a -> a -> a -> a -> v
+pattern V4 t x y z <- (vector . cvec -> (t,x,y,z)) where
   V4 t x y z = mk4 t x y z
 {-# INLINE   V4 #-}
 {-# COMPLETE V4 #-}
